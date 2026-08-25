@@ -1,0 +1,179 @@
+/* All colors/fonts/sizes below are driven by CSS custom properties that the
+   plugin writes at runtime from Settings (see
+   src/infrastructure/obsidian/QuranHighlightExtension.ts). Nothing here is
+   !important — every selector is scoped under .quran-key-* so themes and
+   user CSS snippets can still override it. */
+
+.cm-quran-key-text {
+	font-family: var(--quran-key-font-family);
+	font-size: var(--quran-key-font-size);
+	line-height: var(--quran-key-line-height);
+	color: var(--quran-key-color);
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	background-color: transparent;
+}
+
+.markdown-source-view.mod-cm6 .cm-line:has(.cm-quran-key-text) {
+	line-height: var(--quran-key-line-height-loose);
+}
+
+.quran-key-modal-alias {
+	color: var(--text-muted);
+	font-size: 0.82em;
+	font-style: italic;
+	margin-right: 8px;
+	opacity: 0.75;
+}
+
+.quran-key-analytics-dashboard {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	background: var(--background-secondary-alt);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 10px;
+	margin: 10px 0;
+	font-size: 0.82em;
+	color: var(--text-normal);
+}
+
+.quran-key-analytics-dashboard[dir="rtl"] {
+	direction: rtl;
+}
+
+.quran-key-analytics-stat {
+	flex: 1;
+	text-align: center;
+	border-inline-start: 1px solid var(--background-modifier-border);
+}
+
+.quran-key-analytics-stat:first-child {
+	border-inline-start: none;
+}
+
+.quran-key-analytics-label {
+	color: var(--text-muted);
+	display: block;
+	margin-bottom: 4px;
+	font-size: 0.9em;
+}
+
+.quran-key-analytics-value {
+	font-weight: 600;
+	color: var(--text-accent);
+	font-size: 1.1em;
+}
+
+.quran-key-highlight {
+	color: var(--text-accent);
+	font-weight: bold;
+}
+
+.quran-key-suggestion-text {
+	font-size: 1.1em;
+	line-height: 1.5;
+	text-align: right;
+	direction: rtl;
+}
+
+.quran-key-suggestion-meta {
+	color: var(--text-muted);
+	display: block;
+	margin-top: 4px;
+	text-align: right;
+	direction: rtl;
+}
+
+.quran-key-picker-modal {
+	max-width: 600px;
+	max-height: 80vh;
+	display: flex;
+	flex-direction: column;
+	direction: rtl;
+	text-align: right;
+}
+
+.quran-key-picker-list {
+	flex: 1;
+	overflow-y: auto;
+	max-height: 45vh;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 5px;
+	background: var(--background-primary);
+}
+
+.quran-key-picker-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	cursor: pointer;
+	border-radius: 4px;
+}
+
+.quran-key-picker-item.is-active {
+	background: var(--background-modifier-hover);
+	box-shadow: inset 3px 0 0 var(--text-accent);
+}
+
+.quran-key-picker-item-right {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.quran-key-picker-item-name {
+	font-size: 1.2em;
+	color: var(--text-muted);
+}
+
+.quran-key-picker-item-name.is-checked {
+	color: var(--text-normal);
+	font-weight: 500;
+}
+
+.quran-key-picker-add-source {
+	margin-top: 10px;
+}
+
+.quran-key-picker-add-source > summary {
+	cursor: pointer;
+	color: var(--text-accent);
+	font-size: 0.92em;
+	padding: 6px 0;
+}
+
+.quran-key-picker-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-top: 14px;
+	padding-top: 10px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.quran-key-picker-hint {
+	color: var(--text-muted);
+	font-size: 0.8em;
+}
+
+/* Toggled off entirely via settings.styleOrnateNumbers (see
+   QuranHighlightExtension.ts); when on, styleable independently of the
+   surrounding .cm-quran-key-text ayah text. Override via
+   settings.customCss, which is appended after this stylesheet loads. */
+.quran-key-ornate-number {
+	color: var(--text-accent);
+	font-weight: 600;
+}
+
+.quran-key-settings-textarea {
+	width: 100%;
+	min-height: 100px;
+	font-family: var(--font-monospace);
+	font-size: 0.85em;
+}

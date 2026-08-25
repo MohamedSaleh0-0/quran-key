@@ -1,0 +1,58 @@
+[
+  {
+    "id": "alef-madda-variants",
+    "kind": "literal",
+    "description": "unify various spellings of يا أيّها (ya ayyuha)",
+    "pattern": "يا\\s+أيها",
+    "flags": "g",
+    "replacement": "يايها"
+  },
+  {
+    "id": "ya-ayyuha-1",
+    "kind": "literal",
+    "description": "unify joined spelling ياأيها",
+    "pattern": "ياأيها",
+    "flags": "g",
+    "replacement": "يايها"
+  },
+  {
+    "id": "ya-ayyuha-2",
+    "kind": "literal",
+    "description": "unify joined spelling يأيها",
+    "pattern": "يأيها",
+    "flags": "g",
+    "replacement": "يايها"
+  },
+  {
+    "id": "salah",
+    "kind": "literal",
+    "description": "صلوة -> صلاة (salah short-alef spelling)",
+    "pattern": "صلوة",
+    "flags": "g",
+    "replacement": "صلاة"
+  },
+  {
+    "id": "zakah",
+    "kind": "literal",
+    "description": "زكوة -> زكاة (zakah short-alef spelling)",
+    "pattern": "زكوة",
+    "flags": "g",
+    "replacement": "زكاة"
+  },
+  {
+    "id": "hayah",
+    "kind": "literal",
+    "description": "حيوة -> حياة (hayah short-alef spelling)",
+    "pattern": "حيوة",
+    "flags": "g",
+    "replacement": "حياة"
+  },
+  {
+    "id": "mishkah",
+    "kind": "literal",
+    "description": "مشكوة -> مشكاة (mishkah short-alef spelling)",
+    "pattern": "مشكوة",
+    "flags": "g",
+    "replacement": "مشكاة"
+  }
+]

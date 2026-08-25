@@ -1,0 +1,444 @@
+[
+  {
+    "id": "tabari",
+    "name": "تفسير الطبري (جامع البيان)",
+    "aliases": [
+      "الطبري",
+      "جامع البيان",
+      "ابن جرير"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "ibn-katheer",
+    "name": "تفسير ابن كثير (القرآن العظيم)",
+    "aliases": [
+      "ابن كثير",
+      "كثير",
+      "تفسير القرآن العظيم"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "qurtubi",
+    "name": "تفسير القرطبي (الجامع لأحكام القرآن)",
+    "aliases": [
+      "القرطبي",
+      "الجامع لأحكام القرآن"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "baghawi",
+    "name": "تفسير البغوي (معالم التنزيل)",
+    "aliases": [
+      "البغوي",
+      "معالم التنزيل"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "zad-almaseer",
+    "name": "تفسير ابن الجوزي (زاد المسير)",
+    "aliases": [
+      "ابن الجوزي",
+      "الجوزي",
+      "زاد المسير"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "almawirdee",
+    "name": "تفسير الماوردي (النكت والعيون)",
+    "aliases": [
+      "الماوردي",
+      "النكت والعيون"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "ibn-alqayyim",
+    "name": "تفسير ابن القيم",
+    "aliases": [
+      "ابن القيم",
+      "ابن قيم الجوزية",
+      "القيم"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "ibn-taymiyyah",
+    "name": "تفسير ابن تيمية",
+    "aliases": [
+      "ابن تيمية",
+      "تيمية",
+      "شيخ الإسلام"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "samaani",
+    "name": "تفسير السمعاني",
+    "aliases": [
+      "السمعاني"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "makki",
+    "name": "تفسير مكي بن أبي طالب",
+    "aliases": [
+      "مكي",
+      "مكي بن أبي طالب",
+      "الهداية إلى بلوغ النهاية"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "mahasin-altaweel",
+    "name": "محاسن التأويل للقاسمي",
+    "aliases": [
+      "القاسمي",
+      "محاسن التأويل"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "althaalabi",
+    "name": "تفسير الثعالبي (الجواهر الحسان)",
+    "aliases": [
+      "الثعالبي",
+      "الجواهر الحسان"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "samarqandi",
+    "name": "تفسير السمرقندي (بحر العلوم)",
+    "aliases": [
+      "السممرقندي",
+      "بحر العلوم"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "althalabi",
+    "name": "تفسير الثعلبي (الكشف والبيان)",
+    "aliases": [
+      "الثعلبي",
+      "الكشف والبيان"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "fath-albayan",
+    "name": "فتح البيان للقنوجي",
+    "aliases": [
+      "القنوجي",
+      "فتح البيان"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "fath-alqadeer",
+    "name": "فتح القدير للشوكاني",
+    "aliases": [
+      "الشوكاني",
+      "فتح القدير"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "altasheel",
+    "name": "تفسير ابن جزي (التسهيل)",
+    "aliases": [
+      "ابن جزي",
+      "التسهيل",
+      "التسهيل لعلوم التنزيل"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "alaloosi",
+    "name": "تفسير الآلوسي (روح المعاني)",
+    "aliases": [
+      "الآلوسي",
+      "روح المعاني"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "alrazi",
+    "name": "تفسير الرازي (مفاتيح الغيب)",
+    "aliases": [
+      "الرازي",
+      "فخر الدين الرازي",
+      "مفاتيح الغيب"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "adwaa-albayan",
+    "name": "أضواء البيان للشنقيطي",
+    "aliases": [
+      "الشنقيطي",
+      "أضواء البيان",
+      "محمد الأمين الشنقيطي"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "nathm-aldurar",
+    "name": "نظم الدرر للبقاعي",
+    "aliases": [
+      "البقاعي",
+      "نظم الدرر"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "ibn-aashoor",
+    "name": "تفسير ابن عاشور (التحرير والتنوير)",
+    "aliases": [
+      "ابن عاشور",
+      "عاشور",
+      "التحرير والتنوير",
+      "التحرير"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "ibn-atiyah",
+    "name": "المحرر الوجيز لابن عطية",
+    "aliases": [
+      "ابن عطية",
+      "عطية",
+      "المحرر الوجيز"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "albahr-almuheet",
+    "name": "البحر المحيط لأبي حيان",
+    "aliases": [
+      "أبي حيان",
+      "أبو حيان",
+      "البحر المحيط"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "albaseet",
+    "name": "التفسير البسيط للواحدي",
+    "aliases": [
+      "الواحدي",
+      "التفسير البسيط",
+      "البسيط"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "abu-alsuod",
+    "name": "تفسير أبي السعود",
+    "aliases": [
+      "أبي السعود",
+      "أبو السعود",
+      "إرشاد العقل السليم"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "kashaf",
+    "name": "الكشاف للزمخشري",
+    "aliases": [
+      "الزمخشري",
+      "الكشاف"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "muyassar",
+    "name": "التفسير الميسر",
+    "aliases": [
+      "الميسر",
+      "التفسير الميسر",
+      "مجمع الملك فهد"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "mukhtasar",
+    "name": "المختصر في التفسير",
+    "aliases": [
+      "المختصر",
+      "المختصر في التفسير",
+      "مركز تفسير"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "saadi",
+    "name": "تفسير السعدي (تيسير الكريم الرحمن)",
+    "aliases": [
+      "السعدي",
+      "تيسير الكريم الرحمن",
+      "تيسير الكريم"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "aysar-altafasir",
+    "name": "أيسر التفاسير للجزائري",
+    "aliases": [
+      "الجزائري",
+      "أبو بكر الجزائري",
+      "أيسر التفاسير"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "tadabbur-wa-amal",
+    "name": "القرآن – تدبر وعمل",
+    "aliases": [
+      "تدبر وعمل",
+      "شركة الخبرات الذكية",
+      "القرآن تدبر وعمل"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "ibn-uthaymeen",
+    "name": "تفسير ابن عثيمين",
+    "aliases": [
+      "ابن عثيمين",
+      "عثيمين"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "jalalayn",
+    "name": "تفسير الجلالين",
+    "aliases": [
+      "الجلالين",
+      "المحلي والسيوطي",
+      "جلال الدين"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "iejee",
+    "name": "جامع البيان للإيجي",
+    "aliases": [
+      "الإيجي",
+      "جامع البيان للإيجي"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "albaydawee",
+    "name": "تفسير البيضاوي (أنوار التنزيل)",
+    "aliases": [
+      "البيضاوي",
+      "أنوار التنزيل"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "alnasafi",
+    "name": "تفسير النسفي (مدارك التنزيل)",
+    "aliases": [
+      "النسفي",
+      "مدارك التنزيل"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "alwajeez",
+    "name": "الوجيز للواحدي",
+    "aliases": [
+      "الوجيز",
+      "الوجيز للواحدي"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "zimneen",
+    "name": "تفسير ابن أبي زمنين",
+    "aliases": [
+      "ابن أبي زمنين",
+      "زمنين"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "mathoor",
+    "name": "موسوعة التفسير المأثور",
+    "aliases": [
+      "المأثور",
+      "التفسير المأثور",
+      "معهد الشاطبي",
+      "موسوعة التفسير المأثور"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "aldur-almanthoor",
+    "name": "الدر المنثور للسيوطي",
+    "aliases": [
+      "الدر المنثور",
+      "السيوطي"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  },
+  {
+    "id": "ibn-abi-hatim",
+    "name": "تفسير ابن أبي حاتم",
+    "aliases": [
+      "ابن أبي حاتم",
+      "أبي حاتم"
+    ],
+    "urlTemplate": "https://tafsir.app/get.php?src={bookId}&s={surahId}&a={ayahId}&ver=1",
+    "isBuiltin": true
+  }
+]

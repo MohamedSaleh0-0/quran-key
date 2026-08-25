@@ -1,0 +1,92 @@
+{
+  "stripTashkeel": false,
+  "useOrnateNumbers": true,
+  "ornateRingGlyph": "۝",
+  "wrapperStart": "﴿",
+  "wrapperEnd": "﴾",
+  "referenceFormat": "[{surah}:{verse}]",
+  "normalizationRules": [
+    {
+      "id": "alef-madda-variants",
+      "description": "unify various spellings of يا أيّها (ya ayyuha)",
+      "pattern": "يا\\s+أيها",
+      "flags": "g",
+      "replacement": "يايها",
+      "enabled": true
+    },
+    {
+      "id": "ya-ayyuha-1",
+      "description": "unify joined spelling ياأيها",
+      "pattern": "ياأيها",
+      "flags": "g",
+      "replacement": "يايها",
+      "enabled": true
+    },
+    {
+      "id": "ya-ayyuha-2",
+      "description": "unify joined spelling يأيها",
+      "pattern": "يأيها",
+      "flags": "g",
+      "replacement": "يايها",
+      "enabled": true
+    },
+    {
+      "id": "salah",
+      "description": "صلوة -> صلاة (salah short-alef spelling)",
+      "pattern": "صلوة",
+      "flags": "g",
+      "replacement": "صلاة",
+      "enabled": true
+    },
+    {
+      "id": "zakah",
+      "description": "زكوة -> زكاة (zakah short-alef spelling)",
+      "pattern": "زكوة",
+      "flags": "g",
+      "replacement": "زكاة",
+      "enabled": true
+    },
+    {
+      "id": "hayah",
+      "description": "حيوة -> حياة (hayah short-alef spelling)",
+      "pattern": "حيوة",
+      "flags": "g",
+      "replacement": "حياة",
+      "enabled": true
+    },
+    {
+      "id": "mishkah",
+      "description": "مشكوة -> مشكاة (mishkah short-alef spelling)",
+      "pattern": "مشكوة",
+      "flags": "g",
+      "replacement": "مشكاة",
+      "enabled": true
+    }
+  ],
+  "quranFontFamily": "'Amiri', 'KFGQPC Uthman Taha Naskh', serif",
+  "quranFontSize": 1.1,
+  "quranLineHeight": 2.1,
+  "quranColor": "#dfc56b",
+  "styleOrnateNumbers": true,
+  "customCss": "",
+  "showAnalytics": true,
+  "maxSuggestionResults": 30,
+  "maxSlidingWindowWords": 12,
+  "interfaceLanguage": "ar",
+  "searchStrategy": "literal",
+  "defaultTafsirBookId": "saadi",
+  "favoriteBooksIds": [],
+  "customTafsirBooks": [],
+  "tafsirBookResolutionOrder": [
+    "explicit",
+    "lineAliases",
+    "favorites",
+    "default"
+  ],
+  "includeAyahTextInTafsir": true,
+  "useHorizontalDivider": true,
+  "rangeHeadingLevel": "###",
+  "bookHeadingLevel": "####",
+  "tafsirFetchDelayMs": 150,
+  "tafsirFetchDelayThreshold": 2
+}
