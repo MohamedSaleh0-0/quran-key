@@ -1,7 +1,7 @@
 {
 	"name": "quran-key",
 	"version": "1.0.0",
-	"description": "Contextual Quran extraction, snippet trimming, and multi-source tafsir lookup for Obsidian.",
+	"description": "Enrich your Islamic knowledge with Quran research, tafsir, and tadabbur.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
@@ -9,6 +9,9 @@
 		"test": "vitest run"
 	},
 	"license": "MIT",
+	"dependencies": {
+		"@codemirror/view": "^6.38.6"
+	},
 	"devDependencies": {
 		"@types/node": "^20.0.0",
 		"@typescript-eslint/parser": "^8.69.0",

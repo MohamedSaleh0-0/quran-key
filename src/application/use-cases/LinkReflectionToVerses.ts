@@ -25,9 +25,9 @@ export interface DetectedCitation {
 }
 
 function formatDateISO(date: Date): string {
-	const y = String(date.getFullYear());
-	const m = String(date.getMonth() + 1).padStart(2, "0");
-	const d = String(date.getDate()).padStart(2, "0");
+	const y = date.getFullYear();
+	const m = (date.getMonth() + 1 < 10 ? "0" : "") + (date.getMonth() + 1);
+	const d = (date.getDate() < 10 ? "0" : "") + date.getDate();
 	return `${y}-${m}-${d}`;
 }
 
