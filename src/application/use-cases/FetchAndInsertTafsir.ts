@@ -22,13 +22,6 @@ export interface TafsirFormattingOptions {
 	defaultBookId: string;
 }
 
-/**
- * FR-21..26: fetch commentary for a surah+ayah range from one or more
- * books and write a formatted block into the editor. Book *selection*
- * (FR-23) is delegated to `resolveBooks`, which walks
- * `options.resolutionOrder` — v1 hardcoded this precedence as a fixed
- * if/else chain; here it's data (NFR-6), independently testable.
- */
 export class FetchAndInsertTafsir {
 	constructor(
 		private readonly quranRepository: QuranRepository,
@@ -96,7 +89,7 @@ export class FetchAndInsertTafsir {
 						}
 					}
 					if (ayahRange.length > options.fetchDelayThreshold) {
-						await new Promise((resolve) => setTimeout(resolve, options.fetchDelayMs));
+						await new Promise((resolve) => window.setTimeout(resolve, options.fetchDelayMs));
 					}
 					const rawContent = await this.tafsirRepository.fetchTafsir(book, surahId, ayahId);
 					if (rawContent && rawContent.trim() !== "") {
@@ -116,16 +109,13 @@ export class FetchAndInsertTafsir {
 			const end: EditorPosition = { line: lineNum, ch: lineText ? lineText.length : 0 };
 			editor.replaceRange(finalOutput.trim() + "\n", start, end);
 			return true;
-		} catch (_error) {
+		} catch {
 			this.notice.show(t(options.locale, "tafsir.fetchFailed"));
 			return false;
 		}
 	}
 }
 
-/** Turns raw fetched commentary into blockquoted Markdown, defusing a few
- *  characters that would otherwise misrender inside a note (wiki-links,
- *  emphasis markers, leading horizontal rules). */
 function formatBookContent(bookName: string, textContent: string, bookHeadingLevel: HeadingLevel, locale: Locale): string {
 	if (!textContent || textContent.trim() === "") {
 		return `${bookHeadingLevel} ${bookName}\n\n> ${t(locale, "tafsir.emptyBook")}\n\n`;

@@ -3,22 +3,10 @@ import type { App } from "obsidian";
 import type { ReflectionCategory } from "../../domain/entities/ReflectionCategory";
 import type { ReflectionFileEntry, ReflectionFileRepository } from "../../domain/ports/ReflectionFileRepository";
 
-/** Characters invalid (or awkward) in filenames across Windows/macOS/Linux. */
 function sanitizeFileNameSegment(segment: string): string {
 	return segment.replace(/[\\/:*?"<>|]/g, "").trim();
 }
 
-/**
- * One note per (category, surah, ayah), e.g. "تدبرات/... .md" — first
- * link to an ayah creates the file (with frontmatter identifying which
- * ayah it is), every later one appends a new dated entry to it.
- *
- * File *identity* is the (surahId, ayah) pair in frontmatter, deliberately
- * not the filename — see ReflectionFileNameBuilder's doc comment — so
- * changing settings.reflectionFileNameTemplate later still finds and
- * appends to the same file instead of spawning a duplicate under the new
- * title.
- */
 export class ObsidianReflectionFileRepository implements ReflectionFileRepository {
 	constructor(private readonly app: App) {}
 
@@ -62,8 +50,6 @@ export class ObsidianReflectionFileRepository implements ReflectionFileRepositor
 		const base = sanitizeFileNameSegment(title) || "تدبر";
 		let candidate = normalizePath(`${folderPath}/${base}.md`);
 		let suffix = 2;
-		// Extremely unlikely (two different ayahs producing an identical
-		// truncated title), but avoid silently overwriting if it happens.
 		while (this.app.vault.getAbstractFileByPath(candidate)) {
 			candidate = normalizePath(`${folderPath}/${base} (${suffix}).md`);
 			suffix++;
@@ -71,9 +57,6 @@ export class ObsidianReflectionFileRepository implements ReflectionFileRepositor
 		return candidate;
 	}
 
-	/** Obsidian's `createFolder` fails if the parent segment doesn't exist
-	 *  yet, and has no recursive option — walk the path one segment at a
-	 *  time, creating whatever's missing. */
 	private async ensureFolder(folderPath: string): Promise<void> {
 		const normalized = normalizePath(folderPath);
 		if (this.app.vault.getAbstractFileByPath(normalized)) return;
@@ -85,10 +68,8 @@ export class ObsidianReflectionFileRepository implements ReflectionFileRepositor
 			if (!this.app.vault.getAbstractFileByPath(current)) {
 				try {
 					await this.app.vault.createFolder(current);
-				} catch (_error) {
-					// Benign race (e.g. another call just created it) — the
-					// getAbstractFileByPath check on the next segment (or the
-					// caller's own path) is what actually matters.
+				} catch {
+					// Benign race
 				}
 			}
 		}

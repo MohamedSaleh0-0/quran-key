@@ -16,10 +16,6 @@ const RESOLUTION_LABELS: Record<TafsirResolutionStrategy, Record<Locale, string>
 	default: { ar: "الكتاب الافتراضي", en: "Default book" },
 };
 
-/**
- * Renders SETTINGS_SCHEMA generically, then composite sections using
- * `Setting.setHeading()` to adhere to Obsidian UI guidelines.
- */
 export class QuranKeySettingsTab extends PluginSettingTab {
 	constructor(app: App, private readonly plugin: Plugin & SettingsHost, private readonly services: AppServices) {
 		super(app, plugin);
@@ -100,7 +96,6 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 					slider
 						.setLimits(min, max, step)
 						.setValue(Number(settings[field.key]))
-						.setDynamicTooltip()
 						.onChange(async (value) => {
 							settings[field.key] = value;
 							await this.save();

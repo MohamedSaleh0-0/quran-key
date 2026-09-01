@@ -34,6 +34,7 @@ import { ObsidianNoticeAdapter } from "./infrastructure/obsidian/ObsidianNoticeA
 import { ObsidianReflectionFileRepository } from "./infrastructure/obsidian/ObsidianReflectionFileRepository";
 import {
 	applyStyleVariables,
+	cleanupStyleVariables,
 	createMarkdownPostProcessor,
 	createOrnateNumberHighlightExtension,
 	createOrnateNumberPostProcessor,
@@ -56,9 +57,6 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 	private readonly tafsirRepository = new HttpTafsirRepository();
 	private readonly notice = new ObsidianNoticeAdapter();
 	private readonly memento = new InMemoryInsertionMemento();
-	private styleEl!: HTMLStyleElement;
-	/** Mutated in place (not reassigned) so registerEditorExtension's
-	 *  reference stays valid — see refreshHighlightExtension(). */
 	private readonly editorExtension: Extension[] = [];
 
 	services!: AppServices;
@@ -69,7 +67,7 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 		this.repository = new ObsidianQuranRepository(this.app.vault, new ArabicNormalizer(this.settings.normalizationRules));
 		await this.repository.loadAll();
 
-		this.initStyleSheet();
+		this.refreshStyles();
 		this.rebuildCoreServices();
 		this.refreshHighlightExtension();
 		this.registerEditorExtension(this.editorExtension);
@@ -86,7 +84,7 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 	}
 
 	onunload(): void {
-		this.styleEl?.remove();
+		cleanupStyleVariables();
 	}
 
 	async loadSettings(): Promise<void> {
@@ -96,30 +94,15 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
-		// Cheap (a handful of regex compiles + remapping the bundled demo
-		// corpus) — always rebuilding on every save is simpler than tracking
-		// exactly which fields are "structural"; see docs/ARCHITECTURE.md §2.
 		this.rebuildCoreServices();
 		this.refreshHighlightExtension();
 		this.refreshStyles();
 	}
 
-	private initStyleSheet(): void {
-		this.styleEl = document.createElement("style");
-		this.styleEl.id = "quran-key-dynamic-styles";
-		document.head.appendChild(this.styleEl);
-		this.refreshStyles();
-	}
-
 	private refreshStyles(): void {
-		applyStyleVariables(this.styleEl, this.settings);
+		applyStyleVariables(this.settings);
 	}
 
-	/** CodeMirror extensions aren't mutable in place once constructed, but
-	 *  Obsidian's `registerEditorExtension` keeps the *array reference* it
-	 *  was given live — mutating this array's contents and calling
-	 *  `workspace.updateOptions()` is the documented way to hot-swap a
-	 *  registered extension (e.g. after the wrapper glyphs change). */
 	private refreshHighlightExtension(): void {
 		this.editorExtension.length = 0;
 		this.editorExtension.push(createQuranHighlightExtension(this.settings.wrapperStart, this.settings.wrapperEnd));
@@ -129,15 +112,10 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 		this.app.workspace.updateOptions();
 	}
 
-	/** Rebuilds every service compiled from a setting (normalization
-	 *  rules, the reference-format template, wrapper glyphs) so structural
-	 *  changes take effect immediately — no plugin reload required. This
-	 *  is the composition root; nothing outside this method calls `new`
-	 *  on a concrete adapter or use case. */
 	private rebuildCoreServices(): void {
 		const normalizer = new ArabicNormalizer(this.settings.normalizationRules);
 		this.repository = new ObsidianQuranRepository(this.app.vault, normalizer);
-		void this.repository.loadAll(); // bundled data: effectively synchronous
+		void this.repository.loadAll();
 
 		const reference = VerseReference.compile(this.settings.referenceFormat);
 		const phraseMatcher = new PhraseMatcher(normalizer);
@@ -154,13 +132,13 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 		const formatter = new VerseOutputFormatter(ornateConverter, reference, (text) => normalizer.stripTashkeel(text));
 		const toggle = new ToggleSnippetView(snippetExtractor, formatter);
 
-		const builtinBooks = builtinTafsirBooksData as unknown as TafsirBook[];
-		const catalog = new TafsirCatalog(builtinBooks, this.settings.customTafsirBooks as unknown as TafsirBook[]);
+		const builtinBooks = builtinTafsirBooksData as TafsirBook[];
+		const catalog = new TafsirCatalog(builtinBooks, this.settings.customTafsirBooks as TafsirBook[]);
 
-		const builtinReflectionCategories = builtinReflectionCategoriesData as unknown as ReflectionCategory[];
+		const builtinReflectionCategories = builtinReflectionCategoriesData as ReflectionCategory[];
 		const reflectionCatalog = new ReflectionCategoryCatalog(
 			builtinReflectionCategories,
-			this.settings.customReflectionCategories as unknown as ReflectionCategory[]
+			this.settings.customReflectionCategories as ReflectionCategory[]
 		);
 		const reflectionFileNameBuilder = new ReflectionFileNameBuilder(
 			this.settings.reflectionFileNameTemplate,
@@ -257,13 +235,6 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 			saveSettings: () => this.saveSettings(),
 		};
 
-		// Mutate the existing object in place (rather than reassigning
-		// this.services) once it exists, so anything holding a reference
-		// to it from an earlier rebuild — commands captured once at
-		// registerAllCommands() time, the settings tab, an open modal —
-		// observes the rebuilt catalog/use-cases/settings immediately
-		// instead of a stale snapshot from onload. Reassignment only
-		// happens on the very first call, when there's nothing to mutate.
 		if (this.services) {
 			Object.assign(this.services, rebuilt);
 		} else {
@@ -271,4 +242,3 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 		}
 	}
 }
-

@@ -3,7 +3,6 @@ import type { Ayah } from "../../domain/entities/Ayah";
 import type { QuranRepository } from "../../domain/ports/QuranRepository";
 import type { ArabicNormalizer } from "../../domain/services/ArabicNormalizer";
 import sampleCorpus from "../../../data/ayahs.json";
-// src/infrastructure/obsidian/ObsidianQuranRepository.ts
 
 interface RawAyah {
 	surah_id: number;
@@ -24,10 +23,11 @@ export class ObsidianQuranRepository implements QuranRepository {
 	async loadAll(): Promise<void> {
 		if (this.ayahs.length > 0) return;
 
-		// Supports both top-level array [...] and wrapped { ayahs: [...] }
-		const raw: RawAyah[] = Array.isArray(sampleCorpus)
-			? (sampleCorpus as unknown as RawAyah[])
-			: (sampleCorpus as unknown as { ayahs: RawAyah[] }).ayahs;
+		const raw = (
+			Array.isArray(sampleCorpus)
+				? sampleCorpus
+				: (sampleCorpus as { ayahs: RawAyah[] }).ayahs
+		) as RawAyah[];
 
 		this.ayahs = raw.map((a, index) => ({
 			id: index + 1,

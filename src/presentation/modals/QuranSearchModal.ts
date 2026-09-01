@@ -14,17 +14,6 @@ function toPosition(pos: ObsidianEditorPosition): EditorPosition {
 	return { line: pos.line, ch: pos.ch };
 }
 
-/**
- * The global fuzzy search modal (FR-16..20). Doubles as a "pick a verse
- * for tafsir" picker when `onVerseSelectOverride` is supplied — that's
- * how the "global tafsir" command flow reuses this exact modal instead of
- * duplicating a picker (see docs/ARCHITECTURE.md).
- *
- * Keyboard: Enter inserts/selects the active suggestion. Shift+Enter
- * fetches tafsir for just that verse (or, in override mode, resolves the
- * override directly). Ctrl/Cmd+Enter opens RangeEndSuggestModal to pick a
- * multi-ayah range within the same surah.
- */
 export class QuranSearchModal extends SuggestModal<Ayah> {
 	private currentQuery = "";
 	private dashboard: AnalyticsDashboard | null = null;
@@ -105,11 +94,11 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 	}
 
 	private openTafsirFlow(startAyah: Ayah, endAyah: Ayah): void {
-		new TafsirBookPickerModal(this.services.app, this.services, async (chosenBooks) => {
+		new TafsirBookPickerModal(this.services.app, this.services, (chosenBooks) => {
 			if (chosenBooks.length === 0) return;
 			const editorPort = this.services.wrapEditor(this.editor);
 			const cursor = editorPort.getCursor();
-			await this.services.useCases.fetchTafsir.execute(
+			void this.services.useCases.fetchTafsir.execute(
 				editorPort,
 				editorPort.getLine(cursor.line),
 				cursor.line,
@@ -132,7 +121,7 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 			!!this.preFilteredMatches &&
 			cleanQuery.length > 0 &&
 			(cleanQuery.includes(cleanInitial) || cleanInitial.includes(cleanQuery));
-		const pool = usePreFiltered ? this.preFilteredMatches! : undefined;
+		const pool = usePreFiltered && this.preFilteredMatches ? this.preFilteredMatches : undefined;
 
 		const matches = this.services.useCases.search.execute(query, pool);
 		if (this.dashboard) this.dashboard.update(matches, this.services.repository.getAllAyahs());

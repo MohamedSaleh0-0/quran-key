@@ -4,16 +4,6 @@ import type { TafsirBook } from "../../domain/entities/TafsirBook";
 import type { AppServices } from "../AppServices";
 import { t } from "../../config/strings";
 
-/**
- * Search-as-you-type, multi-select tafsir book picker (FR-21). Backed by
- * TafsirCatalog, so builtin and user-added books render identically.
- *
- * Takes `services` (not a `catalog`/`locale` snapshot) so it always reads
- * the live catalog and settings — important because this modal can itself
- * add a custom book (see renderAddSourceForm), and main.ts keeps
- * `AppServices` identity stable across rebuilds (Object.assign, not
- * reassignment) specifically so a reference taken here stays current.
- */
 export class TafsirBookPickerModal extends Modal {
 	private readonly selected = new Set<string>();
 	private activeIndex = 0;
@@ -101,12 +91,12 @@ export class TafsirBookPickerModal extends Modal {
 			const right = item.createDiv({ cls: "quran-key-picker-item-right" });
 			const checkbox = right.createEl("input", { type: "checkbox" });
 			checkbox.checked = isChecked;
-			right.createEl("span", {
+			right.createSpan({
 				text: book.name,
 				cls: `quran-key-picker-item-name${isChecked ? " is-checked" : ""}`,
 			});
 			if (book.aliases.length > 0) {
-				item.createEl("span", { text: book.aliases.join("\u060C "), cls: "quran-key-modal-alias" });
+				item.createSpan({ text: book.aliases.join("\u060C "), cls: "quran-key-modal-alias" });
 			}
 			item.addEventListener("click", () => {
 				this.activeIndex = idx;
@@ -122,7 +112,6 @@ export class TafsirBookPickerModal extends Modal {
 		this.updateConfirmState();
 	}
 
-	/** Quick-add form for custom sources inside the modal. */
 	private renderAddSourceForm(containerEl: HTMLElement): void {
 		const details = containerEl.createEl("details", { cls: "quran-key-picker-add-source" });
 		details.createEl("summary", { text: t(this.locale, "tafsir.addSourceTitle") });
@@ -198,7 +187,7 @@ export class TafsirBookPickerModal extends Modal {
 
 	private renderFooter(containerEl: HTMLElement): void {
 		const footer = containerEl.createDiv({ cls: "quran-key-picker-footer" });
-		footer.createEl("span", { text: t(this.locale, "tafsir.pickerHint"), cls: "quran-key-picker-hint" });
+		footer.createSpan({ text: t(this.locale, "tafsir.pickerHint"), cls: "quran-key-picker-hint" });
 		this.confirmBtn = footer.createEl("button", {
 			text: t(this.locale, "tafsir.pickerConfirm"),
 			cls: "mod-cta",

@@ -12,16 +12,8 @@ import { t } from "../../config/strings";
 
 export interface ReflectionLinkOptions {
 	locale: Locale;
-	/** True (default) = a real "move": the original selection is removed
-	 *  from the editor once it's been written to every target ayah file.
-	 *  False leaves it in place — a copy instead of a move. */
 	deleteSelectionAfterLinking: boolean;
-	/** Whatever precedes each dated entry inside a file — deliberately not
-	 *  restricted to a heading: "### {date}", "- {date}", "1. {date}", or
-	 *  empty for no prefix at all are all valid. {date} is the only
-	 *  placeholder. */
 	entryPrefixTemplate: string;
-	/** Used only when quoting the full passage for a range link. */
 	quoteFormattingOptions: FormattingOptions;
 }
 
@@ -33,24 +25,12 @@ export interface DetectedCitation {
 }
 
 function formatDateISO(date: Date): string {
-	const y = date.getFullYear();
+	const y = String(date.getFullYear());
 	const m = String(date.getMonth() + 1).padStart(2, "0");
 	const d = String(date.getDate()).padStart(2, "0");
 	return `${y}-${m}-${d}`;
 }
 
-/**
- * Links a selected piece of writing (a تدبر, أثر, or any other configured
- * category — see ReflectionCategoryCatalog) to an ayah or ayah range —
- * one dedicated file **per ayah**, not per range: linking a تدبر about
- * 3-5 writes the identical entry into ayah 3's file, ayah 4's file, and
- * ayah 5's file, each noting it's range-wide (not specific to that one
- * ayah) and quoting the full passage — so searching/browsing by any one
- * ayah in the range finds it directly, since it lives in that ayah's own
- * file. A single-ayah link skips both the range notice and the quoted
- * passage, since the file's own title already says which ayah it's about
- * (per explicit request: quoting is for passages, not single ayat).
- */
 export class LinkReflectionToVerses {
 	constructor(
 		private readonly repository: QuranRepository,
@@ -61,10 +41,6 @@ export class LinkReflectionToVerses {
 		private readonly files: ReflectionFileRepository
 	) {}
 
-	/** If `text` already contains one of the user's own wrapped ayah
-	 *  citations (the same `[Surah:N-M]` format used elsewhere in the
-	 *  plugin), resolves the ayah range directly from it so the caller
-	 *  can skip the manual verse picker entirely. */
 	detectExistingCitation(text: string): DetectedCitation | null {
 		const match = this.reference.find(text);
 		if (!match) return null;
@@ -100,9 +76,6 @@ export class LinkReflectionToVerses {
 
 		for (let ayahId = startAyah; ayahId <= endAyah; ayahId++) {
 			const ayah = this.repository.findAyah(surahId, ayahId);
-			// File titles are never allowed to carry tashkeel, regardless of
-			// any output-formatting setting — a diacritic-laden filename is
-			// fragile across filesystems/sync tools in a way body text isn't.
 			const ayahTextForTitle = ayah ? this.normalizer.stripTashkeel(ayah.text) : "";
 			const fileTitle = this.fileNameBuilder.build(surahName, ayahId, ayahTextForTitle);
 			await this.files.appendEntry(category, { surahId, surahName, ayahId, fileTitle, entryMarkdown });

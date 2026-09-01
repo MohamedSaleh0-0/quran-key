@@ -10,15 +10,6 @@ function escapeRegex(literal: string): string {
 	return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/**
- * Live Preview highlighting for any span wrapped in the configured
- * wrapper glyphs. v1 hardcoded the pattern `﴿[^﴾]*﴾` directly; here it's
- * rebuilt from settings.wrapperStart/wrapperEnd (non-greedy `.*?` instead
- * of a negated character class so multi-character wrapper strings work
- * too, not just single glyphs). main.ts re-registers this extension when
- * the wrapper glyphs change, since a CodeMirror extension's regex isn't
- * mutable in place once constructed.
- */
 export function createQuranHighlightExtension(wrapperStart: string, wrapperEnd: string) {
 	const pattern = new RegExp(`${escapeRegex(wrapperStart)}.*?${escapeRegex(wrapperEnd)}`, "g");
 	const decorator = new MatchDecorator({
@@ -40,15 +31,6 @@ export function createQuranHighlightExtension(wrapperStart: string, wrapperEnd: 
 	);
 }
 
-/**
- * Live Preview highlighting for ornate ayah-number markers ("۝١٢") as
- * their own styleable span, independent of the surrounding
- * cm-quran-key-text mark — CodeMirror layers overlapping mark decorations
- * fine, so this nests naturally inside the wrapper highlight. Gated
- * behind settings.styleOrnateNumbers in main.ts's refreshHighlightExtension
- * (separate from useOrnateNumbers, which controls the character
- * substitution itself, not whether it's additionally styled).
- */
 export function createOrnateNumberHighlightExtension(ringGlyph: string) {
 	const pattern = new RegExp(`${escapeRegex(ringGlyph)}[${ARABIC_INDIC_DIGITS}]+`, "g");
 	const decorator = new MatchDecorator({
@@ -70,9 +52,6 @@ export function createOrnateNumberHighlightExtension(ringGlyph: string) {
 	);
 }
 
-/** Reading-view equivalent of createOrnateNumberHighlightExtension. Run
- *  after createMarkdownPostProcessor so the ornate-number span nests
- *  inside the wrapper's highlight span rather than replacing it. */
 export function createOrnateNumberPostProcessor(ringGlyph: string): (el: HTMLElement) => void {
 	const pattern = new RegExp(`(${escapeRegex(ringGlyph)}[${ARABIC_INDIC_DIGITS}]+)`, "g");
 
@@ -85,16 +64,13 @@ export function createOrnateNumberPostProcessor(ringGlyph: string): (el: HTMLEle
 				let m: RegExpExecArray | null;
 				while ((m = pattern.exec(text)) !== null) {
 					if (m.index > lastIndex) {
-						frag.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+						frag.appendText(text.slice(lastIndex, m.index));
 					}
-					const span = document.createElement("span");
-					span.className = ORNATE_NUMBER_CLASS;
-					span.textContent = m[0];
-					frag.appendChild(span);
+					frag.createSpan({ cls: ORNATE_NUMBER_CLASS, text: m[0] });
 					lastIndex = m.index + m[0].length;
 				}
 				if (lastIndex < text.length) {
-					frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+					frag.appendText(text.slice(lastIndex));
 				}
 				node.parentNode?.replaceChild(frag, node);
 			}
@@ -107,9 +83,6 @@ export function createOrnateNumberPostProcessor(ringGlyph: string): (el: HTMLEle
 	return walk;
 }
 
-/** Reading-view equivalent: walks rendered text nodes and wraps any
- *  wrapperStart...wrapperEnd span in the same highlight class, so styling
- *  is identical in both modes. */
 export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: string): (el: HTMLElement) => void {
 	const pattern = new RegExp(`${escapeRegex(wrapperStart)}(.*?)${escapeRegex(wrapperEnd)}`, "g");
 
@@ -122,16 +95,13 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 				let m: RegExpExecArray | null;
 				while ((m = pattern.exec(text)) !== null) {
 					if (m.index > lastIndex) {
-						frag.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+						frag.appendText(text.slice(lastIndex, m.index));
 					}
-					const span = document.createElement("span");
-					span.className = HIGHLIGHT_CLASS;
-					span.textContent = `${wrapperStart}${m[1]}${wrapperEnd}`;
-					frag.appendChild(span);
+					frag.createSpan({ cls: HIGHLIGHT_CLASS, text: `${wrapperStart}${m[1]}${wrapperEnd}` });
 					lastIndex = m.index + m[0].length;
 				}
 				if (lastIndex < text.length) {
-					frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+					frag.appendText(text.slice(lastIndex));
 				}
 				node.parentNode?.replaceChild(frag, node);
 			}
@@ -144,25 +114,18 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 	return walk;
 }
 
-/** Writes the Qur'anic-text style settings as CSS custom properties,
- *  consumed by the plain classes in styles.css. Replaces v1's five
- *  separate `style.cssText = "...!important..."` call sites with one
- *  function and zero `!important` (NFR-10) — themes and CSS snippets can
- *  still override any of this.
- *
- *  settings.customCss (raw, user-authored) is appended verbatim after the
- *  generated variables so it can target .cm-quran-key-text,
- *  .quran-key-ornate-number, or anything else in styles.css without
- *  editing the plugin's bundled stylesheet. */
-export function applyStyleVariables(styleEl: HTMLStyleElement, settings: PluginConfig): void {
-	const vars = `
-:root {
-	--quran-key-font-family: ${settings.quranFontFamily};
-	--quran-key-font-size: ${settings.quranFontSize}em;
-	--quran-key-line-height: ${settings.quranLineHeight};
-	--quran-key-line-height-loose: ${settings.quranLineHeight + 0.4};
-	--quran-key-color: ${settings.quranColor};
+export function applyStyleVariables(settings: PluginConfig): void {
+	document.body.style.setProperty("--quran-key-font-family", settings.quranFontFamily);
+	document.body.style.setProperty("--quran-key-font-size", `${settings.quranFontSize}em`);
+	document.body.style.setProperty("--quran-key-line-height", String(settings.quranLineHeight));
+	document.body.style.setProperty("--quran-key-line-height-loose", String(settings.quranLineHeight + 0.4));
+	document.body.style.setProperty("--quran-key-color", settings.quranColor);
 }
-`.trim();
-	styleEl.textContent = settings.customCss?.trim() ? `${vars}\n\n${settings.customCss}` : vars;
+
+export function cleanupStyleVariables(): void {
+	document.body.style.removeProperty("--quran-key-font-family");
+	document.body.style.removeProperty("--quran-key-font-size");
+	document.body.style.removeProperty("--quran-key-line-height");
+	document.body.style.removeProperty("--quran-key-line-height-loose");
+	document.body.style.removeProperty("--quran-key-color");
 }

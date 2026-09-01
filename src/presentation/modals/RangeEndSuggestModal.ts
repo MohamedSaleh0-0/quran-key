@@ -8,13 +8,6 @@ import type { VerseSelectHandler } from "./types";
 import { ArabicNormalizer } from "../../domain/services/ArabicNormalizer";
 import { t } from "../../config/strings";
 
-/**
- * Scoped range-end picker: choose the closing ayah of a multi-verse range
- * starting at `startAyah`, within the same surah (FR-18). Plain
- * Enter/click inserts the resolved range as text (or resolves the
- * override); Shift+Enter skips straight to fetching tafsir for the whole
- * range (FR-19), prompting for books via TafsirBookPickerModal.
- */
 export class RangeEndSuggestModal extends SuggestModal<Ayah> {
 	constructor(
 		private readonly services: AppServices,
@@ -72,13 +65,13 @@ export class RangeEndSuggestModal extends SuggestModal<Ayah> {
 
 	private openTafsirFlow(rangeAyahs: Ayah[]): void {
 		if (rangeAyahs.length === 0) return;
-		new TafsirBookPickerModal(this.services.app, this.services, async (chosenBooks) => {
+		new TafsirBookPickerModal(this.services.app, this.services, (chosenBooks) => {
 			if (chosenBooks.length === 0) return;
 			const editorPort = this.services.wrapEditor(this.editor);
 			const cursor = editorPort.getCursor();
 			const first = rangeAyahs[0];
 			const last = rangeAyahs[rangeAyahs.length - 1];
-			await this.services.useCases.fetchTafsir.execute(
+			void this.services.useCases.fetchTafsir.execute(
 				editorPort,
 				editorPort.getLine(cursor.line),
 				cursor.line,
