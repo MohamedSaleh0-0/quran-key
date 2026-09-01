@@ -37,7 +37,13 @@ Fetch commentary for single ayahs or multi-ayah ranges using your preferred book
 ### 4. Tadabbur & Athar Journaling
 Select your reflection text and run **Log selection as تدبر** to create or append to dedicated verse notes linked via frontmatter.
 
-![Reflection Linking Demo](docs/assets/reflection-demo.gif)
+
+
+
+### Video Walkthrough
+[▶ Click here to watch the full walkthrough demo](https://github.com/user-attachments/assets/050b9c1e-5144-429e-b5c0-3a14a89bd6a9)
+
+
 
 ---
 
