@@ -8,7 +8,7 @@ import { QuranSearchModal } from "../../modals/QuranSearchModal";
 export function createFetchContextualTafsirCommand(services: AppServices): CommandDefinition {
 	return {
 		id: "fetch-contextual-tafsir",
-		name: "Fetch Contextual Tafsir for Current Line",
+		name: "Fetch contextual tafsir for current line",
 		run: async (editor) => {
 			const editorPort = services.wrapEditor(editor);
 			const cursor = editorPort.getCursor();

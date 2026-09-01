@@ -80,12 +80,27 @@ export function createOrnateNumberPostProcessor(ringGlyph: string): (el: HTMLEle
 		if (node.nodeType === Node.TEXT_NODE) {
 			const text = node.nodeValue || "";
 			if (text.includes(ringGlyph)) {
-				const span = document.createElement("span");
-				span.innerHTML = text.replace(pattern, (m) => `<span class="${ORNATE_NUMBER_CLASS}">${m}</span>`);
-				node.parentNode?.replaceChild(span, node);
+				const frag = document.createDocumentFragment();
+				let lastIndex = 0;
+				let m: RegExpExecArray | null;
+				while ((m = pattern.exec(text)) !== null) {
+					if (m.index > lastIndex) {
+						frag.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+					}
+					const span = document.createElement("span");
+					span.className = ORNATE_NUMBER_CLASS;
+					span.textContent = m[0];
+					frag.appendChild(span);
+					lastIndex = m.index + m[0].length;
+				}
+				if (lastIndex < text.length) {
+					frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+				}
+				node.parentNode?.replaceChild(frag, node);
 			}
 		} else {
-			for (let i = 0; i < node.childNodes.length; i++) walk(node.childNodes[i]);
+			const children = Array.from(node.childNodes);
+			for (const child of children) walk(child);
 		}
 	}
 
@@ -102,15 +117,27 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 		if (node.nodeType === Node.TEXT_NODE) {
 			const text = node.nodeValue || "";
 			if (text.includes(wrapperStart) && text.includes(wrapperEnd)) {
-				const span = document.createElement("span");
-				span.innerHTML = text.replace(
-					pattern,
-					(_m, inner: string) => `<span class="${HIGHLIGHT_CLASS}">${wrapperStart}${inner}${wrapperEnd}</span>`
-				);
-				node.parentNode?.replaceChild(span, node);
+				const frag = document.createDocumentFragment();
+				let lastIndex = 0;
+				let m: RegExpExecArray | null;
+				while ((m = pattern.exec(text)) !== null) {
+					if (m.index > lastIndex) {
+						frag.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+					}
+					const span = document.createElement("span");
+					span.className = HIGHLIGHT_CLASS;
+					span.textContent = `${wrapperStart}${m[1]}${wrapperEnd}`;
+					frag.appendChild(span);
+					lastIndex = m.index + m[0].length;
+				}
+				if (lastIndex < text.length) {
+					frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+				}
+				node.parentNode?.replaceChild(frag, node);
 			}
 		} else {
-			for (let i = 0; i < node.childNodes.length; i++) walk(node.childNodes[i]);
+			const children = Array.from(node.childNodes);
+			for (const child of children) walk(child);
 		}
 	}
 

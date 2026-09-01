@@ -24,6 +24,6 @@ export class ConvertReferenceToFootnote {
 		const lastLineNum = editor.lineCount() - 1;
 		const lastLineText = editor.getLine(lastLineNum);
 		const footerPos: EditorPosition = { line: lastLineNum, ch: lastLineText.length };
-		editor.replaceRange(`\n\n${footnoteTag}: ${match.surahName}`, footerPos, footerPos);
+		editor.replaceRange(`\n\n${footnoteTag}: ${match.matchText}`, footerPos, footerPos);
 	}
 }

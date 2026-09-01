@@ -19,7 +19,7 @@ export function createLinkReflectionCommand(services: AppServices, categoryId: s
 
 	return {
 		id: `link-reflection-${categoryId}`,
-		name: category ? `Log Selection as ${category.name}` : `Log Selection (${categoryId})`,
+		name: category ? `Log selection as ${category.name}` : `Log selection (${categoryId})`,
 		run: (editor) => {
 			const locale = services.settings.interfaceLanguage;
 			const cat = services.reflectionCatalog.byId(categoryId);

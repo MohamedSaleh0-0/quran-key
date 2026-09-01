@@ -27,8 +27,9 @@ export class ObsidianReflectionFileRepository implements ReflectionFileRepositor
 
 		const existing = this.findExistingFile(category.folder, entry.surahId, entry.ayahId);
 		if (existing) {
-			const current = await this.app.vault.read(existing);
-			await this.app.vault.modify(existing, `${current.trim()}\n\n---\n\n${entry.entryMarkdown}\n`);
+			await this.app.vault.process(existing, (current) => {
+				return `${current.trim()}\n\n---\n\n${entry.entryMarkdown}\n`;
+			});
 			return;
 		}
 

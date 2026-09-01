@@ -17,11 +17,8 @@ const RESOLUTION_LABELS: Record<TafsirResolutionStrategy, Record<Locale, string>
 };
 
 /**
- * Renders SETTINGS_SCHEMA generically, then a handful of composite
- * sections that need add/remove/reorder UI a single `Setting` can't
- * express. `saveSettings()` (passed in via the plugin) also triggers
- * main.ts's core-service rebuild, so structural settings (reference
- * format, wrapper glyphs, normalization rules) take effect immediately.
+ * Renders SETTINGS_SCHEMA generically, then composite sections using
+ * `Setting.setHeading()` to adhere to Obsidian UI guidelines.
  */
 export class QuranKeySettingsTab extends PluginSettingTab {
 	constructor(app: App, private readonly plugin: Plugin & SettingsHost, private readonly services: AppServices) {
@@ -33,19 +30,22 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		containerEl.empty();
 		const locale = this.plugin.settings.interfaceLanguage;
 
-		containerEl.createEl("h2", { text: locale === "ar" ? "إعدادات مفتاح القرآن" : "Quran Key Settings" });
-
 		for (const section of SETTINGS_SCHEMA) {
-			containerEl.createEl("h3", { text: section.heading[locale] });
+			new Setting(containerEl).setName(section.heading[locale]).setHeading();
 			for (const field of section.fields) this.renderField(containerEl, field, locale);
 		}
 
+		new Setting(containerEl).setName(locale === "ar" ? "تخصيص كتب التفسير" : "Tafsir book options").setHeading();
 		this.renderDefaultTafsirBook(containerEl, locale);
 		this.renderFavorites(containerEl, locale);
 		this.renderCustomBooks(containerEl, locale);
 		this.renderResolutionOrder(containerEl, locale);
+
+		new Setting(containerEl).setName(locale === "ar" ? "قواعد التطبيع والتصنيفات" : "Normalization and reflections").setHeading();
 		this.renderNormalizationRules(containerEl, locale);
 		this.renderReflectionCategories(containerEl, locale);
+
+		new Setting(containerEl).setName(locale === "ar" ? "إعدادات متقدمة" : "Advanced").setHeading();
 		this.renderAdvancedTunables(containerEl, locale);
 	}
 
@@ -154,14 +154,6 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 	}
 
 	private renderCustomBooks(containerEl: HTMLElement, locale: Locale): void {
-		containerEl.createEl("h3", { text: locale === "ar" ? "مصادر تفسير مخصصة" : "Custom tafsir sources" });
-		containerEl.createEl("p", {
-			text:
-				locale === "ar"
-					? "أضف مصدرك الخاص. استخدم {bookId} و{surahId} و{ayahId} داخل الرابط — يتم استبدالها تلقائياً عند الجلب."
-					: "Add your own source. Use {bookId}, {surahId}, {ayahId} inside the URL — substituted automatically at fetch time.",
-		});
-
 		const list = containerEl.createDiv();
 		const renderList = () => {
 			list.empty();
@@ -187,7 +179,12 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		let newAliases = "";
 		let newUrl = "";
 		new Setting(containerEl)
-			.setName(locale === "ar" ? "إضافة مصدر جديد" : "Add a new source")
+			.setName(locale === "ar" ? "إضافة مصدر تفسير جديد" : "Add a new tafsir source")
+			.setDesc(
+				locale === "ar"
+					? "استخدم {bookId} و{surahId} و{ayahId} داخل الرابط — يتم استبدالها تلقائياً عند الجلب."
+					: "Use {bookId}, {surahId}, {ayahId} inside the URL — substituted automatically at fetch time."
+			)
 			.addText((t) => t.setPlaceholder("id").onChange((v) => (newId = v)))
 			.addText((t) => t.setPlaceholder(locale === "ar" ? "الاسم" : "Name").onChange((v) => (newName = v)))
 			.addText((t) =>
@@ -217,7 +214,6 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 	}
 
 	private renderResolutionOrder(containerEl: HTMLElement, locale: Locale): void {
-		containerEl.createEl("h3", { text: locale === "ar" ? "أولوية اختيار كتاب التفسير" : "Tafsir book resolution order" });
 		const list = containerEl.createDiv();
 		const renderList = () => {
 			list.empty();
@@ -255,7 +251,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 
 	private renderNormalizationRules(containerEl: HTMLElement, locale: Locale): void {
 		const details = containerEl.createEl("details");
-		details.createEl("summary", { text: locale === "ar" ? "قواعد تطبيع النص العربي (متقدم)" : "Arabic normalization rules (advanced)" });
+		details.createEl("summary", { text: locale === "ar" ? "قواعد تطبيع النص العربي" : "Arabic normalization rules" });
 		const list = details.createDiv();
 		const renderList = () => {
 			list.empty();
@@ -309,14 +305,6 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 	}
 
 	private renderReflectionCategories(containerEl: HTMLElement, locale: Locale): void {
-		containerEl.createEl("h3", { text: locale === "ar" ? "تصنيفات إضافية للتدبر" : "Additional reflection categories" });
-		containerEl.createEl("p", {
-			text:
-				locale === "ar"
-					? "تدبر وأثر مضمّنان دائماً. أضف تصنيفاً جديداً هنا (مثل «فائدة») ليصبح له فولدر خاص — يحتاج أمر ربط مستقل له سطراً في الكود وإعادة تحميل الإضافة."
-					: 'Tadabbur and Athar are always builtin. Add a new category here (e.g. "benefit") to give it its own folder — a dedicated link command for it still needs a code change and a plugin reload.',
-		});
-
 		const list = containerEl.createDiv();
 		const renderList = () => {
 			list.empty();
@@ -341,7 +329,12 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		let newName = "";
 		let newFolder = "";
 		new Setting(containerEl)
-			.setName(locale === "ar" ? "إضافة تصنيف جديد" : "Add a new category")
+			.setName(locale === "ar" ? "إضافة تصنيف تدبر جديد" : "Add a new reflection category")
+			.setDesc(
+				locale === "ar"
+					? "تدبر وأثر مضمّنان دائماً. أضف تصنيفاً جديداً هنا (مثل «فائدة») ليصبح له مجلد خاص."
+					: "Tadabbur and Athar are builtin. Add custom categories here (e.g. Benefit) to assign dedicated folders."
+			)
 			.addText((t) => t.setPlaceholder("id").onChange((v) => (newId = v)))
 			.addText((t) => t.setPlaceholder(locale === "ar" ? "الاسم" : "Name").onChange((v) => (newName = v)))
 			.addText((t) => t.setPlaceholder(locale === "ar" ? "اسم الفولدر" : "Folder name").onChange((v) => (newFolder = v)))
@@ -359,8 +352,6 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 	}
 
 	private renderAdvancedTunables(containerEl: HTMLElement, locale: Locale): void {
-		containerEl.createEl("h3", { text: locale === "ar" ? "قيم متقدمة" : "Advanced tunables" });
-
 		const numberField = (
 			key:
 				| "maxSlidingWindowWords"
@@ -415,4 +406,3 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		);
 	}
 }
-

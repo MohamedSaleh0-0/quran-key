@@ -4,7 +4,7 @@ import type { Ayah } from "../../domain/entities/Ayah";
 import type { EditorPosition } from "../../domain/ports/EditorPort";
 import type { AppServices } from "../AppServices";
 import { AnalyticsDashboard } from "../components/AnalyticsDashboard";
-import { highlightMatch } from "./highlightMatch";
+import { renderHighlightedText } from "./highlightMatch";
 import { TafsirBookPickerModal } from "./TafsirBookPickerModal";
 import { RangeEndSuggestModal } from "./RangeEndSuggestModal";
 import type { VerseSelectHandler } from "./types";
@@ -141,7 +141,7 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 
 	renderSuggestion(item: Ayah, el: HTMLElement): void {
 		const textEl = el.createDiv({ cls: "quran-key-suggestion-text" });
-		textEl.innerHTML = highlightMatch(item.text, this.currentQuery, (s) => this.services.normalizer.normalizeForSearch(s));
+		renderHighlightedText(textEl, item.text, this.currentQuery, (s) => this.services.normalizer.normalizeForSearch(s));
 		el.createEl("small", {
 			text: `${item.surahName} - \u0627\u0644\u0622\u064A\u0629 ${item.ayahId}`,
 			cls: "quran-key-suggestion-meta",

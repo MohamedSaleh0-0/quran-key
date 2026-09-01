@@ -4,15 +4,9 @@ function escapeRegex(literal: string): string {
 	return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function escapeHtml(text: string): string {
-	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
 /** Builds a per-character regex fragment tolerant of common Arabic
  *  spelling variants (hamza forms, ya/hamza-ya, waw/hamza-waw, ta
- *  marbuta/ha), with optional tashkeel between characters. Rendering-only
- *  — never used for the actual match logic (that's ArabicNormalizer +
- *  PatternBuilder in the domain layer). */
+ *  marbuta/ha), with optional tashkeel between characters. */
 function buildTolerantCharPattern(word: string): string {
 	let pattern = "";
 	for (const char of word) {
@@ -26,19 +20,47 @@ function buildTolerantCharPattern(word: string): string {
 	return pattern;
 }
 
-/** Highlights `query`'s words inside `text` (HTML-escaped first) for
- *  suggestion rendering only. */
-export function highlightMatch(text: string, query: string, normalizeForSearch: (s: string) => string): string {
-	const escaped = escapeHtml(text);
-	if (!query || query.trim().length === 0) return escaped;
+/** Safely renders `text` into `containerEl` with matches highlighted using DOM elements (no innerHTML). */
+export function renderHighlightedText(
+	containerEl: HTMLElement,
+	text: string,
+	query: string,
+	normalizeForSearch: (s: string) => string
+): void {
+	containerEl.empty();
+	if (!query || query.trim().length === 0) {
+		containerEl.setText(text);
+		return;
+	}
+
 	const cleanWords = normalizeForSearch(query).split(/\s+/).filter((w) => w.length > 0);
-	if (cleanWords.length === 0) return escaped;
+	if (cleanWords.length === 0) {
+		containerEl.setText(text);
+		return;
+	}
 
 	const combined = cleanWords.map(buildTolerantCharPattern).join(`${TASHKEEL_FILLER}\\s+${TASHKEEL_FILLER}`);
+	let rx: RegExp;
 	try {
-		const rx = new RegExp(`(${combined})`, "g");
-		return escaped.replace(rx, '<span class="quran-key-highlight">$1</span>');
+		rx = new RegExp(combined, "g");
 	} catch {
-		return escaped;
+		containerEl.setText(text);
+		return;
+	}
+
+	let lastIndex = 0;
+	let match: RegExpExecArray | null;
+
+	while ((match = rx.exec(text)) !== null) {
+		if (match.index > lastIndex) {
+			containerEl.appendText(text.slice(lastIndex, match.index));
+		}
+		containerEl.createSpan({ cls: "quran-key-highlight", text: match[0] });
+		lastIndex = match.index + match[0].length;
+		if (match[0].length === 0) rx.lastIndex++;
+	}
+
+	if (lastIndex < text.length) {
+		containerEl.appendText(text.slice(lastIndex));
 	}
 }

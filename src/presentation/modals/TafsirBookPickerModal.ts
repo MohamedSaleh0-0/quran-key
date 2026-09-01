@@ -122,14 +122,7 @@ export class TafsirBookPickerModal extends Modal {
 		this.updateConfirmState();
 	}
 
-	/**
-	 * FR-21 extension: a quick-add form so a source can be registered
-	 * without leaving the picker (the settings tab's fuller "custom tafsir
-	 * sources" section — with rename/reorder/delete — remains the place
-	 * to manage entries afterward; this just gets a URL template into the
-	 * catalog fast, mirroring the id-generation approach already used for
-	 * quick-added normalization rules).
-	 */
+	/** Quick-add form for custom sources inside the modal. */
 	private renderAddSourceForm(containerEl: HTMLElement): void {
 		const details = containerEl.createEl("details", { cls: "quran-key-picker-add-source" });
 		details.createEl("summary", { text: t(this.locale, "tafsir.addSourceTitle") });
@@ -140,31 +133,36 @@ export class TafsirBookPickerModal extends Modal {
 		let urlInput!: TextComponent;
 
 		new Setting(body)
+			.setName(t(this.locale, "tafsir.addSourceNamePlaceholder"))
 			.addText((tx) => {
 				nameInput = tx;
-				tx.setPlaceholder(t(this.locale, "tafsir.addSourceNamePlaceholder"));
-			})
+			});
+
+		new Setting(body)
+			.setName(t(this.locale, "tafsir.addSourceAliasesPlaceholder"))
 			.addText((tx) => {
 				aliasesInput = tx;
-				tx.setPlaceholder(t(this.locale, "tafsir.addSourceAliasesPlaceholder"));
-			})
+			});
+
+		new Setting(body)
+			.setName(t(this.locale, "tafsir.addSourceUrlPlaceholder"))
 			.addText((tx) => {
 				urlInput = tx;
-				tx.setPlaceholder(t(this.locale, "tafsir.addSourceUrlPlaceholder"));
-			})
-			.addButton((btn) =>
-				btn
-					.setButtonText(t(this.locale, "tafsir.addSourceButton"))
-					.setCta()
-					.onClick(async () => {
-						const addedId = await this.addCustomSource(nameInput.getValue(), aliasesInput.getValue(), urlInput.getValue());
-						if (addedId) {
-							nameInput.setValue("");
-							aliasesInput.setValue("");
-							urlInput.setValue("");
-						}
-					})
-			);
+			});
+
+		new Setting(body).addButton((btn) =>
+			btn
+				.setButtonText(t(this.locale, "tafsir.addSourceButton"))
+				.setCta()
+				.onClick(async () => {
+					const addedId = await this.addCustomSource(nameInput.getValue(), aliasesInput.getValue(), urlInput.getValue());
+					if (addedId) {
+						nameInput.setValue("");
+						aliasesInput.setValue("");
+						urlInput.setValue("");
+					}
+				})
+		);
 	}
 
 	private async addCustomSource(name: string, aliasesRaw: string, urlTemplate: string): Promise<string | null> {
@@ -188,9 +186,7 @@ export class TafsirBookPickerModal extends Modal {
 				isBuiltin: false,
 			},
 		];
-		// saveSettings() persists and rebuilds services.catalog in place —
-		// this.services stays the live object, so the read below sees the
-		// new book immediately (no reload required).
+
 		await this.services.saveSettings();
 
 		this.selected.add(id);

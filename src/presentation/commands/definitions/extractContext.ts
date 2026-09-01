@@ -6,7 +6,7 @@ import { QuranSearchModal } from "../../modals/QuranSearchModal";
 export function createExtractContextCommand(services: AppServices): CommandDefinition {
 	return {
 		id: "extract-quran-context",
-		name: "Extract Quran Verse from Context",
+		name: "Extract Quran verse from context",
 		run: (editor) => {
 			const editorPort = services.wrapEditor(editor);
 			const success = services.useCases.extract.execute(editorPort, (query, matches, start, end) => {

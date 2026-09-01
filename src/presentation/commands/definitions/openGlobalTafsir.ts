@@ -9,7 +9,7 @@ import { QuranSearchModal } from "../../modals/QuranSearchModal";
 export function createOpenGlobalTafsirCommand(services: AppServices): CommandDefinition {
 	return {
 		id: "open-tafsir-global-modal",
-		name: "Open Global Tafsir Selection Modal",
+		name: "Open global tafsir selection modal",
 		run: (editor) => {
 			new TafsirBookPickerModal(services.app, services, (chosenBooks) => {
 				if (chosenBooks.length === 0) return;

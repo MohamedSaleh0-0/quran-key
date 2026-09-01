@@ -5,7 +5,7 @@ import { QuranSearchModal } from "../../modals/QuranSearchModal";
 export function createOpenGlobalSearchCommand(services: AppServices): CommandDefinition {
 	return {
 		id: "open-quran-global-search",
-		name: "Open Global Quran Search Modal",
+		name: "Open global Quran search modal",
 		run: (editor) => {
 			new QuranSearchModal(services, editor).open();
 		},
