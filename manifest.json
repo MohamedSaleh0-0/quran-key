@@ -1,7 +1,7 @@
 {
 	"id": "quran-key",
 	"name": "Quran Key",
-	"version": "2.0.0",
+	"version": "1.0.0",
 	"minAppVersion": "1.5.0",
 	"description": "Contextual Quran extraction, snippet trimming, and multi-source tafsir lookup for Obsidian — fully re-architected for customizability.",
 	"author": "Mohamed Saleh",
