@@ -23,11 +23,9 @@ export class ObsidianQuranRepository implements QuranRepository {
 	async loadAll(): Promise<void> {
 		if (this.ayahs.length > 0) return;
 
-		const raw = (
-			Array.isArray(sampleCorpus)
-				? sampleCorpus
-				: (sampleCorpus as { ayahs: RawAyah[] }).ayahs
-		) as RawAyah[];
+		const raw: RawAyah[] = Array.isArray(sampleCorpus)
+			? sampleCorpus
+			: (sampleCorpus as { ayahs: RawAyah[] }).ayahs;
 
 		this.ayahs = raw.map((a, index) => ({
 			id: index + 1,

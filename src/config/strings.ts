@@ -1,17 +1,5 @@
 import type { Locale } from "./types";
 
-/**
- * Transient UI strings (modal placeholders, dashboard labels, notices).
- * Setting names/descriptions live next to their field in
- * presentation/settings/SettingsSchema.ts instead, since those are
- * inherently 1:1 with a field and duplicating a key here would just be
- * indirection without benefit.
- *
- * v1 had these hardcoded inline as Arabic string literals inside DOM
- * builders. This table is the seam NFR-nothing-specific but §5.3/§7 in the
- * docs rely on: adding a locale is "add a key to this object", not "hunt
- * every component for a literal".
- */
 export const STRINGS: Record<Locale, Record<string, string>> = {
 	ar: {
 		"search.placeholder": "اكتب كلمات البحث بدقة لدراسة المواضيع القرآنيّة...",
@@ -72,13 +60,15 @@ export const STRINGS: Record<Locale, Record<string, string>> = {
 };
 
 export function t(locale: Locale, key: string, vars?: Record<string, string | number>): string {
-	const table = STRINGS[locale] ?? STRINGS.ar;
-	let value = table[key] ?? STRINGS.ar[key] ?? key;
+	const currentLocale: Locale = locale === "en" ? "en" : "ar";
+	const table: Record<string, string> = STRINGS[currentLocale] ?? STRINGS.ar;
+	const rawValue: string = table[key] ?? STRINGS.ar[key] ?? key;
+	let value: string = rawValue;
 	if (vars) {
-		for (const [k, v] of Object.entries(vars)) {
-			value = value.replace(`{${k}}`, String(v));
+		for (const k of Object.keys(vars)) {
+			const val = String(vars[k]);
+			value = value.split(`{${k}}`).join(val);
 		}
 	}
 	return value;
 }
-

@@ -59,7 +59,7 @@ export function createOrnateNumberPostProcessor(ringGlyph: string): (el: HTMLEle
 		if (node.nodeType === Node.TEXT_NODE) {
 			const text = node.nodeValue || "";
 			if (text.includes(ringGlyph)) {
-				const frag = document.createDocumentFragment();
+				const frag = createFragment();
 				let lastIndex = 0;
 				let m: RegExpExecArray | null;
 				while ((m = pattern.exec(text)) !== null) {
@@ -90,7 +90,7 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 		if (node.nodeType === Node.TEXT_NODE) {
 			const text = node.nodeValue || "";
 			if (text.includes(wrapperStart) && text.includes(wrapperEnd)) {
-				const frag = document.createDocumentFragment();
+				const frag = createFragment();
 				let lastIndex = 0;
 				let m: RegExpExecArray | null;
 				while ((m = pattern.exec(text)) !== null) {
