@@ -30,6 +30,17 @@ export interface TafsirBookDescriptor {
 	isBuiltin: boolean;
 }
 
+/** A تدبر/أثر category. Builtin categories (data/reflectionCategories.json)
+ *  and user-added ones (settings.customReflectionCategories) share this
+ *  exact shape. */
+export interface ReflectionCategoryDescriptor {
+	id: string;
+	name: string;
+	/** Vault-relative folder this category's per-ayah files live under. */
+	folder: string;
+	isBuiltin: boolean;
+}
+
 /** One Arabic-text normalization rule. Ships with sane defaults in
  *  settings.normalizationRules; fully user-editable from there. */
 export interface NormalizationRule {
@@ -98,4 +109,25 @@ export interface PluginConfig {
 	/** Delay between successive tafsir requests once a range is "long". */
 	tafsirFetchDelayMs: number;
 	tafsirFetchDelayThreshold: number;
+
+	// --- Reflections (تدبر / أثر) ---
+	/** User-added categories, merged with the builtin تدبر/أثر catalogue at
+	 *  runtime (see ReflectionCategoryCatalog). */
+	customReflectionCategories: ReflectionCategoryDescriptor[];
+	/** Default true = a true "move": the original selection is removed
+	 *  from the editor once written to every target ayah file. False
+	 *  behaves like a copy — the selection stays untouched. */
+	deleteSelectionAfterLinkingReflection: boolean;
+	/** Whatever precedes each dated entry inside a file — not restricted
+	 *  to a heading. {date} is the only placeholder, e.g. "### {date}",
+	 *  "- {date}", "1. {date}", or empty for no prefix. */
+	reflectionEntryPrefixTemplate: string;
+	/** Must contain {ayahText}; {surah} and {verse} are also available.
+	 *  Builds each per-ayah file's on-disk title — see
+	 *  ReflectionFileNameBuilder. */
+	reflectionFileNameTemplate: string;
+	/** Ayah text inside a file title is truncated at this length (0 = no
+	 *  truncation) — some ayat are very long. */
+	reflectionFileNameAyahTextMaxLength: number;
 }
+

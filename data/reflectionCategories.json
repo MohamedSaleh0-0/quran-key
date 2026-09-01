@@ -1,0 +1,14 @@
+[
+  {
+    "id": "tadabbur",
+    "name": "تدبر",
+    "folder": "تدبرات",
+    "isBuiltin": true
+  },
+  {
+    "id": "athar",
+    "name": "أثر",
+    "folder": "آثار",
+    "isBuiltin": true
+  }
+]

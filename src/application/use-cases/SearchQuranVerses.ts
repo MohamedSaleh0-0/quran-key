@@ -13,7 +13,10 @@ import { PhraseMatcher } from "../../domain/services/PhraseMatcher";
  * hardcoded choice — v2 fix for the "search returns anything containing
  * the words in any order" complaint. "literal" delegates to PhraseMatcher
  * (contiguous, order-preserving — the same engine ExtractAndInsertVerse's
- * direct-query path uses); "fuzzy" delegates to FuzzyMatcher (any
+ * direct-query path uses), but — unlike that direct-query path — with
+ * `allowPrefixOnLastWord` on: this is a live, as-you-type search box, so
+ * the word currently being typed shouldn't have to be finished before
+ * anything shows up. "fuzzy" delegates to FuzzyMatcher (any
  * order/position), preserved as the looser opt-in mode.
  */
 export class SearchQuranVerses {
@@ -28,8 +31,9 @@ export class SearchQuranVerses {
 	execute(query: string, pool?: readonly Ayah[]): Ayah[] {
 		const corpus = pool ?? this.repository.getAllAyahs();
 		if (this.strategy === "literal") {
-			return this.phraseMatcher.findMatches(query, corpus).slice(0, this.maxResults);
+			return this.phraseMatcher.findMatches(query, corpus, true).slice(0, this.maxResults);
 		}
 		return this.fuzzyMatcher.findMatches(query, corpus, this.maxResults);
 	}
 }
+

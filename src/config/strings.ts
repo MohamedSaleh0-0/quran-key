@@ -36,6 +36,10 @@ export const STRINGS: Record<Locale, Record<string, string>> = {
 		"tafsir.addSourceAliasesPlaceholder": "أسماء بديلة، مفصولة بفواصل",
 		"tafsir.addSourceUrlPlaceholder": "رابط يحوي {bookId} و{surahId} و{ayahId}",
 		"tafsir.addSourceButton": "إضافة",
+		"reflection.noSelection": "حدد نصًا أولاً لتسجيله.",
+		"reflection.unknownCategory": "تصنيف غير معروف.",
+		"reflection.rangeNoticeTitle": "ملحوظة",
+		"reflection.rangeNoticeBody": "هذا {category} عام على الآيات من {start} إلى {end}، وليس خاصًا بهذه الآية وحدها.",
 	},
 	en: {
 		"search.placeholder": "Type search words to look up Qur'anic verses...",
@@ -60,6 +64,10 @@ export const STRINGS: Record<Locale, Record<string, string>> = {
 		"tafsir.addSourceAliasesPlaceholder": "aliases, comma-separated",
 		"tafsir.addSourceUrlPlaceholder": "URL containing {bookId}, {surahId}, {ayahId}",
 		"tafsir.addSourceButton": "Add",
+		"reflection.noSelection": "Select some text first to log it.",
+		"reflection.unknownCategory": "Unknown reflection category.",
+		"reflection.rangeNoticeTitle": "Note",
+		"reflection.rangeNoticeBody": "This {category} concerns the range {start}\u2013{end} as a whole, not only this ayah.",
 	},
 };
 
@@ -73,3 +81,4 @@ export function t(locale: Locale, key: string, vars?: Record<string, string | nu
 	}
 	return value;
 }
+

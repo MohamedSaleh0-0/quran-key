@@ -52,6 +52,13 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	bookHeadingLevel: "####",
 	tafsirFetchDelayMs: 150,
 	tafsirFetchDelayThreshold: 2,
+
+	// Reflections (تدبر / أثر)
+	customReflectionCategories: [],
+	deleteSelectionAfterLinkingReflection: true,
+	reflectionEntryPrefixTemplate: "### {date}",
+	reflectionFileNameTemplate: "{ayahText} ({surah} {verse})",
+	reflectionFileNameAyahTextMaxLength: 60,
 };
 
 /** v1 stored the literal string "[Surah:Verse]" as a display-only setting
@@ -65,3 +72,4 @@ export function migrateLegacySettings(raw: Partial<PluginConfig> | undefined): P
 	}
 	return raw;
 }
+

@@ -205,4 +205,38 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 			},
 		],
 	},
+	{
+		id: "reflections",
+		heading: { ar: "التدبرات والآثار", en: "Reflections (تدبر / أثر)" },
+		fields: [
+			{
+				key: "deleteSelectionAfterLinkingReflection",
+				type: "toggle",
+				label: { ar: "نقل النص المحدد بدل نسخه", en: "Move selection instead of copying it" },
+				description: {
+					ar: "عند التفعيل، يُحذف النص المحدد من مكانه الأصلي بعد كتابته في ملفات الآيات المرتبطة (نقل حقيقي). عند التعطيل يبقى في مكانه (نسخ).",
+					en: "When enabled, the selected text is removed from its original note after being written to the linked ayah files (a true move). When disabled it stays in place (a copy).",
+				},
+			},
+			{
+				key: "reflectionFileNameTemplate",
+				type: "text",
+				label: { ar: "صيغة عنوان ملف الآية", en: "Ayah file title format" },
+				description: {
+					ar: "يجب أن تحوي {ayahText}؛ يمكن أيضاً استخدام {surah} و{verse}. مثال: \"{ayahText} ({surah} {verse})\".",
+					en: 'Must contain {ayahText}; {surah} and {verse} are also available, e.g. "{ayahText} ({surah} {verse})".',
+				},
+			},
+			{
+				key: "reflectionEntryPrefixTemplate",
+				type: "text",
+				label: { ar: "صيغة بداية كل مُدخل", en: "Entry prefix format" },
+				description: {
+					ar: "{date} هو المتغيّر الوحيد المتاح. أمثلة: \"### {date}\" لعنوان، \"- {date}\" لقائمة نقطية، \"1. {date}\" لقائمة مرقّمة، أو اتركه فارغاً بلا أي بداية.",
+					en: 'Only {date} is available as a placeholder. Examples: "### {date}" for a heading, "- {date}" for a bullet, "1. {date}" for a numbered item, or leave it empty for no prefix at all.',
+				},
+			},
+		],
+	},
 ];
+

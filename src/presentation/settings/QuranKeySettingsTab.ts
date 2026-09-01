@@ -45,6 +45,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		this.renderCustomBooks(containerEl, locale);
 		this.renderResolutionOrder(containerEl, locale);
 		this.renderNormalizationRules(containerEl, locale);
+		this.renderReflectionCategories(containerEl, locale);
 		this.renderAdvancedTunables(containerEl, locale);
 	}
 
@@ -307,11 +308,66 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		renderList();
 	}
 
+	private renderReflectionCategories(containerEl: HTMLElement, locale: Locale): void {
+		containerEl.createEl("h3", { text: locale === "ar" ? "تصنيفات إضافية للتدبر" : "Additional reflection categories" });
+		containerEl.createEl("p", {
+			text:
+				locale === "ar"
+					? "تدبر وأثر مضمّنان دائماً. أضف تصنيفاً جديداً هنا (مثل «فائدة») ليصبح له فولدر خاص — يحتاج أمر ربط مستقل له سطراً في الكود وإعادة تحميل الإضافة."
+					: 'Tadabbur and Athar are always builtin. Add a new category here (e.g. "benefit") to give it its own folder — a dedicated link command for it still needs a code change and a plugin reload.',
+		});
+
+		const list = containerEl.createDiv();
+		const renderList = () => {
+			list.empty();
+			for (const cat of this.plugin.settings.customReflectionCategories) {
+				new Setting(list)
+					.setName(cat.name)
+					.setDesc(cat.folder)
+					.addExtraButton((btn) =>
+						btn.setIcon("trash").onClick(async () => {
+							this.plugin.settings.customReflectionCategories = this.plugin.settings.customReflectionCategories.filter(
+								(c) => c.id !== cat.id
+							);
+							await this.save();
+							renderList();
+						})
+					);
+			}
+		};
+		renderList();
+
+		let newId = "";
+		let newName = "";
+		let newFolder = "";
+		new Setting(containerEl)
+			.setName(locale === "ar" ? "إضافة تصنيف جديد" : "Add a new category")
+			.addText((t) => t.setPlaceholder("id").onChange((v) => (newId = v)))
+			.addText((t) => t.setPlaceholder(locale === "ar" ? "الاسم" : "Name").onChange((v) => (newName = v)))
+			.addText((t) => t.setPlaceholder(locale === "ar" ? "اسم الفولدر" : "Folder name").onChange((v) => (newFolder = v)))
+			.addButton((btn) =>
+				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
+					if (!newId.trim() || !newName.trim() || !newFolder.trim()) return;
+					this.plugin.settings.customReflectionCategories = [
+						...this.plugin.settings.customReflectionCategories,
+						{ id: newId.trim(), name: newName.trim(), folder: newFolder.trim(), isBuiltin: false },
+					];
+					await this.save();
+					renderList();
+				})
+			);
+	}
+
 	private renderAdvancedTunables(containerEl: HTMLElement, locale: Locale): void {
 		containerEl.createEl("h3", { text: locale === "ar" ? "قيم متقدمة" : "Advanced tunables" });
 
 		const numberField = (
-			key: "maxSlidingWindowWords" | "maxSuggestionResults" | "tafsirFetchDelayMs" | "tafsirFetchDelayThreshold",
+			key:
+				| "maxSlidingWindowWords"
+				| "maxSuggestionResults"
+				| "tafsirFetchDelayMs"
+				| "tafsirFetchDelayThreshold"
+				| "reflectionFileNameAyahTextMaxLength",
 			label: Record<Locale, string>,
 			desc: Record<Locale, string>
 		) => {
@@ -349,5 +405,14 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			{ ar: "عتبة تفعيل التأخير (عدد الآيات)", en: "Delay threshold (ayah count)" },
 			{ ar: "أقل طول نطاق يبدأ عنده تفعيل التأخير أعلاه.", en: "Range length above which the delay above kicks in." }
 		);
+		numberField(
+			"reflectionFileNameAyahTextMaxLength",
+			{ ar: "أقصى طول لنص الآية داخل اسم الملف", en: "Max ayah-text length in filename" },
+			{
+				ar: "يُقتطع نص الآية داخل عنوان الملف عند هذا الطول (٠ = بلا اقتطاع).",
+				en: "Ayah text inside the file title is truncated at this length (0 = no truncation).",
+			}
+		);
 	}
 }
+

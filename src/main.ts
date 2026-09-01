@@ -5,6 +5,7 @@ import type { Extension } from "@codemirror/state";
 import { DEFAULT_SETTINGS, migrateLegacySettings } from "./config/defaults";
 import type { PluginConfig } from "./config/types";
 import type { TafsirBook } from "./domain/entities/TafsirBook";
+import type { ReflectionCategory } from "./domain/entities/ReflectionCategory";
 import { ArabicNormalizer } from "./domain/services/ArabicNormalizer";
 import { PhraseMatcher } from "./domain/services/PhraseMatcher";
 import { FuzzyMatcher } from "./domain/services/FuzzyMatcher";
@@ -13,6 +14,8 @@ import { SnippetExtractor } from "./domain/services/SnippetExtractor";
 import { OrnateNumberConverter } from "./domain/services/OrnateNumberConverter";
 import { VerseOutputFormatter, type FormattingOptions } from "./domain/services/VerseOutputFormatter";
 import { TafsirCatalog } from "./domain/services/TafsirCatalog";
+import { ReflectionCategoryCatalog } from "./domain/services/ReflectionCategoryCatalog";
+import { ReflectionFileNameBuilder } from "./domain/services/ReflectionFileNameBuilder";
 import { VerseReference } from "./domain/value-objects/VerseReference";
 
 import { SearchQuranVerses } from "./application/use-cases/SearchQuranVerses";
@@ -20,6 +23,7 @@ import { AnalyzeLineContext } from "./application/use-cases/AnalyzeLineContext";
 import { ExtractAndInsertVerse } from "./application/use-cases/ExtractAndInsertVerse";
 import { ToggleSnippetView } from "./application/use-cases/ToggleSnippetView";
 import { FetchAndInsertTafsir, type TafsirFormattingOptions } from "./application/use-cases/FetchAndInsertTafsir";
+import { LinkReflectionToVerses, type ReflectionLinkOptions } from "./application/use-cases/LinkReflectionToVerses";
 import { RemoveQuranReference } from "./application/use-cases/RemoveQuranReference";
 import { ConvertReferenceToFootnote } from "./application/use-cases/ConvertReferenceToFootnote";
 import { StripTashkeel } from "./application/use-cases/StripTashkeel";
@@ -27,6 +31,7 @@ import { StripTashkeel } from "./application/use-cases/StripTashkeel";
 import { ObsidianQuranRepository } from "./infrastructure/obsidian/ObsidianQuranRepository";
 import { ObsidianEditorAdapter } from "./infrastructure/obsidian/ObsidianEditorAdapter";
 import { ObsidianNoticeAdapter } from "./infrastructure/obsidian/ObsidianNoticeAdapter";
+import { ObsidianReflectionFileRepository } from "./infrastructure/obsidian/ObsidianReflectionFileRepository";
 import {
 	applyStyleVariables,
 	createMarkdownPostProcessor,
@@ -42,6 +47,7 @@ import { registerAllCommands } from "./presentation/commands/registerCommands";
 import { QuranKeySettingsTab, type SettingsHost } from "./presentation/settings/QuranKeySettingsTab";
 
 import builtinTafsirBooksData from "../data/tafsirBooks.json";
+import builtinReflectionCategoriesData from "../data/reflectionCategories.json";
 
 export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 	settings: PluginConfig = DEFAULT_SETTINGS;
@@ -151,12 +157,32 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 		const builtinBooks = builtinTafsirBooksData as unknown as TafsirBook[];
 		const catalog = new TafsirCatalog(builtinBooks, this.settings.customTafsirBooks as unknown as TafsirBook[]);
 
+		const builtinReflectionCategories = builtinReflectionCategoriesData as unknown as ReflectionCategory[];
+		const reflectionCatalog = new ReflectionCategoryCatalog(
+			builtinReflectionCategories,
+			this.settings.customReflectionCategories as unknown as ReflectionCategory[]
+		);
+		const reflectionFileNameBuilder = new ReflectionFileNameBuilder(
+			this.settings.reflectionFileNameTemplate,
+			this.settings.reflectionFileNameAyahTextMaxLength
+		);
+		const reflectionFiles = new ObsidianReflectionFileRepository(this.app);
+
 		const getFormattingOptions = (): FormattingOptions => ({
 			wrapperStart: this.settings.wrapperStart,
 			wrapperEnd: this.settings.wrapperEnd,
 			useOrnateNumbers: this.settings.useOrnateNumbers,
 			stripTashkeelOnOutput: this.settings.stripTashkeel,
 		});
+
+		const linkReflection = new LinkReflectionToVerses(
+			this.repository,
+			normalizer,
+			reference,
+			formatter,
+			reflectionFileNameBuilder,
+			reflectionFiles
+		);
 
 		const extract = new ExtractAndInsertVerse(
 			this.repository,
@@ -201,14 +227,32 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 			defaultBookId: this.settings.defaultTafsirBookId,
 		});
 
+		const buildReflectionOptions = (): ReflectionLinkOptions => ({
+			locale: this.settings.interfaceLanguage,
+			deleteSelectionAfterLinking: this.settings.deleteSelectionAfterLinkingReflection,
+			entryPrefixTemplate: this.settings.reflectionEntryPrefixTemplate,
+			quoteFormattingOptions: getFormattingOptions(),
+		});
+
 		const rebuilt: AppServices = {
 			app: this.app,
 			settings: this.settings,
 			repository: this.repository,
 			catalog,
+			reflectionCatalog,
 			normalizer,
-			useCases: { search, analyzeContext, extract, fetchTafsir, removeReference, convertToFootnote, stripTashkeel },
+			useCases: {
+				search,
+				analyzeContext,
+				extract,
+				fetchTafsir,
+				removeReference,
+				convertToFootnote,
+				stripTashkeel,
+				linkReflection,
+			},
 			buildTafsirOptions,
+			buildReflectionOptions,
 			wrapEditor: (editor: Editor) => new ObsidianEditorAdapter(editor),
 			saveSettings: () => this.saveSettings(),
 		};
@@ -227,3 +271,4 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 		}
 	}
 }
+

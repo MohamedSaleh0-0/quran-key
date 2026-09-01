@@ -88,5 +88,10 @@
   "rangeHeadingLevel": "###",
   "bookHeadingLevel": "####",
   "tafsirFetchDelayMs": 150,
-  "tafsirFetchDelayThreshold": 2
+  "tafsirFetchDelayThreshold": 2,
+  "customReflectionCategories": [],
+  "deleteSelectionAfterLinkingReflection": true,
+  "reflectionEntryHeadingLevel": "###",
+  "reflectionFileNameTemplate": "{ayahText} ({surah} {verse})",
+  "reflectionFileNameAyahTextMaxLength": 120
 }
