@@ -14,10 +14,6 @@
 	background-color: transparent;
 }
 
-.markdown-source-view.mod-cm6 .cm-line:has(.cm-quran-key-text) {
-	line-height: var(--quran-key-line-height-loose);
-}
-
 .quran-key-modal-alias {
 	color: var(--text-muted);
 	font-size: 0.82em;
