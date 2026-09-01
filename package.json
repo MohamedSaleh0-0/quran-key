@@ -1,6 +1,6 @@
 {
 	"name": "quran-key",
-	"version": "2.0.0",
+	"version": "1.0.0",
 	"description": "Contextual Quran extraction, snippet trimming, and multi-source tafsir lookup for Obsidian.",
 	"main": "main.js",
 	"scripts": {
