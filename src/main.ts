@@ -45,12 +45,12 @@ import { InMemoryInsertionMemento } from "./infrastructure/memory/InMemoryInsert
 
 import type { AppServices } from "./presentation/AppServices";
 import { registerAllCommands } from "./presentation/commands/registerCommands";
-import { QuranKeySettingsTab, type SettingsHost } from "./presentation/settings/QuranKeySettingsTab";
+import { QuranKeySettingsTab } from "./presentation/settings/QuranKeySettingsTab";
 
 import builtinTafsirBooksData from "../data/tafsirBooks.json";
 import builtinReflectionCategoriesData from "../data/reflectionCategories.json";
 
-export default class QuranKeyPlugin extends Plugin implements SettingsHost {
+export default class QuranKeyPlugin extends Plugin {
 	settings: PluginConfig = DEFAULT_SETTINGS;
 
 	private repository!: ObsidianQuranRepository;
