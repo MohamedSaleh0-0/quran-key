@@ -25,7 +25,7 @@ export class RangeEndSuggestModal extends SuggestModal<Ayah> {
 	}
 
 	onOpen(): void {
-		super.onOpen();
+		void super.onOpen();
 		this.inputEl.addEventListener(
 			"keydown",
 			(evt) => {

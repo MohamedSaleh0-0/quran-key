@@ -32,7 +32,7 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 	}
 
 	onOpen(): void {
-		super.onOpen();
+		void super.onOpen();
 		const { settings } = this.services;
 
 		if (settings.showAnalytics) {
