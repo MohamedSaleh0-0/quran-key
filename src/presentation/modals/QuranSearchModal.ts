@@ -118,7 +118,7 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 		const cleanQuery = normalizer.normalizeForSearch(query);
 		const cleanInitial = this.initialQuery ? normalizer.normalizeForSearch(this.initialQuery) : "";
 		const usePreFiltered =
-			!!this.preFilteredMatches &&
+			Boolean(this.preFilteredMatches) &&
 			cleanQuery.length > 0 &&
 			(cleanQuery.includes(cleanInitial) || cleanInitial.includes(cleanQuery));
 		const pool = usePreFiltered && this.preFilteredMatches ? this.preFilteredMatches : undefined;

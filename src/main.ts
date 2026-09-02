@@ -133,13 +133,13 @@ export default class QuranKeyPlugin extends Plugin implements SettingsHost {
 		const formatter = new VerseOutputFormatter(ornateConverter, reference, (text) => normalizer.stripTashkeel(text));
 		const toggle = new ToggleSnippetView(snippetExtractor, formatter);
 
-		const builtinBooks = builtinTafsirBooksData as unknown as TafsirBook[];
-		const catalog = new TafsirCatalog(builtinBooks, this.settings.customTafsirBooks as unknown as TafsirBook[]);
+		const builtinBooks = builtinTafsirBooksData as TafsirBook[];
+		const catalog = new TafsirCatalog(builtinBooks, this.settings.customTafsirBooks as TafsirBook[]);
 
-		const builtinReflectionCategories = builtinReflectionCategoriesData as unknown as ReflectionCategory[];
+		const builtinReflectionCategories = builtinReflectionCategoriesData as ReflectionCategory[];
 		const reflectionCatalog = new ReflectionCategoryCatalog(
 			builtinReflectionCategories,
-			this.settings.customReflectionCategories as unknown as ReflectionCategory[]
+			this.settings.customReflectionCategories as ReflectionCategory[]
 		);
 		const reflectionFileNameBuilder = new ReflectionFileNameBuilder(
 			this.settings.reflectionFileNameTemplate,
