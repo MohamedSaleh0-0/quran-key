@@ -17,14 +17,17 @@ const RESOLUTION_LABELS: Record<TafsirResolutionStrategy, Record<Locale, string>
 };
 
 export class QuranKeySettingsTab extends PluginSettingTab {
-	constructor(app: App, private readonly plugin: Plugin & SettingsHost, private readonly services: AppServices) {
-		super(app, plugin);
+	private readonly host: Plugin & SettingsHost;
+
+	constructor(app: App, pluginInstance: Plugin & SettingsHost, private readonly services: AppServices) {
+		super(app, pluginInstance);
+		this.host = pluginInstance;
 	}
 
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		const locale = this.plugin.settings.interfaceLanguage;
+		const locale = this.host.settings.interfaceLanguage;
 
 		for (const section of SETTINGS_SCHEMA) {
 			new Setting(containerEl).setName(section.heading[locale]).setHeading();
@@ -46,11 +49,11 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 	}
 
 	private async save(): Promise<void> {
-		await this.plugin.saveSettings();
+		await this.host.saveSettings();
 	}
 
 	private renderField(containerEl: HTMLElement, field: SettingFieldDefinition, locale: Locale): void {
-		const settings = this.plugin.settings as unknown as Record<string, unknown>;
+		const settings = this.host.settings as unknown as Record<string, unknown>;
 		const setting = new Setting(containerEl).setName(field.label[locale]).setDesc(field.description[locale]);
 
 		switch (field.type) {
@@ -123,9 +126,9 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			)
 			.addDropdown((dropdown) => {
 				for (const book of this.services.catalog.all()) dropdown.addOption(book.id, book.name);
-				dropdown.setValue(this.plugin.settings.defaultTafsirBookId);
+				dropdown.setValue(this.host.settings.defaultTafsirBookId);
 				dropdown.onChange(async (value) => {
-					this.plugin.settings.defaultTafsirBookId = value;
+					this.host.settings.defaultTafsirBookId = value;
 					await this.save();
 				});
 			});
@@ -137,11 +140,11 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const list = section.createDiv();
 		for (const book of this.services.catalog.all()) {
 			new Setting(list).setName(book.name).addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.favoriteBooksIds.includes(book.id)).onChange(async (value) => {
-					const set = new Set(this.plugin.settings.favoriteBooksIds);
+				toggle.setValue(this.host.settings.favoriteBooksIds.includes(book.id)).onChange(async (value) => {
+					const set = new Set(this.host.settings.favoriteBooksIds);
 					if (value) set.add(book.id);
 					else set.delete(book.id);
-					this.plugin.settings.favoriteBooksIds = Array.from(set);
+					this.host.settings.favoriteBooksIds = Array.from(set);
 					await this.save();
 				})
 			);
@@ -152,13 +155,13 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const list = containerEl.createDiv();
 		const renderList = () => {
 			list.empty();
-			for (const book of this.plugin.settings.customTafsirBooks) {
+			for (const book of this.host.settings.customTafsirBooks) {
 				new Setting(list)
 					.setName(book.name)
 					.setDesc(book.urlTemplate)
 					.addExtraButton((btn) =>
 						btn.setIcon("trash").onClick(async () => {
-							this.plugin.settings.customTafsirBooks = this.plugin.settings.customTafsirBooks.filter(
+							this.host.settings.customTafsirBooks = this.host.settings.customTafsirBooks.filter(
 								(b) => b.id !== book.id
 							);
 							await this.save();
@@ -189,8 +192,8 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			.addButton((btn) =>
 				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
 					if (!newId.trim() || !newName.trim() || !newUrl.trim()) return;
-					this.plugin.settings.customTafsirBooks = [
-						...this.plugin.settings.customTafsirBooks,
+					this.host.settings.customTafsirBooks = [
+						...this.host.settings.customTafsirBooks,
 						{
 							id: newId.trim(),
 							name: newName.trim(),
@@ -212,7 +215,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const list = containerEl.createDiv();
 		const renderList = () => {
 			list.empty();
-			const order = this.plugin.settings.tafsirBookResolutionOrder;
+			const order = this.host.settings.tafsirBookResolutionOrder;
 			order.forEach((strategy, idx) => {
 				const row = new Setting(list).setName(`${idx + 1}. ${RESOLUTION_LABELS[strategy]?.[locale] ?? strategy}`);
 				row.addExtraButton((btn) =>
@@ -222,7 +225,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 						.onClick(async () => {
 							const next = [...order];
 							[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-							this.plugin.settings.tafsirBookResolutionOrder = next;
+							this.host.settings.tafsirBookResolutionOrder = next;
 							await this.save();
 							renderList();
 						})
@@ -234,7 +237,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 						.onClick(async () => {
 							const next = [...order];
 							[next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
-							this.plugin.settings.tafsirBookResolutionOrder = next;
+							this.host.settings.tafsirBookResolutionOrder = next;
 							await this.save();
 							renderList();
 						})
@@ -250,19 +253,19 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const list = details.createDiv();
 		const renderList = () => {
 			list.empty();
-			this.plugin.settings.normalizationRules.forEach((rule, idx) => {
+			this.host.settings.normalizationRules.forEach((rule, idx) => {
 				const row = new Setting(list).setName(rule.description || rule.id).setDesc(`${rule.pattern} -> ${rule.replacement}`);
 				row.addToggle((toggle) =>
 					toggle.setValue(rule.enabled).onChange(async (value) => {
-						const rules = [...this.plugin.settings.normalizationRules];
+						const rules = [...this.host.settings.normalizationRules];
 						rules[idx] = { ...rules[idx], enabled: value };
-						this.plugin.settings.normalizationRules = rules;
+						this.host.settings.normalizationRules = rules;
 						await this.save();
 					})
 				);
 				row.addExtraButton((btn) =>
 					btn.setIcon("trash").onClick(async () => {
-						this.plugin.settings.normalizationRules = this.plugin.settings.normalizationRules.filter((_, i) => i !== idx);
+						this.host.settings.normalizationRules = this.host.settings.normalizationRules.filter((_, i) => i !== idx);
 						await this.save();
 						renderList();
 					})
@@ -280,8 +283,8 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 				.addButton((btn) =>
 					btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
 						if (!pattern.trim()) return;
-						this.plugin.settings.normalizationRules = [
-							...this.plugin.settings.normalizationRules,
+						this.host.settings.normalizationRules = [
+							...this.host.settings.normalizationRules,
 							{
 								id: `custom-${Date.now()}`,
 								description: description.trim(),
@@ -303,13 +306,13 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const list = containerEl.createDiv();
 		const renderList = () => {
 			list.empty();
-			for (const cat of this.plugin.settings.customReflectionCategories) {
+			for (const cat of this.host.settings.customReflectionCategories) {
 				new Setting(list)
 					.setName(cat.name)
 					.setDesc(cat.folder)
 					.addExtraButton((btn) =>
 						btn.setIcon("trash").onClick(async () => {
-							this.plugin.settings.customReflectionCategories = this.plugin.settings.customReflectionCategories.filter(
+							this.host.settings.customReflectionCategories = this.host.settings.customReflectionCategories.filter(
 								(c) => c.id !== cat.id
 							);
 							await this.save();
@@ -336,8 +339,8 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			.addButton((btn) =>
 				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
 					if (!newId.trim() || !newName.trim() || !newFolder.trim()) return;
-					this.plugin.settings.customReflectionCategories = [
-						...this.plugin.settings.customReflectionCategories,
+					this.host.settings.customReflectionCategories = [
+						...this.host.settings.customReflectionCategories,
 						{ id: newId.trim(), name: newName.trim(), folder: newFolder.trim(), isBuiltin: false },
 					];
 					await this.save();
@@ -361,10 +364,10 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 				.setName(label[locale])
 				.setDesc(desc[locale])
 				.addText((text) =>
-					text.setValue(String(this.plugin.settings[key])).onChange(async (value) => {
+					text.setValue(String(this.host.settings[key])).onChange(async (value) => {
 						const num = parseInt(value, 10);
 						if (!isNaN(num) && num >= 0) {
-							this.plugin.settings[key] = num;
+							this.host.settings[key] = num;
 							await this.save();
 						}
 					})
