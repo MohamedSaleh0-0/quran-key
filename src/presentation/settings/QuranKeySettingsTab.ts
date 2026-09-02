@@ -1,6 +1,6 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type { App, Plugin } from "obsidian";
-import type { Locale, PluginConfig, TafsirResolutionStrategy } from "../../config/types";
+import type { Locale, TafsirResolutionStrategy } from "../../config/types";
 import type { AppServices } from "../AppServices";
 import { SETTINGS_SCHEMA, type SettingFieldDefinition } from "./SettingsSchema";
 
