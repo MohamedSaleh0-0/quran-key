@@ -91,7 +91,8 @@
   "tafsirFetchDelayThreshold": 2,
   "customReflectionCategories": [],
   "deleteSelectionAfterLinkingReflection": true,
-  "reflectionEntryHeadingLevel": "###",
+  "reflectionEntryPrefixTemplate": "- ",
   "reflectionFileNameTemplate": "{ayahText} ({surah} {verse})",
-  "reflectionFileNameAyahTextMaxLength": 120
+  "reflectionFileNameAyahTextMaxLength": 120,
+  "reflectionEntryHeadingLevel": "###"
 }

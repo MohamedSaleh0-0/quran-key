@@ -25,4 +25,22 @@ export class ReflectionCategoryCatalog {
 	byId(id: string): ReflectionCategory | null {
 		return this.categories.find((c) => c.id === id) ?? null;
 	}
+
+	/** Root-to-leaf ancestor chain for `categoryId` (the category itself
+	 *  is the last element), walked via `parentCategoryId`. Cycle-safe:
+	 *  if a chain of parents loops back on itself, the walk stops at the
+	 *  point of the cycle rather than hanging or throwing — heading
+	 *  creation must never fail because of a settings mistake, it should
+	 *  just degrade to treating the category as top-level from there. */
+	ancestorChain(categoryId: string): ReflectionCategory[] {
+		const chain: ReflectionCategory[] = [];
+		const visited = new Set<string>();
+		let current = this.byId(categoryId);
+		while (current && !visited.has(current.id)) {
+			visited.add(current.id);
+			chain.unshift(current);
+			current = current.parentCategoryId ? this.byId(current.parentCategoryId) : null;
+		}
+		return chain;
+	}
 }

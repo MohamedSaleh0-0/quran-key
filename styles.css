@@ -1,175 +1,135 @@
-/* All colors/fonts/sizes below are driven by CSS custom properties that the
-   plugin writes at runtime from Settings (see
-   src/infrastructure/obsidian/QuranHighlightExtension.ts). Nothing here is
-   !important — every selector is scoped under .quran-key-* so themes and
-   user CSS snippets can still override it. */
-
-.cm-quran-key-text {
+/* --- المتغيرات والتنسيق الأساسي للشواهد القرآنية --- */
+.cm-quran-key-text,
+.quran-key-text,
+span.cm-quran-key-text {
 	font-family: var(--quran-key-font-family);
 	font-size: var(--quran-key-font-size);
 	line-height: var(--quran-key-line-height);
 	color: var(--quran-key-color);
+	direction: rtl;
+	unicode-bidi: isolate;
+	text-align: right;
+
+	/* تفعيل قواعد OpenType للرسم العثماني ومنع تكديس الحركات وتشوّه التنوين */
+	font-feature-settings: "mark" 1, "mkmk" 1, "ccmp" 1, "calt" 1, "liga" 1;
+	font-variant-ligatures: contextual common-ligatures;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
-	background-color: transparent;
 }
 
-.quran-key-modal-alias {
-	color: var(--text-muted);
-	font-size: 0.82em;
-	font-style: italic;
-	margin-right: 8px;
-	opacity: 0.75;
+/* --- أرقام الآيات المزخرفة (نمط المصحف الشريف كـ تطبيق آية) --- */
+.quran-key-ornate-number {
+	font-family: var(--quran-key-font-family);
+	font-size: 0.9em;
+	color: var(--quran-key-color);
+	opacity: 0.9;
+	margin: 0 0.15em;
+	display: inline-block;
+	vertical-align: middle;
+	font-feature-settings: "mark" 1, "mkmk" 1;
+	user-select: text;
 }
 
+/* --- تمييز كلمات البحث في النوافذ المنبثقة --- */
+.quran-key-highlight {
+	background-color: rgba(223, 197, 107, 0.25);
+	color: var(--text-normal);
+	border-radius: 3px;
+	padding: 0 2px;
+	font-weight: 500;
+}
+
+/* --- لوحة التحليلات تحت شريط البحث --- */
 .quran-key-analytics-dashboard {
 	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	background: var(--background-secondary-alt);
-	border: 1px solid var(--background-modifier-border);
+	gap: 12px;
+	padding: 8px 12px;
+	margin-top: 8px;
+	margin-bottom: 8px;
+	background: var(--background-secondary);
 	border-radius: 6px;
-	padding: 10px;
-	margin: 10px 0;
-	font-size: 0.82em;
-	color: var(--text-normal);
-}
-
-.quran-key-analytics-dashboard[dir="rtl"] {
-	direction: rtl;
+	border: 1px solid var(--background-modifier-border);
+	font-size: 0.85em;
 }
 
 .quran-key-analytics-stat {
-	flex: 1;
-	text-align: center;
-	border-inline-start: 1px solid var(--background-modifier-border);
-}
-
-.quran-key-analytics-stat:first-child {
-	border-inline-start: none;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 }
 
 .quran-key-analytics-label {
 	color: var(--text-muted);
-	display: block;
-	margin-bottom: 4px;
-	font-size: 0.9em;
+	font-size: 0.8em;
 }
 
 .quran-key-analytics-value {
+	color: var(--text-accent);
 	font-weight: 600;
-	color: var(--text-accent);
-	font-size: 1.1em;
 }
 
-.quran-key-highlight {
-	color: var(--text-accent);
-	font-weight: bold;
-}
-
-.quran-key-suggestion-text {
-	font-size: 1.1em;
-	line-height: 1.5;
-	text-align: right;
-	direction: rtl;
-}
-
-.quran-key-suggestion-meta {
-	color: var(--text-muted);
-	display: block;
-	margin-top: 4px;
-	text-align: right;
-	direction: rtl;
-}
-
+/* --- نوافذ الاختيار والقوائم (التفاسير والربط) --- */
 .quran-key-picker-modal {
-	max-width: 600px;
-	max-height: 80vh;
-	display: flex;
-	flex-direction: column;
-	direction: rtl;
-	text-align: right;
+	max-width: 680px;
 }
 
 .quran-key-picker-list {
-	flex: 1;
+	max-height: 380px;
 	overflow-y: auto;
-	max-height: 45vh;
+	margin: 12px 0;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
-	padding: 5px;
-	background: var(--background-primary);
 }
 
 .quran-key-picker-item {
 	display: flex;
-	align-items: center;
 	justify-content: space-between;
-	padding: 10px 12px;
-	border-bottom: 1px solid var(--background-modifier-border);
+	align-items: center;
+	padding: 8px 12px;
 	cursor: pointer;
-	border-radius: 4px;
+	border-bottom: 1px solid var(--background-modifier-border-focus);
 }
 
-.quran-key-picker-item.is-active {
-	background: var(--background-modifier-hover);
-	box-shadow: inset 3px 0 0 var(--text-accent);
+.quran-key-picker-item:last-child {
+	border-bottom: none;
+}
+
+.quran-key-picker-item.is-active,
+.quran-key-picker-item:hover {
+	background-color: var(--background-modifier-hover);
 }
 
 .quran-key-picker-item-right {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-}
-
-.quran-key-picker-item-name {
-	font-size: 1.2em;
-	color: var(--text-muted);
+	gap: 8px;
+	overflow: hidden;
 }
 
 .quran-key-picker-item-name.is-checked {
-	color: var(--text-normal);
-	font-weight: 500;
-}
-
-.quran-key-picker-add-source {
-	margin-top: 10px;
-}
-
-.quran-key-picker-add-source > summary {
-	cursor: pointer;
-	color: var(--text-accent);
-	font-size: 0.92em;
-	padding: 6px 0;
-}
-
-.quran-key-picker-footer {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
-	margin-top: 14px;
-	padding-top: 10px;
-	border-top: 1px solid var(--background-modifier-border);
-}
-
-.quran-key-picker-hint {
-	color: var(--text-muted);
-	font-size: 0.8em;
-}
-
-/* Toggled off entirely via settings.styleOrnateNumbers (see
-   QuranHighlightExtension.ts); when on, styleable independently of the
-   surrounding .cm-quran-key-text ayah text. Override via
-   settings.customCss, which is appended after this stylesheet loads. */
-.quran-key-ornate-number {
 	color: var(--text-accent);
 	font-weight: 600;
 }
 
+.quran-key-modal-alias {
+	font-size: 0.8em;
+	color: var(--text-muted);
+}
+
+.quran-key-picker-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 12px;
+}
+
+.quran-key-picker-hint {
+	font-size: 0.8em;
+	color: var(--text-muted);
+}
+
 .quran-key-settings-textarea {
 	width: 100%;
-	min-height: 100px;
 	font-family: var(--font-monospace);
-	font-size: 0.85em;
+	font-size: 0.9em;
 }

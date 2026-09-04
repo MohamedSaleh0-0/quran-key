@@ -2,6 +2,7 @@ import type { App, Editor } from "obsidian";
 import type { PluginConfig } from "../config/types";
 import type { EditorPort } from "../domain/ports/EditorPort";
 import type { QuranRepository } from "../domain/ports/QuranRepository";
+import type { AyahNoteRepository } from "../domain/ports/AyahNoteRepository";
 import type { ArabicNormalizer } from "../domain/services/ArabicNormalizer";
 import type { TafsirCatalog } from "../domain/services/TafsirCatalog";
 import type { ReflectionCategoryCatalog } from "../domain/services/ReflectionCategoryCatalog";
@@ -10,6 +11,7 @@ import type { ConvertReferenceToFootnote } from "../application/use-cases/Conver
 import type { ExtractAndInsertVerse } from "../application/use-cases/ExtractAndInsertVerse";
 import type { FetchAndInsertTafsir, TafsirFormattingOptions } from "../application/use-cases/FetchAndInsertTafsir";
 import type { LinkReflectionToVerses, ReflectionLinkOptions } from "../application/use-cases/LinkReflectionToVerses";
+import type { LinkAyahsTogether } from "../application/use-cases/LinkAyahsTogether";
 import type { RemoveQuranReference } from "../application/use-cases/RemoveQuranReference";
 import type { SearchQuranVerses } from "../application/use-cases/SearchQuranVerses";
 import type { StripTashkeel } from "../application/use-cases/StripTashkeel";
@@ -25,6 +27,7 @@ export interface AppServices {
 	app: App;
 	settings: PluginConfig;
 	repository: QuranRepository;
+	ayahNotes: AyahNoteRepository;
 	catalog: TafsirCatalog;
 	reflectionCatalog: ReflectionCategoryCatalog;
 	normalizer: ArabicNormalizer;
@@ -37,10 +40,10 @@ export interface AppServices {
 		convertToFootnote: ConvertReferenceToFootnote;
 		stripTashkeel: StripTashkeel;
 		linkReflection: LinkReflectionToVerses;
+		linkAyahsTogether: LinkAyahsTogether;
 	};
 	buildTafsirOptions: () => TafsirFormattingOptions;
 	buildReflectionOptions: () => ReflectionLinkOptions;
 	wrapEditor: (editor: Editor) => EditorPort;
 	saveSettings: () => Promise<void>;
 }
-

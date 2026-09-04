@@ -15,7 +15,6 @@ import { OrnateNumberConverter } from "./domain/services/OrnateNumberConverter";
 import { VerseOutputFormatter, type FormattingOptions } from "./domain/services/VerseOutputFormatter";
 import { TafsirCatalog } from "./domain/services/TafsirCatalog";
 import { ReflectionCategoryCatalog } from "./domain/services/ReflectionCategoryCatalog";
-import { ReflectionFileNameBuilder } from "./domain/services/ReflectionFileNameBuilder";
 import { VerseReference } from "./domain/value-objects/VerseReference";
 
 import { SearchQuranVerses } from "./application/use-cases/SearchQuranVerses";
@@ -24,6 +23,7 @@ import { ExtractAndInsertVerse } from "./application/use-cases/ExtractAndInsertV
 import { ToggleSnippetView } from "./application/use-cases/ToggleSnippetView";
 import { FetchAndInsertTafsir, type TafsirFormattingOptions } from "./application/use-cases/FetchAndInsertTafsir";
 import { LinkReflectionToVerses, type ReflectionLinkOptions } from "./application/use-cases/LinkReflectionToVerses";
+import { LinkAyahsTogether } from "./application/use-cases/LinkAyahsTogether";
 import { RemoveQuranReference } from "./application/use-cases/RemoveQuranReference";
 import { ConvertReferenceToFootnote } from "./application/use-cases/ConvertReferenceToFootnote";
 import { StripTashkeel } from "./application/use-cases/StripTashkeel";
@@ -31,7 +31,7 @@ import { StripTashkeel } from "./application/use-cases/StripTashkeel";
 import { ObsidianQuranRepository } from "./infrastructure/obsidian/ObsidianQuranRepository";
 import { ObsidianEditorAdapter } from "./infrastructure/obsidian/ObsidianEditorAdapter";
 import { ObsidianNoticeAdapter } from "./infrastructure/obsidian/ObsidianNoticeAdapter";
-import { ObsidianReflectionFileRepository } from "./infrastructure/obsidian/ObsidianReflectionFileRepository";
+import { ObsidianAyahNoteRepository } from "./infrastructure/obsidian/ObsidianAyahNoteRepository";
 import {
 	applyStyleVariables,
 	cleanupStyleVariables,
@@ -141,11 +141,11 @@ export default class QuranKeyPlugin extends Plugin {
 			builtinReflectionCategories,
 			this.settings.customReflectionCategories
 		);
-		const reflectionFileNameBuilder = new ReflectionFileNameBuilder(
-			this.settings.reflectionFileNameTemplate,
-			this.settings.reflectionFileNameAyahTextMaxLength
-		);
-		const reflectionFiles = new ObsidianReflectionFileRepository(this.app);
+
+		const ayahNotes = new ObsidianAyahNoteRepository(this.app, () => ({
+			ayahNotesFolder: this.settings.ayahNotesFolder,
+			reflectionFileNameAyahTextMaxLength: this.settings.reflectionFileNameAyahTextMaxLength,
+		}));
 
 		const getFormattingOptions = (): FormattingOptions => ({
 			wrapperStart: this.settings.wrapperStart,
@@ -159,9 +159,11 @@ export default class QuranKeyPlugin extends Plugin {
 			normalizer,
 			reference,
 			formatter,
-			reflectionFileNameBuilder,
-			reflectionFiles
+			reflectionCatalog,
+			ayahNotes
 		);
+
+		const linkAyahsTogether = new LinkAyahsTogether(ayahNotes, formatter);
 
 		const extract = new ExtractAndInsertVerse(
 			this.repository,
@@ -208,8 +210,14 @@ export default class QuranKeyPlugin extends Plugin {
 
 		const buildReflectionOptions = (): ReflectionLinkOptions => ({
 			locale: this.settings.interfaceLanguage,
-			deleteSelectionAfterLinking: this.settings.deleteSelectionAfterLinkingReflection,
-			entryPrefixTemplate: this.settings.reflectionEntryPrefixTemplate,
+			replaceSelectionWithBacklink: this.settings.deleteSelectionAfterLinkingReflection,
+			entryPrefixTemplate: this.settings.reflectionEntryPrefixTemplate.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
+			entrySeparator: this.settings.reflectionEntrySeparator.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
+			insertionMode: this.settings.reflectionInsertionMode,
+			includeAyahTextInNote: this.settings.includeAyahTextInReflectionNote,
+			fileNameTemplate: this.settings.reflectionFileNameTemplate,
+			backlinkAliasTemplate: this.settings.reflectionBacklinkAliasTemplate,
+			backlinkWrapTemplate: this.settings.reflectionBacklinkWrapTemplate,
 			quoteFormattingOptions: getFormattingOptions(),
 		});
 
@@ -217,6 +225,7 @@ export default class QuranKeyPlugin extends Plugin {
 			app: this.app,
 			settings: this.settings,
 			repository: this.repository,
+			ayahNotes,
 			catalog,
 			reflectionCatalog,
 			normalizer,
@@ -229,6 +238,7 @@ export default class QuranKeyPlugin extends Plugin {
 				convertToFootnote,
 				stripTashkeel,
 				linkReflection,
+				linkAyahsTogether,
 			},
 			buildTafsirOptions,
 			buildReflectionOptions,

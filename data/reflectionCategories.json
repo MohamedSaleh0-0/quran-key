@@ -2,13 +2,21 @@
   {
     "id": "tadabbur",
     "name": "تدبر",
-    "folder": "تدبرات",
+    "organizationMode": "unified",
+    "headingText": "تدبرات",
+    "headingLevel": "###",
+    "parentCategoryId": null,
+    "folder": "",
     "isBuiltin": true
   },
   {
     "id": "athar",
     "name": "أثر",
-    "folder": "آثار",
+    "organizationMode": "unified",
+    "headingText": "آثار",
+    "headingLevel": "###",
+    "parentCategoryId": null,
+    "folder": "",
     "isBuiltin": true
   }
 ]

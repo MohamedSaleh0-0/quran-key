@@ -5,6 +5,7 @@ import type { PluginConfig } from "../../config/types";
 const HIGHLIGHT_CLASS = "cm-quran-key-text";
 const ORNATE_NUMBER_CLASS = "quran-key-ornate-number";
 const ARABIC_INDIC_DIGITS = "\u0660-\u0669";
+const CUSTOM_STYLE_TAG_ID = "quran-key-custom-styles";
 
 function escapeRegex(literal: string): string {
 	return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -120,6 +121,14 @@ export function applyStyleVariables(settings: PluginConfig): void {
 	document.body.style.setProperty("--quran-key-line-height", String(settings.quranLineHeight));
 	document.body.style.setProperty("--quran-key-line-height-loose", String(settings.quranLineHeight + 0.4));
 	document.body.style.setProperty("--quran-key-color", settings.quranColor);
+
+	let customStyleEl = document.getElementById(CUSTOM_STYLE_TAG_ID) as HTMLStyleElement | null;
+	if (!customStyleEl) {
+		customStyleEl = document.createElement("style");
+		customStyleEl.id = CUSTOM_STYLE_TAG_ID;
+		document.head.appendChild(customStyleEl);
+	}
+	customStyleEl.textContent = settings.customCss || "";
 }
 
 export function cleanupStyleVariables(): void {
@@ -128,4 +137,9 @@ export function cleanupStyleVariables(): void {
 	document.body.style.removeProperty("--quran-key-line-height");
 	document.body.style.removeProperty("--quran-key-line-height-loose");
 	document.body.style.removeProperty("--quran-key-color");
+
+	const customStyleEl = document.getElementById(CUSTOM_STYLE_TAG_ID);
+	if (customStyleEl) {
+		customStyleEl.remove();
+	}
 }

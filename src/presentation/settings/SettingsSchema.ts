@@ -17,18 +17,18 @@ export interface SettingsSectionDefinition {
 	fields: SettingFieldDefinition[];
 }
 
-export const HEADING_LEVEL_OPTIONS = [
-	{ value: "###", label: "Heading 3 (###)" },
-	{ value: "####", label: "Heading 4 (####)" },
-	{ value: "#####", label: "Heading 5 (#####)" },
-];
-
 /**
  * Every simple (single-control) setting lives here. Composite sections —
  * favorite books, custom tafsir sources, resolution order, normalization
- * rules, numeric tunables — are bespoke renderers in
+ * rules, category management, numeric tunables — are bespoke renderers in
  * QuranKeySettingsTab.ts because they need add/remove/reorder UI a single
  * `Setting` control can't express; everything else is genuinely additive.
+ *
+ * Heading-level fields (rangeHeadingLevel, bookHeadingLevel) are plain
+ * "text" fields, not a dropdown — a fixed H3-H5 menu turned out to be a
+ * hardcoded literal wearing a settings costume; see docs/ARCHITECTURE.md
+ * §9. Category-specific heading levels live in the category management
+ * UI instead, since they're per-category, not global.
  */
 export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 	{
@@ -129,17 +129,21 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 		fields: [
 			{
 				key: "rangeHeadingLevel",
-				type: "dropdown",
+				type: "text",
 				label: { ar: "حجم عنوان نطاق الآيات", en: "Range heading level" },
-				description: { ar: "مستوى الـ Heading للعنوان الرئيسي للنطاق.", en: "Heading level for the main range heading." },
-				dropdownOptions: HEADING_LEVEL_OPTIONS,
+				description: {
+					ar: "مثل ### أو ## أو أي مستوى تريده — نص حر بلا سقف أو حد أدنى.",
+					en: "e.g. ### or ## or any level you like — free text, no fixed ceiling or floor.",
+				},
 			},
 			{
 				key: "bookHeadingLevel",
-				type: "dropdown",
+				type: "text",
 				label: { ar: "حجم عنوان كتاب التفسير", en: "Book heading level" },
-				description: { ar: "مستوى الـ Heading لعنوان كل كتاب تفسير على حدة.", en: "Heading level for each book's own heading." },
-				dropdownOptions: HEADING_LEVEL_OPTIONS,
+				description: {
+					ar: "مستوى الـ Heading لعنوان كل كتاب تفسير على حدة — نص حر.",
+					en: "Heading level for each book's own heading — free text.",
+				},
 			},
 			{
 				key: "includeAyahTextInTafsir",
@@ -207,21 +211,79 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 	},
 	{
 		id: "reflections",
-		heading: { ar: "التدبرات والآثار", en: "Reflections (تدبر / أثر)" },
+		heading: { ar: "ملاحظات الآيات (التدبرات والآثار)", en: "Ayah notes (تدبر / أثر)" },
 		fields: [
+			{
+				key: "ayahNotesFolder",
+				type: "text",
+				label: { ar: "مجلد ملاحظات الآيات الموحّدة", en: "Unified ayah notes folder" },
+				description: {
+					ar: "المجلد الذي تُحفظ فيه ملاحظة الآية الموحّدة (تشمل كل تصنيف وضعه المستخدم على «موحّد»).",
+					en: "Folder holding each ayah's unified note (used by every category set to \"unified\").",
+				},
+			},
+			{
+				key: "includeAyahTextInReflectionNote",
+				type: "toggle",
+				label: { ar: "تضمين نص الآية في أول الملاحظة", en: "Include ayah text at the top of the note" },
+				description: {
+					ar: "يُكتب مرة واحدة فقط عند إنشاء الملاحظة لأول مرة، وليس مع كل مُدخل جديد.",
+					en: "Written once, when the note is first created — not repeated with every new entry.",
+				},
+			},
+			{
+				key: "reflectionInsertionMode",
+				type: "dropdown",
+				label: { ar: "ترتيب المُدخلات الجديدة", en: "New-entry placement" },
+				description: {
+					ar: "مباشرة أسفل العنوان: الأحدث يظهر أولاً. نهاية القسم: ترتيب زمني (الأقدم أولاً).",
+					en: "Directly under the heading: newest first. End of section: chronological (oldest first).",
+				},
+				dropdownOptions: [
+					{ value: "afterHeading", label: "afterHeading" },
+					{ value: "endOfSection", label: "endOfSection" },
+				],
+			},
+			{
+				key: "reflectionEntrySeparator",
+				type: "text",
+				label: { ar: "الفاصل بين المُدخلات", en: "Separator between entries" },
+				description: {
+					ar: "يُدرج بين كل مُدخل والذي يليه. اتركه فارغاً لعدم وجود فاصل. الافتراضي خط أفقي (---).",
+					en: "Inserted between consecutive entries. Leave empty for no separator. Default is a horizontal rule (---).",
+				},
+			},
 			{
 				key: "deleteSelectionAfterLinkingReflection",
 				type: "toggle",
-				label: { ar: "نقل النص المحدد بدل نسخه", en: "Move selection instead of copying it" },
+				label: { ar: "استبدال النص المحدد برابط للآية", en: "Replace selection with a backlink" },
 				description: {
-					ar: "عند التفعيل، يُحذف النص المحدد من مكانه الأصلي بعد كتابته في ملفات الآيات المرتبطة (نقل حقيقي). عند التعطيل يبقى في مكانه (نسخ).",
-					en: "When enabled, the selected text is removed from its original note after being written to the linked ayah files (a true move). When disabled it stays in place (a copy).",
+					ar: "عند التفعيل (الافتراضي)، يُستبدل النص المحدد في مكانه الأصلي برابط لملاحظة الآية بدل حذفه بلا أثر. عند التعطيل يبقى النص كما هو (نسخ).",
+					en: "When enabled (default), the selected text is replaced in its original note with a backlink to the ayah note, instead of being erased with no trace. When disabled, the text is left exactly as-is (a copy).",
+				},
+			},
+			{
+				key: "reflectionBacklinkAliasTemplate",
+				type: "text",
+				label: { ar: "صيغة نص الرابط (alias)", en: "Backlink alias template" },
+				description: {
+					ar: "{surah} و{verse} و{ayahText} متاحة. اتركه فارغاً لرابط بلا alias، أي [[عنوان الملاحظة]] كما هو.",
+					en: "{surah}, {verse}, {ayahText} available. Leave empty for a plain [[Note Title]] link with no alias.",
+				},
+			},
+			{
+				key: "reflectionBacklinkWrapTemplate",
+				type: "text",
+				label: { ar: "صيغة إحاطة الرابط", en: "Backlink wrap template" },
+				description: {
+					ar: "{link} هو المتغيّر الوحيد. مثال: \"↳ نُقل إلى {link}\".",
+					en: 'Only {link} is available as a placeholder. Example: "↳ moved to {link}".',
 				},
 			},
 			{
 				key: "reflectionFileNameTemplate",
 				type: "text",
-				label: { ar: "صيغة عنوان ملف الآية", en: "Ayah file title format" },
+				label: { ar: "صيغة عنوان ملف الآية", en: "Ayah note title format" },
 				description: {
 					ar: "يجب أن تحوي {ayahText}؛ يمكن أيضاً استخدام {surah} و{verse}. مثال: \"{ayahText} ({surah} {verse})\".",
 					en: 'Must contain {ayahText}; {surah} and {verse} are also available, e.g. "{ayahText} ({surah} {verse})".',
@@ -239,4 +301,3 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 		],
 	},
 ];
-

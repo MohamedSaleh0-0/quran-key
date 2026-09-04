@@ -1,19 +1,30 @@
 import type { Ayah } from "../../domain/entities/Ayah";
 import type { ReflectionCategory } from "../../domain/entities/ReflectionCategory";
 import type { EditorPort, EditorPosition } from "../../domain/ports/EditorPort";
+import type { AyahNoteRepository } from "../../domain/ports/AyahNoteRepository";
 import type { QuranRepository } from "../../domain/ports/QuranRepository";
-import type { ReflectionFileRepository } from "../../domain/ports/ReflectionFileRepository";
 import type { CompiledVerseReference } from "../../domain/value-objects/VerseReference";
 import type { ArabicNormalizer } from "../../domain/services/ArabicNormalizer";
-import type { ReflectionFileNameBuilder } from "../../domain/services/ReflectionFileNameBuilder";
+import type { ReflectionCategoryCatalog } from "../../domain/services/ReflectionCategoryCatalog";
 import type { FormattingOptions, VerseOutputFormatter } from "../../domain/services/VerseOutputFormatter";
-import type { Locale } from "../../config/types";
+import type { Locale, ReflectionInsertionMode } from "../../config/types";
 import { t } from "../../config/strings";
 
 export interface ReflectionLinkOptions {
 	locale: Locale;
-	deleteSelectionAfterLinking: boolean;
+	/** true (default): the logged selection is replaced in its source
+	 *  note with a backlink to the ayah note. false: the selection is
+	 *  left completely untouched (a copy). Never silently erased to "". */
+	replaceSelectionWithBacklink: boolean;
 	entryPrefixTemplate: string;
+	entrySeparator: string;
+	insertionMode: ReflectionInsertionMode;
+	includeAyahTextInNote: boolean;
+	fileNameTemplate: string;
+	backlinkAliasTemplate: string;
+	backlinkWrapTemplate: string;
+	/** Reused both for the >1-ayah "quoted passage" in a range notice and
+	 *  for the single-ayah body quote written into a fresh unified note. */
 	quoteFormattingOptions: FormattingOptions;
 }
 
@@ -37,8 +48,8 @@ export class LinkReflectionToVerses {
 		private readonly normalizer: ArabicNormalizer,
 		private readonly reference: CompiledVerseReference,
 		private readonly formatter: VerseOutputFormatter,
-		private readonly fileNameBuilder: ReflectionFileNameBuilder,
-		private readonly files: ReflectionFileRepository
+		private readonly catalog: ReflectionCategoryCatalog,
+		private readonly ayahNotes: AyahNoteRepository
 	) {}
 
 	detectExistingCitation(text: string): DetectedCitation | null {
@@ -74,16 +85,56 @@ export class LinkReflectionToVerses {
 			options.locale
 		);
 
+		const ancestorChain = this.catalog.ancestorChain(category.id);
+		const chain = ancestorChain.length > 0 ? ancestorChain : [category];
+
+		let firstNoteTitle: string | null = null;
 		for (let ayahId = startAyah; ayahId <= endAyah; ayahId++) {
 			const ayah = this.repository.findAyah(surahId, ayahId);
-			const ayahTextForTitle = ayah ? this.normalizer.stripTashkeel(ayah.text) : "";
-			const fileTitle = this.fileNameBuilder.build(surahName, ayahId, ayahTextForTitle);
-			await this.files.appendEntry(category, { surahId, surahName, ayahId, fileTitle, entryMarkdown });
+			const ref = await this.ayahNotes.appendEntry(
+				this.buildIdentity(surahId, surahName, ayahId, ayah, options.quoteFormattingOptions),
+				chain,
+				entryMarkdown,
+				{
+					insertionMode: options.insertionMode,
+					entrySeparator: options.entrySeparator,
+					includeAyahText: options.includeAyahTextInNote,
+					fileNameTemplate: options.fileNameTemplate,
+				}
+			);
+			if (firstNoteTitle === null) firstNoteTitle = ref.title;
 		}
 
-		if (options.deleteSelectionAfterLinking) {
-			editor.replaceRange("", selectionStart, selectionEnd);
+		if (options.replaceSelectionWithBacklink && firstNoteTitle !== null) {
+			const backlink = this.renderBacklink(firstNoteTitle, surahName, startAyah, reflectionText, options);
+			editor.replaceRange(backlink, selectionStart, selectionEnd);
 		}
+		// else: replaceSelectionWithBacklink is false -> leave the selection untouched (a true copy).
+	}
+
+	private buildIdentity(surahId: number, surahName: string, ayahId: number, ayah: Ayah | null, quoteFormatting: FormattingOptions) {
+		const rawText = ayah?.text ?? "";
+		return {
+			surahId,
+			surahName,
+			ayahId,
+			ayahTextRaw: rawText,
+			ayahTextBodyFormatted: ayah ? this.formatter.format([ayah], quoteFormatting) : "",
+		};
+	}
+
+	private renderBacklink(noteTitle: string, surahName: string, ayahId: number, ayahText: string, options: ReflectionLinkOptions): string {
+		const alias = options.backlinkAliasTemplate
+			? options.backlinkAliasTemplate
+					.split("{surah}")
+					.join(surahName)
+					.split("{verse}")
+					.join(String(ayahId))
+					.split("{ayahText}")
+					.join(ayahText)
+			: "";
+		const link = alias ? `[[${noteTitle}|${alias}]]` : `[[${noteTitle}]]`;
+		return options.backlinkWrapTemplate.split("{link}").join(link);
 	}
 
 	private buildQuotedPassage(surahId: number, startAyah: number, endAyah: number, formatting: FormattingOptions): string | null {

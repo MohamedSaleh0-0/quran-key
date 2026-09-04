@@ -1,10 +1,6 @@
 import type { NormalizationRule, PluginConfig } from "./types";
 import builtinNormalizationRules from "../../data/normalizationRules.json";
 
-/** Seed value for settings.normalizationRules — a snapshot of
- *  data/normalizationRules.json with `enabled: true` added. After first
- *  load this array lives entirely in the user's data.json; edits here
- *  only affect brand-new installs. */
 function seedNormalizationRules(): NormalizationRule[] {
 	return (builtinNormalizationRules as Array<Record<string, unknown>>).map((r) => ({
 		id: String(r.id),
@@ -26,10 +22,10 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	referenceFormat: "[{surah}:{verse}]",
 	normalizationRules: seedNormalizationRules(),
 
-	// Qur'anic text styling
-	quranFontFamily: "'Amiri', 'KFGQPC Uthman Taha Naskh', serif",
-	quranFontSize: 1.1,
-	quranLineHeight: 2.1,
+	// Qur'anic text styling (مطابق للمصاحف الرسمية وتطبيق آية)
+	quranFontFamily: "'Amiri Quran', 'KFGQPC Uthmanic Script HAFS', 'KFGQPC Uthman Taha Naskh', 'Amiri', serif",
+	quranFontSize: 1.25,
+	quranLineHeight: 2.4,
 	quranColor: "#dfc56b",
 	styleOrnateNumbers: true,
 	customCss: "",
@@ -53,12 +49,18 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	tafsirFetchDelayMs: 150,
 	tafsirFetchDelayThreshold: 2,
 
-	// Reflections (تدبر / أثر)
+	// Reflections (تدبر / أثر / user-defined categories)
 	customReflectionCategories: [],
+	ayahNotesFolder: "ملاحظات الآيات",
 	deleteSelectionAfterLinkingReflection: true,
+	reflectionBacklinkAliasTemplate: "",
+	reflectionBacklinkWrapTemplate: "{link}",
 	reflectionEntryPrefixTemplate: "### {date}",
+	reflectionEntrySeparator: "\n\n---\n\n",
+	reflectionInsertionMode: "afterHeading",
 	reflectionFileNameTemplate: "{ayahText} ({surah} {verse})",
 	reflectionFileNameAyahTextMaxLength: 60,
+	includeAyahTextInReflectionNote: true,
 };
 
 /** v1 stored the literal string "[Surah:Verse]" as a display-only setting
@@ -67,9 +69,9 @@ export const DEFAULT_SETTINGS: PluginConfig = {
  *  don't silently get a non-functional reference format. */
 export function migrateLegacySettings(raw: Partial<PluginConfig> | undefined): Partial<PluginConfig> {
 	if (!raw) return {};
+	let migrated = raw;
 	if ((raw as { referenceFormat?: string }).referenceFormat === "[Surah:Verse]") {
-		return { ...raw, referenceFormat: "[{surah}:{verse}]" };
+		migrated = { ...migrated, referenceFormat: "[{surah}:{verse}]" };
 	}
-	return raw;
+	return migrated;
 }
-

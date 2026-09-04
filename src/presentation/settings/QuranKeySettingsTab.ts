@@ -1,6 +1,6 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type { App, Plugin } from "obsidian";
-import type { Locale, TafsirResolutionStrategy } from "../../config/types";
+import type { CategoryOrganizationMode, Locale, TafsirResolutionStrategy } from "../../config/types";
 import type { AppServices } from "../AppServices";
 import { SETTINGS_SCHEMA, type SettingFieldDefinition } from "./SettingsSchema";
 
@@ -32,9 +32,11 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		this.renderCustomBooks(containerEl, locale);
 		this.renderResolutionOrder(containerEl, locale);
 
-		new Setting(containerEl).setName(locale === "ar" ? "قواعد التطبيع والتصنيفات" : "Normalization and reflections").setHeading();
-		this.renderNormalizationRules(containerEl, locale);
+		new Setting(containerEl).setName(locale === "ar" ? "تصنيفات الملاحظات" : "Note categories").setHeading();
 		this.renderReflectionCategories(containerEl, locale);
+
+		new Setting(containerEl).setName(locale === "ar" ? "قواعد التطبيع" : "Normalization").setHeading();
+		this.renderNormalizationRules(containerEl, locale);
 
 		new Setting(containerEl).setName(locale === "ar" ? "إعدادات متقدمة" : "Advanced").setHeading();
 		this.renderAdvancedTunables(containerEl, locale);
@@ -239,6 +241,159 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		renderList();
 	}
 
+	/** Each category is (id, name, organizationMode, heading level+text,
+	 *  parent category, folder — the last relevant only for "ownFolder").
+	 *  تدبر/أثر are builtin (not deletable, but every other field —
+	 *  including organizationMode — is still editable: a user who wants
+	 *  تدبر to live in its own folder can flip it here). */
+	private renderReflectionCategories(containerEl: HTMLElement, locale: Locale): void {
+		const list = containerEl.createDiv();
+		const allCategories = () => [...this.services.reflectionCatalog.all()];
+
+		const patchCategory = (id: string, patch: Partial<(typeof this.services.settings.customReflectionCategories)[number]>) => {
+			const builtin = allCategories().find((c) => c.id === id && c.isBuiltin);
+			const custom = this.services.settings.customReflectionCategories;
+			const idx = custom.findIndex((c) => c.id === id);
+			if (idx !== -1) {
+				const next = [...custom];
+				next[idx] = { ...next[idx], ...patch };
+				this.services.settings.customReflectionCategories = next;
+			} else if (builtin) {
+				// First edit of a builtin category — record it as a custom
+				// override, same override convention as TafsirCatalog (NFR-1).
+				this.services.settings.customReflectionCategories = [...custom, { ...builtin, ...patch }];
+			}
+		};
+
+		const renderList = () => {
+			list.empty();
+			for (const cat of allCategories()) {
+				const details = list.createEl("details", { cls: "quran-key-picker-add-source" });
+				details.createEl("summary", { text: `${cat.name}${cat.isBuiltin ? " " + (locale === "ar" ? "(أساسي)" : "(builtin)") : ""}` });
+				const body = details.createDiv();
+
+				new Setting(body)
+					.setName(locale === "ar" ? "الاسم" : "Name")
+					.addText((tx) =>
+						tx.setValue(cat.name).onChange(async (v) => {
+							patchCategory(cat.id, { name: v });
+							await this.save();
+						})
+					);
+
+				new Setting(body)
+					.setName(locale === "ar" ? "مكان التدوين" : "Organization")
+					.setDesc(
+						locale === "ar"
+							? "موحّد: يُكتب تحت عنوان داخل ملاحظة الآية الواحدة. مجلد مستقل: ملف خاص بهذا التصنيف لكل آية."
+							: "Unified: written under a heading inside the ayah's single note. Own folder: a dedicated per-ayah file for this category."
+					)
+					.addDropdown((dd) => {
+						dd.addOption("unified", locale === "ar" ? "موحّد" : "unified");
+						dd.addOption("ownFolder", locale === "ar" ? "مجلد مستقل" : "ownFolder");
+						dd.setValue(cat.organizationMode);
+						dd.onChange(async (v) => {
+							patchCategory(cat.id, { organizationMode: v as CategoryOrganizationMode });
+							await this.save();
+						});
+					});
+
+				new Setting(body)
+					.setName(locale === "ar" ? "نص العنوان" : "Heading text")
+					.addText((tx) =>
+						tx.setValue(cat.headingText).onChange(async (v) => {
+							patchCategory(cat.id, { headingText: v });
+							await this.save();
+						})
+					);
+
+				new Setting(body)
+					.setName(locale === "ar" ? "مستوى العنوان" : "Heading level")
+					.setDesc(locale === "ar" ? "مثل ### — نص حر." : "e.g. ### — free text.")
+					.addText((tx) =>
+						tx.setValue(cat.headingLevel).onChange(async (v) => {
+							patchCategory(cat.id, { headingLevel: v });
+							await this.save();
+						})
+					);
+
+				new Setting(body)
+					.setName(locale === "ar" ? "تصنيف أب (اختياري)" : "Parent category (optional)")
+					.setDesc(
+						locale === "ar"
+							? "يُستخدم مرة واحدة فقط، عند إنشاء العنوان لأول مرة، لتضمينه تحت عنوان الأب."
+							: "Consulted only once, when this heading is first created, to nest it under the parent's."
+					)
+					.addDropdown((dd) => {
+						dd.addOption("", locale === "ar" ? "بلا" : "none");
+						for (const other of allCategories()) {
+							if (other.id === cat.id) continue;
+							dd.addOption(other.id, other.name);
+						}
+						dd.setValue(cat.parentCategoryId ?? "");
+						dd.onChange(async (v) => {
+							patchCategory(cat.id, { parentCategoryId: v || null });
+							await this.save();
+						});
+					});
+
+				new Setting(body)
+					.setName(locale === "ar" ? "المجلد (لوضع «مجلد مستقل» فقط)" : "Folder (only used in \"ownFolder\" mode)")
+					.addText((tx) =>
+						tx.setValue(cat.folder).onChange(async (v) => {
+							patchCategory(cat.id, { folder: v });
+							await this.save();
+						})
+					);
+
+				if (!cat.isBuiltin) {
+					new Setting(body).addExtraButton((btn) =>
+						btn.setIcon("trash").onClick(async () => {
+							this.services.settings.customReflectionCategories = this.services.settings.customReflectionCategories.filter(
+								(c) => c.id !== cat.id
+							);
+							await this.save();
+							renderList();
+						})
+					);
+				}
+			}
+		};
+		renderList();
+
+		let newId = "";
+		let newName = "";
+		new Setting(containerEl)
+			.setName(locale === "ar" ? "إضافة تصنيف جديد" : "Add a new category")
+			.setDesc(
+				locale === "ar"
+					? "مثال: «فوائد عملية». بعد الإضافة، اضبط مكان التدوين والعنوان من القائمة أعلاه."
+					: 'e.g. "Practical benefits". After adding, configure its organization and heading above.'
+			)
+			.addText((t) => t.setPlaceholder("id").onChange((v) => (newId = v)))
+			.addText((t) => t.setPlaceholder(locale === "ar" ? "الاسم" : "Name").onChange((v) => (newName = v)))
+			.addButton((btn) =>
+				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
+					if (!newId.trim() || !newName.trim()) return;
+					this.services.settings.customReflectionCategories = [
+						...this.services.settings.customReflectionCategories,
+						{
+							id: newId.trim(),
+							name: newName.trim(),
+							organizationMode: "unified",
+							headingText: newName.trim(),
+							headingLevel: "###",
+							parentCategoryId: null,
+							folder: "",
+							isBuiltin: false,
+						},
+					];
+					await this.save();
+					renderList();
+				})
+			);
+	}
+
 	private renderNormalizationRules(containerEl: HTMLElement, locale: Locale): void {
 		const details = containerEl.createEl("details");
 		details.createEl("summary", { text: locale === "ar" ? "قواعد تطبيع النص العربي" : "Arabic normalization rules" });
@@ -294,61 +449,9 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		renderList();
 	}
 
-	private renderReflectionCategories(containerEl: HTMLElement, locale: Locale): void {
-		const list = containerEl.createDiv();
-		const renderList = () => {
-			list.empty();
-			for (const cat of this.services.settings.customReflectionCategories) {
-				new Setting(list)
-					.setName(cat.name)
-					.setDesc(cat.folder)
-					.addExtraButton((btn) =>
-						btn.setIcon("trash").onClick(async () => {
-							this.services.settings.customReflectionCategories = this.services.settings.customReflectionCategories.filter(
-								(c) => c.id !== cat.id
-							);
-							await this.save();
-							renderList();
-						})
-					);
-			}
-		};
-		renderList();
-
-		let newId = "";
-		let newName = "";
-		let newFolder = "";
-		new Setting(containerEl)
-			.setName(locale === "ar" ? "إضافة تصنيف تدبر جديد" : "Add a new reflection category")
-			.setDesc(
-				locale === "ar"
-					? "تدبر وأثر مضمّنان دائماً. أضف تصنيفاً جديداً هنا (مثل «فائدة») ليصبح له مجلد خاص."
-					: "Tadabbur and Athar are builtin. Add custom categories here (e.g. Benefit) to assign dedicated folders."
-			)
-			.addText((t) => t.setPlaceholder("id").onChange((v) => (newId = v)))
-			.addText((t) => t.setPlaceholder(locale === "ar" ? "الاسم" : "Name").onChange((v) => (newName = v)))
-			.addText((t) => t.setPlaceholder(locale === "ar" ? "اسم الفولدر" : "Folder name").onChange((v) => (newFolder = v)))
-			.addButton((btn) =>
-				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
-					if (!newId.trim() || !newName.trim() || !newFolder.trim()) return;
-					this.services.settings.customReflectionCategories = [
-						...this.services.settings.customReflectionCategories,
-						{ id: newId.trim(), name: newName.trim(), folder: newFolder.trim(), isBuiltin: false },
-					];
-					await this.save();
-					renderList();
-				})
-			);
-	}
-
 	private renderAdvancedTunables(containerEl: HTMLElement, locale: Locale): void {
 		const numberField = (
-			key:
-				| "maxSlidingWindowWords"
-				| "maxSuggestionResults"
-				| "tafsirFetchDelayMs"
-				| "tafsirFetchDelayThreshold"
-				| "reflectionFileNameAyahTextMaxLength",
+			key: "maxSlidingWindowWords" | "maxSuggestionResults" | "tafsirFetchDelayMs" | "tafsirFetchDelayThreshold" | "reflectionFileNameAyahTextMaxLength",
 			label: Record<Locale, string>,
 			desc: Record<Locale, string>
 		) => {
@@ -374,7 +477,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		numberField(
 			"maxSuggestionResults",
 			{ ar: "أقصى عدد نتائج مقترحة", en: "Max suggestion results" },
-			{ ar: "أقصى عدد آيات تظهر في نوافذ البحث/النطاق.", en: "Cap on suggestions shown in the search/range modals." }
+			{ ar: "أقصى عدد آيات تظهر في نوافذ البحث/النطاق/الربط.", en: "Cap on suggestions shown in the search/range/link-ayat modals." }
 		);
 		numberField(
 			"tafsirFetchDelayMs",

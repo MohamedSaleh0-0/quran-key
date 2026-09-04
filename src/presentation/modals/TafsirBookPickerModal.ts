@@ -101,6 +101,17 @@ export class TafsirBookPickerModal extends Modal {
 			item.addEventListener("click", () => {
 				this.activeIndex = idx;
 				this.toggle(book.id);
+				// `renderList()` (called from `toggle()`) empties and rebuilds every
+				// list item, including whichever one the browser had just focused
+				// via this click — the old node is gone, so focus silently falls
+				// back to <body>. Since the keydown listener below is registered on
+				// `modalEl` with `capture: true`, it only fires for descendants of
+				// the *focused* element; once focus is on <body> (an ancestor of
+				// modalEl, not a descendant), the listener is out of the event path
+				// entirely and arrow keys fall through to the browser's default
+				// (scrolling) instead of moving `activeIndex`. Re-focusing a stable
+				// element inside the modal after every click keeps it fixed.
+				this.searchEl.focus();
 			});
 		});
 	}

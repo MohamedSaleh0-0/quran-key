@@ -4,7 +4,7 @@ import type { NoticePort } from "../../domain/ports/NoticePort";
 import type { QuranRepository } from "../../domain/ports/QuranRepository";
 import type { TafsirRepository } from "../../domain/ports/TafsirRepository";
 import type { TafsirCatalog } from "../../domain/services/TafsirCatalog";
-import type { HeadingLevel, Locale, TafsirResolutionStrategy } from "../../config/types";
+import type { Locale, TafsirResolutionStrategy } from "../../config/types";
 import { t } from "../../config/strings";
 
 export interface TafsirFormattingOptions {
@@ -13,8 +13,8 @@ export interface TafsirFormattingOptions {
 	wrapperEnd: string;
 	includeAyahText: boolean;
 	useHorizontalDivider: boolean;
-	rangeHeadingLevel: HeadingLevel;
-	bookHeadingLevel: HeadingLevel;
+	rangeHeadingLevel: string;
+	bookHeadingLevel: string;
 	fetchDelayMs: number;
 	fetchDelayThreshold: number;
 	resolutionOrder: readonly TafsirResolutionStrategy[];
@@ -116,7 +116,7 @@ export class FetchAndInsertTafsir {
 	}
 }
 
-function formatBookContent(bookName: string, textContent: string, bookHeadingLevel: HeadingLevel, locale: Locale): string {
+function formatBookContent(bookName: string, textContent: string, bookHeadingLevel: string, locale: Locale): string {
 	if (!textContent || textContent.trim() === "") {
 		return `${bookHeadingLevel} ${bookName}\n\n> ${t(locale, "tafsir.emptyBook")}\n\n`;
 	}

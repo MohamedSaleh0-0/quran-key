@@ -28,6 +28,12 @@ export const STRINGS: Record<Locale, Record<string, string>> = {
 		"reflection.unknownCategory": "تصنيف غير معروف.",
 		"reflection.rangeNoticeTitle": "ملحوظة",
 		"reflection.rangeNoticeBody": "هذا {category} عام على الآيات من {start} إلى {end}، وليس خاصًا بهذه الآية وحدها.",
+		"linkAyat.title": "ربط آيات متشابهة",
+		"linkAyat.placeholder": "ابحث عن آية لإضافتها إلى الربط...",
+		"linkAyat.empty": "اكتب كلمات بحث لعرض الآيات.",
+		"linkAyat.selectedPrefix": "المُختار:",
+		"linkAyat.hint": "اختر آيتين على الأقل ثم اضغط «ربط المحدد» (أو Shift+Enter).",
+		"linkAyat.confirm": "ربط المحدد",
 	},
 	en: {
 		"search.placeholder": "Type search words to look up Qur'anic verses...",
@@ -56,6 +62,12 @@ export const STRINGS: Record<Locale, Record<string, string>> = {
 		"reflection.unknownCategory": "Unknown reflection category.",
 		"reflection.rangeNoticeTitle": "Note",
 		"reflection.rangeNoticeBody": "This {category} concerns the range {start}\u2013{end} as a whole, not only this ayah.",
+		"linkAyat.title": "Link related ayahs",
+		"linkAyat.placeholder": "Search for an ayah to add to the link...",
+		"linkAyat.empty": "Type search words to see ayahs.",
+		"linkAyat.selectedPrefix": "Selected:",
+		"linkAyat.hint": "Select at least two ayahs, then click \"Link selected\" (or Shift+Enter).",
+		"linkAyat.confirm": "Link selected",
 	},
 };
 

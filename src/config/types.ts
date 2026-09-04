@@ -2,6 +2,20 @@
  * Central settings schema. Nothing in domain/application/infrastructure
  * reads a literal where a value here could go instead — see
  * docs/ARCHITECTURE.md §6 for the full hardcoded -> configurable map.
+ *
+ * v2.1 changes (see docs/ARCHITECTURE.md §9 "Unified ayah notes"):
+ * - `HeadingLevel` union removed. Obsidian's own convention (H1 often
+ *   owned by the note title) means different users want different
+ *   levels for different purposes — a fixed "H3-H5" menu (v2.0) was
+ *   itself a hardcoded literal masquerading as a setting. Every heading
+ *   level is now a free-text field (still validated at compile time by
+ *   VerseReference-style helpers where it matters, e.g. non-empty and
+ *   matching /^#{1,6}$/).
+ * - `ReflectionCategoryDescriptor` gained `organizationMode`,
+ *   `headingText`, `headingLevel`, `parentCategoryId` — a category no
+ *   longer *must* own a folder; by default (`"unified"`) its entries
+ *   live under a heading inside one note per ayah. `folder` is only
+ *   consulted when `organizationMode === "ownFolder"`.
  */
 
 export type Locale = "ar" | "en";
@@ -12,11 +26,23 @@ export type TafsirResolutionStrategy =
 	| "favorites" // settings.favoriteBooksIds
 	| "default"; // settings.defaultTafsirBookId
 
-export type HeadingLevel = "##" | "###" | "####" | "#####";
-
 export type SearchStrategy =
 	| "literal" // PhraseMatcher: query words must appear contiguously, in order
 	| "fuzzy"; // FuzzyMatcher: query words may appear anywhere, in any order
+
+/** How a reflection entry finds a home. "unified" (the default): entries
+ *  live under this category's heading inside the single note for that
+ *  ayah. "ownFolder": entries live in their own per-ayah file under
+ *  `folder`, and a single link line is kept in sync (both directions)
+ *  with the unified note, which stays "the reference" either way. */
+export type CategoryOrganizationMode = "unified" | "ownFolder";
+
+/** Where a new entry lands relative to already-existing entries under
+ *  the same heading. "afterHeading": newest directly under the heading
+ *  (newest-first). "endOfSection": appended at the section's end
+ *  (chronological, oldest-first) — see HeadingSectionInserter. This is
+ *  one global setting (a formatting taste, not a per-category axis). */
+export type ReflectionInsertionMode = "afterHeading" | "endOfSection";
 
 /** A tafsir source. Builtin books (data/tafsirBooks.json) and
  *  user-added books (settings.customTafsirBooks) share this exact shape —
@@ -30,13 +56,28 @@ export interface TafsirBookDescriptor {
 	isBuiltin: boolean;
 }
 
-/** A تدبر/أثر category. Builtin categories (data/reflectionCategories.json)
- *  and user-added ones (settings.customReflectionCategories) share this
- *  exact shape. */
+/**
+ * A category of personal writing linked to an ayah (تدبر، أثر، or any
+ * user-defined category — "فوائد عملية", "فوائد لغوية", ...). Only تدبر
+ * and أثر are builtin; everything else is a use-case the user configures
+ * for themselves, including whether it lives in the unified note or gets
+ * its own folder.
+ */
 export interface ReflectionCategoryDescriptor {
 	id: string;
 	name: string;
-	/** Vault-relative folder this category's per-ayah files live under. */
+	organizationMode: CategoryOrganizationMode;
+	/** Heading text this category's entries live under, e.g. "تدبرات". */
+	headingText: string;
+	/** e.g. "###". Free text — see the file-level note above. */
+	headingLevel: string;
+	/** Id of an ancestor category whose heading this one should nest
+	 *  under the first time it's created (e.g. "فوائد لغوية" under
+	 *  "فوائد") — null for a top-level heading. Consulted only once, at
+	 *  heading-creation time; see HeadingSectionInserter and
+	 *  ReflectionCategoryCatalog.ancestorChain for the cycle-safe walk. */
+	parentCategoryId: string | null;
+	/** Vault-relative folder — used only when organizationMode is "ownFolder". */
 	folder: string;
 	isBuiltin: boolean;
 }
@@ -75,16 +116,7 @@ export interface PluginConfig {
 	quranFontSize: number; // em
 	quranLineHeight: number;
 	quranColor: string;
-	/** Whether ornate ayah numbers get their own highlight class
-	 *  (.quran-key-ornate-number) in Live Preview and Reading view.
-	 *  Independent of useOrnateNumbers, which controls the character
-	 *  substitution itself — this only controls whether that substituted
-	 *  text is additionally styled. */
 	styleOrnateNumbers: boolean;
-	/** Raw CSS appended verbatim after the generated :root variables (see
-	 *  applyStyleVariables). Lets a user override .cm-quran-key-text,
-	 *  .quran-key-ornate-number, or anything else without editing
-	 *  styles.css directly. */
 	customCss: string;
 
 	// --- Search & interface ---
@@ -92,42 +124,53 @@ export interface PluginConfig {
 	maxSuggestionResults: number;
 	maxSlidingWindowWords: number;
 	interfaceLanguage: Locale;
-	/** Which matcher SearchQuranVerses delegates to — see SearchStrategy. */
 	searchStrategy: SearchStrategy;
 
 	// --- Tafsir ---
 	defaultTafsirBookId: string;
 	favoriteBooksIds: string[];
-	/** User-added sources, merged with the builtin catalogue at runtime. */
 	customTafsirBooks: TafsirBookDescriptor[];
-	/** Order in which book-resolution strategies are tried (NFR-6). */
 	tafsirBookResolutionOrder: TafsirResolutionStrategy[];
 	includeAyahTextInTafsir: boolean;
 	useHorizontalDivider: boolean;
-	rangeHeadingLevel: HeadingLevel;
-	bookHeadingLevel: HeadingLevel;
-	/** Delay between successive tafsir requests once a range is "long". */
+	/** Free-text heading marker, e.g. "###". See file-level note above. */
+	rangeHeadingLevel: string;
+	/** Free-text heading marker, e.g. "####". */
+	bookHeadingLevel: string;
 	tafsirFetchDelayMs: number;
 	tafsirFetchDelayThreshold: number;
 
-	// --- Reflections (تدبر / أثر) ---
-	/** User-added categories, merged with the builtin تدبر/أثر catalogue at
-	 *  runtime (see ReflectionCategoryCatalog). */
+	// --- Reflections (تدبر / أثر / user-defined categories) ---
 	customReflectionCategories: ReflectionCategoryDescriptor[];
-	/** Default true = a true "move": the original selection is removed
-	 *  from the editor once written to every target ayah file. False
-	 *  behaves like a copy — the selection stays untouched. */
+	/** Vault-relative folder for unified per-ayah notes (used by every
+	 *  category whose organizationMode is "unified", i.e. by default). */
+	ayahNotesFolder: string;
+	/** When true (default), the selection that was logged is replaced
+	 *  in its original note with a backlink to the ayah note instead of
+	 *  being erased — v1/v2.0's `deleteSelectionAfterLinkingReflection`
+	 *  used to just delete it, silently losing the content's origin.
+	 *  When false, the selection is left completely untouched (a copy). */
 	deleteSelectionAfterLinkingReflection: boolean;
-	/** Whatever precedes each dated entry inside a file — not restricted
-	 *  to a heading. {date} is the only placeholder, e.g. "### {date}",
-	 *  "- {date}", "1. {date}", or empty for no prefix. */
+	/** {surah}/{verse}/{ayahText} available. Empty = link with no alias,
+	 *  i.e. plain "[[Note Title]]". */
+	reflectionBacklinkAliasTemplate: string;
+	/** Wraps the rendered backlink; the only placeholder is {link}. */
+	reflectionBacklinkWrapTemplate: string;
+	/** Whatever precedes each dated entry — not restricted to a heading.
+	 *  {date} is the only placeholder, e.g. "### {date}", "- {date}",
+	 *  "1. {date}", or empty for no prefix at all. */
 	reflectionEntryPrefixTemplate: string;
+	/** Inserted between consecutive entries under the same heading (or
+	 *  in the same own-folder file). Can be left empty. */
+	reflectionEntrySeparator: string;
+	/** Where a new entry lands relative to existing ones — see
+	 *  ReflectionInsertionMode. */
+	reflectionInsertionMode: ReflectionInsertionMode;
 	/** Must contain {ayahText}; {surah} and {verse} are also available.
-	 *  Builds each per-ayah file's on-disk title — see
-	 *  ReflectionFileNameBuilder. */
+	 *  Builds the unified/own-folder note's on-disk title. */
 	reflectionFileNameTemplate: string;
-	/** Ayah text inside a file title is truncated at this length (0 = no
-	 *  truncation) — some ayat are very long. */
 	reflectionFileNameAyahTextMaxLength: number;
+	/** Whether a freshly-created unified note gets the ayah's own text
+	 *  quoted at the top (once, not repeated per entry). */
+	includeAyahTextInReflectionNote: boolean;
 }
-
