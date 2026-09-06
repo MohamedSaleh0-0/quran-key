@@ -42,9 +42,6 @@ export class ReflectionCategoryPickerModal extends SuggestModal<PickerItem> {
 		} else {
 			const row = el.createDiv({ cls: "quran-key-picker-item-row" });
 			row.createSpan({ text: item.category.name, cls: "quran-key-picker-item-name" });
-			if (item.category.isBuiltin) {
-				row.createSpan({ text: isAr ? "" : " (builtin)", cls: "quran-key-modal-alias" });
-			}
 		}
 	}
 
@@ -66,7 +63,6 @@ export class ReflectionCategoryPickerModal extends SuggestModal<PickerItem> {
 			organizationMode: "unified" as const,
 			headingText: name.trim(),
 			headingLevel: "###",
-			parentCategoryId: null,
 			folder: "",
 			isBuiltin: false,
 		};

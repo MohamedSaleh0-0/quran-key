@@ -12,9 +12,6 @@ import { t } from "../../config/strings";
 
 export interface ReflectionLinkOptions {
 	locale: Locale;
-	/** true (default): the logged selection is replaced in its source
-	 *  note with a backlink to the ayah note. false: the selection is
-	 *  left completely untouched (a copy). Never silently erased to "". */
 	replaceSelectionWithBacklink: boolean;
 	entryPrefixTemplate: string;
 	entrySeparator: string;
@@ -23,8 +20,6 @@ export interface ReflectionLinkOptions {
 	fileNameTemplate: string;
 	backlinkAliasTemplate: string;
 	backlinkWrapTemplate: string;
-	/** Reused both for the >1-ayah "quoted passage" in a range notice and
-	 *  for the single-ayah body quote written into a fresh unified note. */
 	quoteFormattingOptions: FormattingOptions;
 }
 
@@ -85,15 +80,12 @@ export class LinkReflectionToVerses {
 			options.locale
 		);
 
-		const ancestorChain = this.catalog.ancestorChain(category.id);
-		const chain = ancestorChain.length > 0 ? ancestorChain : [category];
-
 		let firstNoteTitle: string | null = null;
 		for (let ayahId = startAyah; ayahId <= endAyah; ayahId++) {
 			const ayah = this.repository.findAyah(surahId, ayahId);
 			const ref = await this.ayahNotes.appendEntry(
 				this.buildIdentity(surahId, surahName, ayahId, ayah, options.quoteFormattingOptions),
-				chain,
+				category,
 				entryMarkdown,
 				{
 					insertionMode: options.insertionMode,
@@ -109,7 +101,6 @@ export class LinkReflectionToVerses {
 			const backlink = this.renderBacklink(firstNoteTitle, surahName, startAyah, reflectionText, options);
 			editor.replaceRange(backlink, selectionStart, selectionEnd);
 		}
-		// else: replaceSelectionWithBacklink is false -> leave the selection untouched (a true copy).
 	}
 
 	private buildIdentity(surahId: number, surahName: string, ayahId: number, ayah: Ayah | null, quoteFormatting: FormattingOptions) {

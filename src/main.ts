@@ -152,7 +152,7 @@ export default class QuranKeyPlugin extends Plugin {
 		const getFormattingOptions = (): FormattingOptions => ({
 			wrapperStart: this.settings.wrapperStart,
 			wrapperEnd: this.settings.wrapperEnd,
-			useOrnateNumbers: this.settings.useOrnateNumbers,
+			useOrnateNumbers: true,
 			stripTashkeelOnOutput: this.settings.stripTashkeel,
 		});
 

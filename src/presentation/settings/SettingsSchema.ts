@@ -19,25 +19,35 @@ export interface SettingsSectionDefinition {
 
 export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 	{
+		id: "general",
+		heading: { ar: "عام", en: "General" },
+		fields: [
+			{
+				key: "interfaceLanguage",
+				type: "dropdown",
+				label: { ar: "لغة الواجهة", en: "Interface language" },
+				description: {
+					ar: "لغة كل نصوص الواجهة، بما فيها صفحة الإعدادات هذه.",
+					en: "Language for the entire interface, including this settings page.",
+				},
+				dropdownOptions: [
+					{ value: "ar", label: "العربية" },
+					{ value: "en", label: "English" },
+				],
+			},
+		],
+	},
+	{
 		id: "text",
-		heading: { ar: "التحكم في النصوص والتخريج", en: "Text handling & output" },
+		heading: { ar: "التحكم في النصوص والتخريج", en: "Text & Output" },
 		fields: [
 			{
 				key: "stripTashkeel",
 				type: "toggle",
 				label: { ar: "إدراج النص مجرداً من التشكيل", en: "Strip tashkeel on insert" },
 				description: {
-					ar: "عند التفعيل، تُدرَج الآيات بلا علامات ضبط وتشكيل كحالة افتراضية.",
-					en: "When enabled, inserted ayahs have tashkeel/diacritics stripped by default.",
-				},
-			},
-			{
-				key: "useOrnateNumbers",
-				type: "toggle",
-				label: { ar: "استخدام الأرقام المزخرفة", en: "Use ornate numbers" },
-				description: {
-					ar: "تحويل رقم الآية العادي بين قوسين إلى الرمز المصحفي المزخرف بالأرقام العربية.",
-					en: "Converts plain \"(n)\" ayah markers into the ring-glyph ornate style.",
+					ar: "إدراج الآيات بدون علامات الضبط والتشكيل.",
+					en: "Insert verses without diacritics.",
 				},
 			},
 			{
@@ -45,63 +55,44 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "text",
 				label: { ar: "صيغة الإحالة المرجعية", en: "Reference format" },
 				description: {
-					ar: "يجب أن تحوي {surah} و{verse}، مثل [{surah}:{verse}]. تتحكم فعلياً في التعرف على المرجع وكتابته (راجع ARCHITECTURE.md NFR-3).",
-					en: "Must contain {surah} and {verse}, e.g. [{surah}:{verse}]. Actually drives parsing AND output (see docs/ARCHITECTURE.md NFR-3).",
+					ar: "يجب أن تحوي {surah} و{verse}، مثل [{surah}:{verse}].",
+					en: "Must contain {surah} and {verse}, e.g. [{surah}:{verse}].",
 				},
 			},
 			{
 				key: "wrapperStart",
 				type: "text",
-				label: { ar: "بداية إطار الآية", en: "Verse wrapper — start glyph" },
-				description: { ar: "الرمز الذي يفتتح به نص الآية المدرجة.", en: "Glyph that opens an inserted ayah." },
+				label: { ar: "بداية إطار الآية", en: "Verse wrapper — start" },
+				description: { ar: "الرمز الذي يفتتح به نص الآية المدرجة.", en: "Glyph that opens an inserted verse." },
 			},
 			{
 				key: "wrapperEnd",
 				type: "text",
-				label: { ar: "نهاية إطار الآية", en: "Verse wrapper — end glyph" },
-				description: { ar: "الرمز الذي يختتم به نص الآية المدرجة.", en: "Glyph that closes an inserted ayah." },
-			},
-			{
-				key: "ornateRingGlyph",
-				type: "text",
-				label: { ar: "رمز الرقم المزخرف", en: "Ornate number ring glyph" },
-				description: { ar: "الرمز المستخدم مع الأرقام المزخرفة (الافتراضي: ۝).", en: "Glyph used to ring ornate ayah numbers (default: ۝)." },
+				label: { ar: "نهاية إطار الآية", en: "Verse wrapper — end" },
+				description: { ar: "الرمز الذي يختتم به نص الآية المدرجة.", en: "Glyph that closes an inserted verse." },
 			},
 		],
 	},
 	{
 		id: "search",
-		heading: { ar: "البحث والواجهة", en: "Search & interface" },
+		heading: { ar: "البحث", en: "Search" },
 		fields: [
 			{
 				key: "showAnalytics",
 				type: "toggle",
 				label: { ar: "إظهار لوحة التحليلات", en: "Show analytics dashboard" },
 				description: {
-					ar: "عرض إحصاءات فورية (الإجمالي، الأكثر تكراراً، الأعلى كثافة) أسفل شريط البحث.",
-					en: "Live match statistics under the search modal's input.",
+					ar: "عرض إحصاءات فورية لنتائج البحث (الإجمالي، الأكثر تكراراً، الأعلى كثافة).",
+					en: "Show live match statistics under the search input.",
 				},
-			},
-			{
-				key: "interfaceLanguage",
-				type: "dropdown",
-				label: { ar: "لغة الواجهة", en: "Interface language" },
-				description: {
-					ar: "لغة النصوص التفاعلية (البحث، لوحة التحليلات، منتقي التفسير).",
-					en: "Language for the plugin's interactive UI text.",
-				},
-				dropdownOptions: [
-					{ value: "ar", label: "العربية" },
-					{ value: "en", label: "English" },
-				],
 			},
 			{
 				key: "searchStrategy",
 				type: "dropdown",
 				label: { ar: "آلية البحث عن الآيات", en: "Verse search mechanism" },
 				description: {
-					ar: "حرفي: يجب أن تظهر كلمات البحث متتالية وبنفس ترتيبها داخل الآية. تقريبي: يكفي أن تظهر كل كلمة في أي مكان بالآية.",
-					en: "Literal: search words must appear contiguously and in order within the ayah. Fuzzy: each word just needs to appear anywhere in the ayah.",
+					ar: "حرفي: مطابقة الكلمات بنفس ترتيبها. تقريبي: ظهور الكلمات بأي ترتيب في الآية.",
+					en: "Literal: search words in exact order. Fuzzy: search words in any order.",
 				},
 				dropdownOptions: [
 					{ value: "literal", label: "Literal" },
@@ -112,80 +103,71 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 	},
 	{
 		id: "tafsir",
-		heading: { ar: "إعدادات محرك التفسير السياقي", en: "Tafsir engine" },
+		heading: { ar: "إعدادات محرك التفسير السياقي", en: "Tafsir Engine" },
 		fields: [
 			{
 				key: "rangeHeadingLevel",
 				type: "text",
-				label: { ar: "حجم عنوان نطاق الآيات", en: "Range heading level" },
+				label: { ar: "مستوى عنوان نطاق الآيات", en: "Range heading level" },
 				description: {
-					ar: "مثل ### أو ## أو أي مستوى تريده — نص حر بلا سقف أو حد أدنى.",
-					en: "e.g. ### or ## or any level you like — free text, no fixed ceiling or floor.",
+					ar: "المستوى المستخدم لعنوان النطاق (مثل ###).",
+					en: "Markdown heading marker for the range (e.g. ###).",
 				},
 			},
 			{
 				key: "bookHeadingLevel",
 				type: "text",
-				label: { ar: "حجم عنوان كتاب التفسير", en: "Book heading level" },
+				label: { ar: "مستوى عنوان كتاب التفسير", en: "Book heading level" },
 				description: {
-					ar: "مستوى الـ Heading لعنوان كل كتاب تفسير على حدة — نص حر.",
-					en: "Heading level for each book's own heading — free text.",
+					ar: "المستوى المستخدم لعنوان المفسر (مثل ####).",
+					en: "Markdown heading marker for each book (e.g. ####).",
 				},
 			},
 			{
 				key: "includeAyahTextInTafsir",
 				type: "toggle",
 				label: { ar: "تضمين نص الآية القرآنية", en: "Include ayah text" },
-				description: { ar: "طباعة نص الآية داخل الأقواس قبل متن تفسيرها.", en: "Print the ayah's own text before its commentary." },
+				description: { ar: "إدراج نص الآية قبل تفسيرها.", en: "Insert the verse text before its commentary." },
 			},
 			{
 				key: "useHorizontalDivider",
 				type: "toggle",
 				label: { ar: "استخدام فاصل أفقي", en: "Use horizontal divider" },
-				description: { ar: "إدراج فاصل (---) بين كتب تفسير متعددة لنفس النطاق.", en: "Insert a '---' divider between multiple books' output." },
+				description: { ar: "إدراج فاصل (---) بين كتب التفسير المختلفة لنفس الآيات.", en: "Insert a '---' divider between multiple commentaries." },
 			},
 		],
 	},
 	{
 		id: "style",
-		heading: { ar: "تنسيق مظهر الأقواس القرآنية", en: "Qur'anic text style" },
+		heading: { ar: "تنسيق مظهر الآيات", en: "Verse Style" },
 		fields: [
-			{
-				key: "quranFontFamily",
-				type: "text",
-				label: { ar: "نوع الخط المصحفي", en: "Font family" },
-				description: {
-					ar: "الخط المدمج الافتراضي هو خط مجمع الملك فهد (KFGQPC Uthmanic Script HAFS) مطابق لتطبيق آية، مع خط Amiri Quran كبديل.",
-					en: "Default bundled font is King Fahd Complex (KFGQPC Uthmanic Script HAFS), with Amiri Quran as fallback.",
-				},
-			},
 			{
 				key: "quranFontSize",
 				type: "slider",
 				label: { ar: "حجم الخط", en: "Font size" },
-				description: { ar: "حجم خط الآية بوحدة (em) نسبةً لمتن النص.", en: "Ayah font size in em, relative to body text." },
+				description: { ar: "حجم خط الآيات القرآنية (em).", en: "Verse font size in em." },
 				slider: { min: 0.8, max: 2.5, step: 0.05 },
 			},
 			{
 				key: "quranLineHeight",
 				type: "slider",
 				label: { ar: "ارتفاع السطر", en: "Line height" },
-				description: { ar: "تباعد الأسطر لمنع تداخل الحركات وعلامات الوقف (الافتراضي 2.4).", en: "Line spacing to prevent tashkeel/waqf marks overlapping (default 2.4)." },
+				description: { ar: "تباعد الأسطر لمنع تداخل الحركات وعلامات الوقف.", en: "Line spacing for Qur'anic text." },
 				slider: { min: 1.5, max: 3.5, step: 0.1 },
 			},
 			{
 				key: "quranColor",
 				type: "color",
-				label: { ar: "لون الآيات", en: "Qur'anic text color" },
-				description: { ar: "اللون المميز للشواهد القرآنية داخل الأقواس.", en: "Accent color for Qur'anic quotes inside the wrapper glyphs." },
+				label: { ar: "لون الآيات", en: "Verse color" },
+				description: { ar: "اللون المميز للآيات القرآنية.", en: "Accent color for Qur'anic verses." },
 			},
 			{
 				key: "styleOrnateNumbers",
 				type: "toggle",
 				label: { ar: "تنسيق الأرقام المزخرفة", en: "Style ornate numbers" },
 				description: {
-					ar: "عند التفعيل، يُميَّز الرقم المزخرف بصرياً في المعاينة المباشرة وعرض القراءة عبر الصنف .quran-key-ornate-number.",
-					en: "When enabled, ornate ayah numbers get their own visual highlight in Live Preview and Reading view.",
+					ar: "إعطاء رقم الآية لوناً مميزاً في المعاينة والقراءة.",
+					en: "Gives the ayah number its own accent color in preview and reading view.",
 				},
 			},
 			{
@@ -193,41 +175,41 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "textarea",
 				label: { ar: "CSS مخصص", en: "Custom CSS" },
 				description: {
-					ar: "يُلحق حرفياً بعد المتغيرات المولّدة تلقائياً.",
-					en: "Appended verbatim after the auto-generated CSS variables.",
+					ar: "أضف قواعد CSS مخصصة لتعديل عناصر الإضافة. الفئات المتاحة للاستهداف: .cm-quran-key-text (متن الآية)، .quran-key-ornate-number (رقم الآية المزخرف)، .quran-key-highlight (تمييز البحث).",
+					en: "Add custom CSS rules targeting plugin elements: .cm-quran-key-text (verse text), .quran-key-ornate-number (ornate ayah number), .quran-key-highlight (search match).",
 				},
 			},
 		],
 	},
 	{
 		id: "reflections",
-		heading: { ar: "ملاحظات الآيات (التدبرات والآثار)", en: "Ayah notes (تدبر / أثر)" },
+		heading: { ar: "ملاحظات الآيات", en: "Ayah Notes" },
 		fields: [
 			{
 				key: "ayahNotesFolder",
 				type: "text",
-				label: { ar: "مجلد ملاحظات الآيات الموحّدة", en: "Unified ayah notes folder" },
+				label: { ar: "مجلد ملاحظات الآيات الموحدة", en: "Unified notes folder" },
 				description: {
-					ar: "المجلد الذي تُحفظ فيه ملاحظة الآية الموحّدة.",
-					en: "Folder holding each ayah's unified note.",
+					ar: "المجلد الذي تُحفظ فيه ملاحظات الآيات.",
+					en: "Folder where unified ayah notes are saved.",
 				},
 			},
 			{
 				key: "includeAyahTextInReflectionNote",
 				type: "toggle",
-				label: { ar: "تضمين نص الآية في أول الملاحظة", en: "Include ayah text at the top of the note" },
+				label: { ar: "تضمين نص الآية في أول الملاحظة", en: "Include ayah text at the top" },
 				description: {
-					ar: "يُكتب مرة واحدة فقط عند إنشاء الملاحظة لأول مرة.",
-					en: "Written once, when the note is first created.",
+					ar: "كتابة نص الآية مرة واحدة عند إنشاء الملف لأول مرة.",
+					en: "Write verse text once when creating the note.",
 				},
 			},
 			{
 				key: "reflectionInsertionMode",
 				type: "dropdown",
-				label: { ar: "ترتيب المُدخلات الجديدة", en: "New-entry placement" },
+				label: { ar: "ترتيب المُدخلات الجديدة", en: "New entries placement" },
 				description: {
-					ar: "مباشرة أسفل العنوان: الأحدث يظهر أولاً. نهاية القسم: ترتيب زمني.",
-					en: "Directly under the heading: newest first. End of section: chronological.",
+					ar: "مباشرة أسفل العنوان: الأحدث أولاً. نهاية القسم: ترتيب زمني تصاعدي.",
+					en: "After heading: newest first. End of section: chronological order.",
 				},
 				dropdownOptions: [
 					{ value: "afterHeading", label: "afterHeading" },
@@ -237,55 +219,55 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 			{
 				key: "reflectionEntrySeparator",
 				type: "textarea",
-				label: { ar: "الفاصل بين المُدخلات", en: "Separator between entries" },
+				label: { ar: "الفاصل بين المُدخلات", en: "Entry separator" },
 				description: {
-					ar: "يُدرج بين كل مُدخل والذي يليه. يدعم أسطر Enter أو \\n. اتركه فارغاً تماماً للقوائم النقطية.",
-					en: "Inserted between entries. Supports newlines or \\n. Leave empty for continuous lists.",
+					ar: "نص يُدرج بين التدوينات المتتالية (يدعم أسطر فارغة).",
+					en: "Text inserted between consecutive entries.",
 				},
 			},
 			{
 				key: "deleteSelectionAfterLinkingReflection",
 				type: "toggle",
-				label: { ar: "استبدال النص المحدد برابط للآية", en: "Replace selection with a backlink" },
+				label: { ar: "استبدال النص المحدد برابط للآية", en: "Replace selection with link" },
 				description: {
-					ar: "عند التفعيل، يُستبدل النص المحدد برابط لملاحظة الآية بدل حذفه. عند التعطيل يبقى النص كما هو.",
-					en: "When enabled, the selected text is replaced with a backlink to the ayah note.",
+					ar: "استبدال النص المختار برابط لملاحظة الآية بدلاً من تركه كنسخة مكررة.",
+					en: "Replace selected text with a backlink to the ayah note.",
 				},
 			},
 			{
 				key: "reflectionBacklinkAliasTemplate",
 				type: "text",
-				label: { ar: "صيغة نص الرابط (alias)", en: "Backlink alias template" },
+				label: { ar: "صيغة الاسم المستعار للرابط (alias)", en: "Link alias template" },
 				description: {
-					ar: "{surah} و{verse} و{ayahText} متاحة. اتركه فارغاً لرابط بلا alias.",
-					en: "{surah}, {verse}, {ayahText} available. Leave empty for no alias.",
+					ar: "المتغيرات المتاحة: {surah} و {verse} و {ayahText}. اتركه فارغاً لرابط صريح.",
+					en: "Available placeholders: {surah}, {verse}, {ayahText}. Leave empty for plain link.",
 				},
 			},
 			{
 				key: "reflectionBacklinkWrapTemplate",
 				type: "text",
-				label: { ar: "صيغة إحاطة الرابط", en: "Backlink wrap template" },
+				label: { ar: "صيغة إحاطة الرابط", en: "Link wrap template" },
 				description: {
-					ar: "{link} هو المتغيّر الوحيد. مثال: \"↳ نُقل إلى {link}\".",
-					en: 'Only {link} is available as a placeholder.',
+					ar: "المتغير الوحيد: {link}. مثال: «↳ نُقل إلى {link}».",
+					en: "Only {link} placeholder is available.",
 				},
 			},
 			{
 				key: "reflectionFileNameTemplate",
 				type: "text",
-				label: { ar: "صيغة عنوان ملف الآية", en: "Ayah note title format" },
+				label: { ar: "صيغة عنوان ملف الآية", en: "Ayah file name template" },
 				description: {
-					ar: "يجب أن تحوي {ayahText}؛ يمكن أيضاً استخدام {surah} و{verse}.",
-					en: 'Must contain {ayahText}; {surah} and {verse} are also available.',
+					ar: "يجب أن تحوي {ayahText}. متاح أيضاً: {surah} و {verse}.",
+					en: "Must contain {ayahText}; {surah} and {verse} are available.",
 				},
 			},
 			{
 				key: "reflectionEntryPrefixTemplate",
 				type: "text",
-				label: { ar: "صيغة بداية كل مُدخل", en: "Entry prefix format" },
+				label: { ar: "صيغة بداية كل مُدخل", en: "Entry prefix template" },
 				description: {
-					ar: "{date} هو المتغيّر الوحيد المتاح. أمثلة: \"### {date}\" أو \"- {date}\".",
-					en: 'Only {date} is available as a placeholder.',
+					ar: "المتغير المتاح: {date}. مثال: «### {date}».",
+					en: "Available placeholder: {date}. e.g. '### {date}'.",
 				},
 			},
 		],

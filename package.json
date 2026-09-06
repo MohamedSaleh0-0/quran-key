@@ -1,7 +1,7 @@
 {
 	"name": "quran-key",
 	"version": "1.1.0",
-	"description": "Enrich your Islamic knowledge with Quran research, tafsir, and tadabbur.",
+	"description": "Toolkit for Islamic studies and Quran research with verse lookup, multi-source tafsir, and reflection notes.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

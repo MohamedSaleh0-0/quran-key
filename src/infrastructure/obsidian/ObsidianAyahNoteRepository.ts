@@ -14,9 +14,6 @@ function sanitizeFileNameSegment(segment: string): string {
 	return segment.replace(/[\\/:*?"<>|]/g, "").trim();
 }
 
-/** Everything this adapter needs from settings, read live (not captured
- *  at construction) so a Settings-tab change takes effect on the very
- *  next write without a full services rebuild. */
 export interface AyahNoteSettingsSource {
 	ayahNotesFolder: string;
 	reflectionFileNameAyahTextMaxLength: number;
@@ -27,15 +24,14 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 
 	async appendEntry(
 		identity: AyahIdentity,
-		ancestorChain: readonly ReflectionCategory[],
+		category: ReflectionCategory,
 		entryMarkdown: string,
 		formatting: ReflectionEntryFormatting
 	): Promise<AyahNoteRef> {
-		const leaf = ancestorChain[ancestorChain.length - 1];
-		if (leaf.organizationMode === "ownFolder") {
-			return this.appendToOwnFolderNote(identity, ancestorChain, entryMarkdown, formatting);
+		if (category.organizationMode === "ownFolder") {
+			return this.appendToOwnFolderNote(identity, category, entryMarkdown, formatting);
 		}
-		return this.appendToUnifiedNote(identity, ancestorChain, entryMarkdown, formatting);
+		return this.appendToUnifiedNote(identity, category, entryMarkdown, formatting);
 	}
 
 	async linkRelatedAyat(
@@ -67,26 +63,21 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		return file.basename;
 	}
 
-	// --- unified note ---
-
 	private async appendToUnifiedNote(
 		identity: AyahIdentity,
-		ancestorChain: readonly ReflectionCategory[],
+		category: ReflectionCategory,
 		entryMarkdown: string,
 		formatting: ReflectionEntryFormatting
 	): Promise<AyahNoteRef> {
 		const file = await this.findOrCreateUnifiedNote(identity, formatting.fileNameTemplate, formatting.includeAyahText);
-		await this.ensureAncestorHeadings(file, ancestorChain);
-		const leaf = ancestorChain[ancestorChain.length - 1];
-		const parent = ancestorChain.length > 1 ? ancestorChain[ancestorChain.length - 2] : null;
 		await this.app.vault.process(file, (current) =>
 			HeadingSectionInserter.insertEntry(
 				current,
 				{
-					headingLevel: leaf.headingLevel,
-					headingText: leaf.headingText,
-					parentHeadingLevel: parent?.headingLevel ?? null,
-					parentHeadingText: parent?.headingText ?? null,
+					headingLevel: category.headingLevel,
+					headingText: category.headingText,
+					parentHeadingLevel: null,
+					parentHeadingText: null,
 					insertionMode: formatting.insertionMode,
 					separator: formatting.entrySeparator,
 				},
@@ -94,22 +85,6 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 			)
 		);
 		return { title: file.basename };
-	}
-
-	private async ensureAncestorHeadings(file: TFile, chain: readonly ReflectionCategory[]): Promise<void> {
-		for (let i = 0; i < chain.length; i++) {
-			const node = chain[i];
-			const parent = i > 0 ? chain[i - 1] : null;
-			await this.app.vault.process(file, (current) =>
-				HeadingSectionInserter.ensureHeadingExists(
-					current,
-					node.headingLevel,
-					node.headingText,
-					parent?.headingLevel ?? null,
-					parent?.headingText ?? null
-				)
-			);
-		}
 	}
 
 	private findExistingUnifiedFile(surahId: number, ayahId: number): TFile | null {
@@ -149,15 +124,12 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		return this.app.vault.create(path, `${frontmatter}${body}`);
 	}
 
-	// --- own-folder note (opt-in per category) ---
-
 	private async appendToOwnFolderNote(
 		identity: AyahIdentity,
-		ancestorChain: readonly ReflectionCategory[],
+		category: ReflectionCategory,
 		entryMarkdown: string,
 		formatting: ReflectionEntryFormatting
 	): Promise<AyahNoteRef> {
-		const category = ancestorChain[ancestorChain.length - 1];
 		const unified = await this.findOrCreateUnifiedNote(identity, formatting.fileNameTemplate, formatting.includeAyahText);
 		const ownFile = await this.findOrCreateOwnFolderNote(category, identity, formatting.fileNameTemplate, unified.basename);
 
@@ -166,19 +138,14 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 			return trimmed.length > 0 ? `${trimmed}${formatting.entrySeparator}${entryMarkdown}\n` : `${entryMarkdown}\n`;
 		});
 
-		// Keep the unified note as "the reference": ensure a single link
-		// line to the own-folder note sits under this category's heading
-		// there too (idempotent — safe to call on every entry).
-		await this.ensureAncestorHeadings(unified, ancestorChain);
-		const parent = ancestorChain.length > 1 ? ancestorChain[ancestorChain.length - 2] : null;
 		await this.app.vault.process(unified, (current) =>
 			HeadingSectionInserter.ensureLinkLine(
 				current,
 				{
 					headingLevel: category.headingLevel,
 					headingText: category.headingText,
-					parentHeadingLevel: parent?.headingLevel ?? null,
-					parentHeadingText: parent?.headingText ?? null,
+					parentHeadingLevel: null,
+					parentHeadingText: null,
 					insertionMode: "afterHeading",
 					separator: formatting.entrySeparator,
 				},
@@ -230,8 +197,6 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		].join("\n");
 		return this.app.vault.create(path, frontmatter);
 	}
-
-	// --- shared file helpers (same as v1's ObsidianReflectionFileRepository) ---
 
 	private uniquePath(folderPath: string, title: string): string {
 		const base = sanitizeFileNameSegment(title) || "آية";

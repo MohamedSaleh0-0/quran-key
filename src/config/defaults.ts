@@ -15,14 +15,12 @@ function seedNormalizationRules(): NormalizationRule[] {
 export const DEFAULT_SETTINGS: PluginConfig = {
 	// Text normalization & verse formatting
 	stripTashkeel: false,
-	useOrnateNumbers: true,
-	ornateRingGlyph: "\u06DD", // ۝
 	wrapperStart: "\uFD3F", // ﴿
 	wrapperEnd: "\uFD3E", // ﴾
 	referenceFormat: "[{surah}:{verse}]",
 	normalizationRules: seedNormalizationRules(),
 
-	// Qur'anic text styling (تطبيق آية ومصحف المدينة)
+	// Qur'anic text styling
 	quranFontFamily: "'KFGQPC Uthmanic Script HAFS', 'Amiri Quran', serif",
 	quranFontSize: 1.3,
 	quranLineHeight: 2.4,
@@ -49,7 +47,7 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	tafsirFetchDelayMs: 150,
 	tafsirFetchDelayThreshold: 2,
 
-	// Reflections (تدبر / أثر / user-defined categories)
+	// Reflections
 	customReflectionCategories: [],
 	ayahNotesFolder: "ملاحظات الآيات",
 	deleteSelectionAfterLinkingReflection: true,

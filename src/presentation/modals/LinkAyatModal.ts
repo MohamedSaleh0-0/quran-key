@@ -4,16 +4,8 @@ import type { Ayah } from "../../domain/entities/Ayah";
 import type { AppServices } from "../AppServices";
 import { t } from "../../config/strings";
 
-/**
- * "Link ayat" command: pick 2+ ayahs (any surah, any count) that share
- * something — a repeated phrase, a theme, whatever the user has in mind —
- * and link them all together via LinkAyahsTogether. Deliberately modeled
- * on TafsirBookPickerModal (search box + checkbox list + keyboard nav +
- * explicit confirm) rather than QuranSearchModal, which is a SuggestModal
- * built to close on a *single* choice.
- */
 export class LinkAyatModal extends Modal {
-	private readonly selected = new Map<number, Ayah>(); // keyed by Ayah.id
+	private readonly selected = new Map<number, Ayah>();
 	private activeIndex = 0;
 	private filtered: Ayah[] = [];
 	private listEl!: HTMLElement;
@@ -97,7 +89,7 @@ export class LinkAyatModal extends Modal {
 			item.addEventListener("click", () => {
 				this.activeIndex = idx;
 				this.toggle(ayah);
-				this.searchEl.focus(); // keep keyboard nav working after a mouse click — see TafsirBookPickerModal
+				this.searchEl.focus();
 			});
 		});
 	}
@@ -135,7 +127,6 @@ export class LinkAyatModal extends Modal {
 
 	private updateConfirmState(): void {
 		if (!this.confirmBtn) return;
-		// Needs 2+, not 1+ — linking a single ayah to nothing is a no-op (LinkAyahsTogether.execute short-circuits on this too).
 		this.confirmBtn.disabled = this.selected.size < 2;
 	}
 
@@ -150,7 +141,7 @@ export class LinkAyatModal extends Modal {
 			{
 				wrapperStart: this.services.settings.wrapperStart,
 				wrapperEnd: this.services.settings.wrapperEnd,
-				useOrnateNumbers: this.services.settings.useOrnateNumbers,
+				useOrnateNumbers: true,
 				stripTashkeelOnOutput: this.services.settings.stripTashkeel,
 			}
 		);

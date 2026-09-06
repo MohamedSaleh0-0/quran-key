@@ -155,3 +155,35 @@ span.cm-quran-key-text {
 	font-family: var(--font-monospace);
 	font-size: 0.9em;
 }
+
+/* --- شريط التبويبات لصفحة الإعدادات --- */
+.quran-key-settings-tabs-header {
+	display: flex;
+	gap: 6px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	margin-bottom: 18px;
+	padding-bottom: 6px;
+	overflow-x: auto;
+}
+
+.quran-key-settings-tab-btn {
+	background: transparent;
+	border: none;
+	padding: 6px 14px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.9em;
+	color: var(--text-muted);
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.quran-key-settings-tab-btn:hover {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.quran-key-settings-tab-btn.is-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 600;
+}
