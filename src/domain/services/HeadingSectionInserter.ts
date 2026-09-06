@@ -44,11 +44,8 @@ function toLines(content: string): string[] {
 function fromLines(lines: readonly string[]): string {
 	// Collapse any accidental triple-blank-lines from the splice math below,
 	// then guarantee exactly one trailing newline (Obsidian's own convention).
-	return lines
-		.join("\n")
-		.replace(/\n{3,}/g, "\n\n")
-		.trimEnd()
-		.concat("\n");
+	const joined = lines.join("\n").replace(/\n{3,}/g, "\n\n");
+	return `${joined.replace(/\s+$/, "")}\n`;
 }
 
 /**
@@ -87,7 +84,12 @@ export class HeadingSectionInserter {
 			block = sectionIsEmpty ? entryBlock : `${options.separator}${entryBlock}`;
 		}
 
-		const merged = [...lines.slice(0, insertAt), ...block.split("\n"), ...lines.slice(insertAt)];
+		const blockLines: string[] = block.split("\n");
+		const merged: string[] = [
+			...lines.slice(0, insertAt),
+			...blockLines,
+			...lines.slice(insertAt),
+		];
 		return fromLines(merged);
 	}
 

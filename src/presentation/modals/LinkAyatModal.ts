@@ -72,7 +72,7 @@ export class LinkAyatModal extends Modal {
 					if (ayah) this.toggle(ayah);
 				} else if (evt.key === "Enter" && evt.shiftKey) {
 					evt.preventDefault();
-					this.submitAndClose();
+					void this.submitAndClose();
 				}
 			},
 			true
@@ -127,7 +127,9 @@ export class LinkAyatModal extends Modal {
 		const footer = containerEl.createDiv({ cls: "quran-key-picker-footer" });
 		footer.createSpan({ text: t(this.locale, "linkAyat.hint"), cls: "quran-key-picker-hint" });
 		this.confirmBtn = footer.createEl("button", { text: t(this.locale, "linkAyat.confirm"), cls: "mod-cta" });
-		this.confirmBtn.addEventListener("click", () => this.submitAndClose());
+		this.confirmBtn.addEventListener("click", () => {
+			void this.submitAndClose();
+		});
 		this.updateConfirmState();
 	}
 

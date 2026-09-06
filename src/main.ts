@@ -250,12 +250,17 @@ export default class QuranKeyPlugin extends Plugin {
 				registerCommands(this, [createLinkReflectionCommand(this.services, categoryId)]);
 			},
 			unregisterReflectionCategoryCommand: (categoryId: string) => {
+				interface InternalApp {
+					commands?: {
+						removeCommand?: (id: string) => void;
+					};
+				}
 				try {
 					const commandId = `${this.manifest.id}:link-reflection-${categoryId}`;
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(this.app as any).commands?.removeCommand?.(commandId);
+					const internalApp = this.app as unknown as InternalApp;
+					internalApp.commands?.removeCommand?.(commandId);
 				} catch {
-					// Unofficial/undocumented API — degrade silently.
+					// Degrading gracefully if unofficial API is unavailable
 				}
 			},
 		};

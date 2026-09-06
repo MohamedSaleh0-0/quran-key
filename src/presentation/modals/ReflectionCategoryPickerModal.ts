@@ -43,15 +43,16 @@ export class ReflectionCategoryPickerModal extends SuggestModal<PickerItem> {
 			const row = el.createDiv({ cls: "quran-key-picker-item-row" });
 			row.createSpan({ text: item.category.name, cls: "quran-key-picker-item-name" });
 			if (item.category.isBuiltin) {
-				row.createSpan({ text: isAr ? " (أساسي)" : " (builtin)", cls: "quran-key-modal-alias" });
+				row.createSpan({ text: isAr ? "" : " (builtin)", cls: "quran-key-modal-alias" });
 			}
 		}
 	}
 
-	async onChooseSuggestion(item: PickerItem): Promise<void> {
+	onChooseSuggestion(item: PickerItem): void {
 		if (item.isNew) {
-			const category = await this.createCategory(item.name);
-			void this.onChoose(category);
+			void this.createCategory(item.name).then((category) => {
+				void this.onChoose(category);
+			});
 		} else {
 			void this.onChoose(item.category);
 		}
