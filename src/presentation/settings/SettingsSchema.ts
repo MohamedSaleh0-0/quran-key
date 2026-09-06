@@ -17,19 +17,6 @@ export interface SettingsSectionDefinition {
 	fields: SettingFieldDefinition[];
 }
 
-/**
- * Every simple (single-control) setting lives here. Composite sections —
- * favorite books, custom tafsir sources, resolution order, normalization
- * rules, category management, numeric tunables — are bespoke renderers in
- * QuranKeySettingsTab.ts because they need add/remove/reorder UI a single
- * `Setting` control can't express; everything else is genuinely additive.
- *
- * Heading-level fields (rangeHeadingLevel, bookHeadingLevel) are plain
- * "text" fields, not a dropdown — a fixed H3-H5 menu turned out to be a
- * hardcoded literal wearing a settings costume; see docs/ARCHITECTURE.md
- * §9. Category-specific heading levels live in the category management
- * UI instead, since they're per-category, not global.
- */
 export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 	{
 		id: "text",
@@ -167,20 +154,23 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				key: "quranFontFamily",
 				type: "text",
 				label: { ar: "نوع الخط المصحفي", en: "Font family" },
-				description: { ar: "الخط المستخدم للنص داخل أقواس الآية (مثل 'Amiri').", en: "Font used for text inside the verse wrapper glyphs." },
+				description: {
+					ar: "الخط المدمج الافتراضي هو خط مجمع الملك فهد (KFGQPC Uthmanic Script HAFS) مطابق لتطبيق آية، مع خط Amiri Quran كبديل.",
+					en: "Default bundled font is King Fahd Complex (KFGQPC Uthmanic Script HAFS), with Amiri Quran as fallback.",
+				},
 			},
 			{
 				key: "quranFontSize",
 				type: "slider",
 				label: { ar: "حجم الخط", en: "Font size" },
 				description: { ar: "حجم خط الآية بوحدة (em) نسبةً لمتن النص.", en: "Ayah font size in em, relative to body text." },
-				slider: { min: 0.8, max: 2, step: 0.05 },
+				slider: { min: 0.8, max: 2.5, step: 0.05 },
 			},
 			{
 				key: "quranLineHeight",
 				type: "slider",
 				label: { ar: "ارتفاع السطر", en: "Line height" },
-				description: { ar: "تباعد الأسطر لمنع تداخل الحركات وعلامات الوقف.", en: "Line spacing to prevent tashkeel/waqf marks overlapping." },
+				description: { ar: "تباعد الأسطر لمنع تداخل الحركات وعلامات الوقف (الافتراضي 2.4).", en: "Line spacing to prevent tashkeel/waqf marks overlapping (default 2.4)." },
 				slider: { min: 1.5, max: 3.5, step: 0.1 },
 			},
 			{
@@ -194,8 +184,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "toggle",
 				label: { ar: "تنسيق الأرقام المزخرفة", en: "Style ornate numbers" },
 				description: {
-					ar: "عند التفعيل، يُميَّز الرقم المزخرف بصرياً في المعاينة المباشرة وعرض القراءة عبر الصنف .quran-key-ornate-number، بمعزل عن نص الآية المحيط.",
-					en: "When enabled, ornate ayah numbers get their own visual highlight in Live Preview and Reading view via the .quran-key-ornate-number class, independent of the surrounding ayah text.",
+					ar: "عند التفعيل، يُميَّز الرقم المزخرف بصرياً في المعاينة المباشرة وعرض القراءة عبر الصنف .quran-key-ornate-number.",
+					en: "When enabled, ornate ayah numbers get their own visual highlight in Live Preview and Reading view.",
 				},
 			},
 			{
@@ -203,8 +193,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "textarea",
 				label: { ar: "CSS مخصص", en: "Custom CSS" },
 				description: {
-					ar: "يُلحق حرفياً بعد المتغيرات المولّدة تلقائياً. صنفان مفيدان: .cm-quran-key-text لنص الآية كاملاً، .quran-key-ornate-number للرقم المزخرف وحده.",
-					en: "Appended verbatim after the auto-generated CSS variables. Useful hooks: .cm-quran-key-text for the whole ayah, .quran-key-ornate-number for just the ornate number.",
+					ar: "يُلحق حرفياً بعد المتغيرات المولّدة تلقائياً.",
+					en: "Appended verbatim after the auto-generated CSS variables.",
 				},
 			},
 		],
@@ -218,8 +208,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "text",
 				label: { ar: "مجلد ملاحظات الآيات الموحّدة", en: "Unified ayah notes folder" },
 				description: {
-					ar: "المجلد الذي تُحفظ فيه ملاحظة الآية الموحّدة (تشمل كل تصنيف وضعه المستخدم على «موحّد»).",
-					en: "Folder holding each ayah's unified note (used by every category set to \"unified\").",
+					ar: "المجلد الذي تُحفظ فيه ملاحظة الآية الموحّدة.",
+					en: "Folder holding each ayah's unified note.",
 				},
 			},
 			{
@@ -227,8 +217,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "toggle",
 				label: { ar: "تضمين نص الآية في أول الملاحظة", en: "Include ayah text at the top of the note" },
 				description: {
-					ar: "يُكتب مرة واحدة فقط عند إنشاء الملاحظة لأول مرة، وليس مع كل مُدخل جديد.",
-					en: "Written once, when the note is first created — not repeated with every new entry.",
+					ar: "يُكتب مرة واحدة فقط عند إنشاء الملاحظة لأول مرة.",
+					en: "Written once, when the note is first created.",
 				},
 			},
 			{
@@ -236,8 +226,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "dropdown",
 				label: { ar: "ترتيب المُدخلات الجديدة", en: "New-entry placement" },
 				description: {
-					ar: "مباشرة أسفل العنوان: الأحدث يظهر أولاً. نهاية القسم: ترتيب زمني (الأقدم أولاً).",
-					en: "Directly under the heading: newest first. End of section: chronological (oldest first).",
+					ar: "مباشرة أسفل العنوان: الأحدث يظهر أولاً. نهاية القسم: ترتيب زمني.",
+					en: "Directly under the heading: newest first. End of section: chronological.",
 				},
 				dropdownOptions: [
 					{ value: "afterHeading", label: "afterHeading" },
@@ -246,11 +236,11 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 			},
 			{
 				key: "reflectionEntrySeparator",
-				type: "text",
+				type: "textarea",
 				label: { ar: "الفاصل بين المُدخلات", en: "Separator between entries" },
 				description: {
-					ar: "يُدرج بين كل مُدخل والذي يليه. اتركه فارغاً لعدم وجود فاصل. الافتراضي خط أفقي (---).",
-					en: "Inserted between consecutive entries. Leave empty for no separator. Default is a horizontal rule (---).",
+					ar: "يُدرج بين كل مُدخل والذي يليه. يدعم أسطر Enter أو \\n. اتركه فارغاً تماماً للقوائم النقطية.",
+					en: "Inserted between entries. Supports newlines or \\n. Leave empty for continuous lists.",
 				},
 			},
 			{
@@ -258,8 +248,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "toggle",
 				label: { ar: "استبدال النص المحدد برابط للآية", en: "Replace selection with a backlink" },
 				description: {
-					ar: "عند التفعيل (الافتراضي)، يُستبدل النص المحدد في مكانه الأصلي برابط لملاحظة الآية بدل حذفه بلا أثر. عند التعطيل يبقى النص كما هو (نسخ).",
-					en: "When enabled (default), the selected text is replaced in its original note with a backlink to the ayah note, instead of being erased with no trace. When disabled, the text is left exactly as-is (a copy).",
+					ar: "عند التفعيل، يُستبدل النص المحدد برابط لملاحظة الآية بدل حذفه. عند التعطيل يبقى النص كما هو.",
+					en: "When enabled, the selected text is replaced with a backlink to the ayah note.",
 				},
 			},
 			{
@@ -267,8 +257,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "text",
 				label: { ar: "صيغة نص الرابط (alias)", en: "Backlink alias template" },
 				description: {
-					ar: "{surah} و{verse} و{ayahText} متاحة. اتركه فارغاً لرابط بلا alias، أي [[عنوان الملاحظة]] كما هو.",
-					en: "{surah}, {verse}, {ayahText} available. Leave empty for a plain [[Note Title]] link with no alias.",
+					ar: "{surah} و{verse} و{ayahText} متاحة. اتركه فارغاً لرابط بلا alias.",
+					en: "{surah}, {verse}, {ayahText} available. Leave empty for no alias.",
 				},
 			},
 			{
@@ -277,7 +267,7 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				label: { ar: "صيغة إحاطة الرابط", en: "Backlink wrap template" },
 				description: {
 					ar: "{link} هو المتغيّر الوحيد. مثال: \"↳ نُقل إلى {link}\".",
-					en: 'Only {link} is available as a placeholder. Example: "↳ moved to {link}".',
+					en: 'Only {link} is available as a placeholder.',
 				},
 			},
 			{
@@ -285,8 +275,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "text",
 				label: { ar: "صيغة عنوان ملف الآية", en: "Ayah note title format" },
 				description: {
-					ar: "يجب أن تحوي {ayahText}؛ يمكن أيضاً استخدام {surah} و{verse}. مثال: \"{ayahText} ({surah} {verse})\".",
-					en: 'Must contain {ayahText}; {surah} and {verse} are also available, e.g. "{ayahText} ({surah} {verse})".',
+					ar: "يجب أن تحوي {ayahText}؛ يمكن أيضاً استخدام {surah} و{verse}.",
+					en: 'Must contain {ayahText}; {surah} and {verse} are also available.',
 				},
 			},
 			{
@@ -294,8 +284,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "text",
 				label: { ar: "صيغة بداية كل مُدخل", en: "Entry prefix format" },
 				description: {
-					ar: "{date} هو المتغيّر الوحيد المتاح. أمثلة: \"### {date}\" لعنوان، \"- {date}\" لقائمة نقطية، \"1. {date}\" لقائمة مرقّمة، أو اتركه فارغاً بلا أي بداية.",
-					en: 'Only {date} is available as a placeholder. Examples: "### {date}" for a heading, "- {date}" for a bullet, "1. {date}" for a numbered item, or leave it empty for no prefix at all.',
+					ar: "{date} هو المتغيّر الوحيد المتاح. أمثلة: \"### {date}\" أو \"- {date}\".",
+					en: 'Only {date} is available as a placeholder.',
 				},
 			},
 		],

@@ -22,9 +22,9 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	referenceFormat: "[{surah}:{verse}]",
 	normalizationRules: seedNormalizationRules(),
 
-	// Qur'anic text styling (مطابق للمصاحف الرسمية وتطبيق آية)
-	quranFontFamily: "'Amiri Quran', 'KFGQPC Uthmanic Script HAFS', 'KFGQPC Uthman Taha Naskh', 'Amiri', serif",
-	quranFontSize: 1.25,
+	// Qur'anic text styling (تطبيق آية ومصحف المدينة)
+	quranFontFamily: "'KFGQPC Uthmanic Script HAFS', 'Amiri Quran', serif",
+	quranFontSize: 1.3,
 	quranLineHeight: 2.4,
 	quranColor: "#dfc56b",
 	styleOrnateNumbers: true,
@@ -63,10 +63,6 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	includeAyahTextInReflectionNote: true,
 };
 
-/** v1 stored the literal string "[Surah:Verse]" as a display-only setting
- *  that nothing ever read (see docs/REQUIREMENTS.md NFR-3). If we see that
- *  exact legacy value on load, upgrade it to the real template so v1 users
- *  don't silently get a non-functional reference format. */
 export function migrateLegacySettings(raw: Partial<PluginConfig> | undefined): Partial<PluginConfig> {
 	if (!raw) return {};
 	let migrated = raw;

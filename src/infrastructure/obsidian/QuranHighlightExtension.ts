@@ -1,6 +1,7 @@
 import { Decoration, MatchDecorator, ViewPlugin } from "@codemirror/view";
 import type { DecorationSet, EditorView, ViewUpdate } from "@codemirror/view";
 import type { PluginConfig } from "../../config/types";
+import { DEFAULT_SETTINGS } from "../../config/defaults";
 
 const HIGHLIGHT_CLASS = "cm-quran-key-text";
 const ORNATE_NUMBER_CLASS = "quran-key-ornate-number";
@@ -32,8 +33,8 @@ export function createQuranHighlightExtension(wrapperStart: string, wrapperEnd: 
 	);
 }
 
-export function createOrnateNumberHighlightExtension(ringGlyph: string) {
-	const pattern = new RegExp(`${escapeRegex(ringGlyph)}[${ARABIC_INDIC_DIGITS}]+`, "g");
+export function createOrnateNumberHighlightExtension() {
+	const pattern = new RegExp(`[${ARABIC_INDIC_DIGITS}]+`, "g");
 	const decorator = new MatchDecorator({
 		regexp: pattern,
 		decoration: Decoration.mark({ class: ORNATE_NUMBER_CLASS }),
@@ -53,13 +54,15 @@ export function createOrnateNumberHighlightExtension(ringGlyph: string) {
 	);
 }
 
-export function createOrnateNumberPostProcessor(ringGlyph: string): (el: HTMLElement) => void {
-	const pattern = new RegExp(`(${escapeRegex(ringGlyph)}[${ARABIC_INDIC_DIGITS}]+)`, "g");
+export function createOrnateNumberPostProcessor(): (el: HTMLElement) => void {
+	const pattern = new RegExp(`[${ARABIC_INDIC_DIGITS}]+`, "g");
 
 	function walk(node: Node): void {
 		if (node.nodeType === Node.TEXT_NODE) {
 			const text = node.nodeValue || "";
-			if (text.includes(ringGlyph)) {
+			pattern.lastIndex = 0;
+			if (pattern.test(text)) {
+				pattern.lastIndex = 0;
 				const frag = createFragment();
 				let lastIndex = 0;
 				let m: RegExpExecArray | null;
@@ -116,11 +119,15 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 }
 
 export function applyStyleVariables(settings: PluginConfig): void {
-	document.body.style.setProperty("--quran-key-font-family", settings.quranFontFamily);
-	document.body.style.setProperty("--quran-key-font-size", `${settings.quranFontSize}em`);
-	document.body.style.setProperty("--quran-key-line-height", String(settings.quranLineHeight));
-	document.body.style.setProperty("--quran-key-line-height-loose", String(settings.quranLineHeight + 0.4));
-	document.body.style.setProperty("--quran-key-color", settings.quranColor);
+	const fontFamily = settings.quranFontFamily?.trim() || DEFAULT_SETTINGS.quranFontFamily;
+	const fontSize = settings.quranFontSize || DEFAULT_SETTINGS.quranFontSize;
+	const lineHeight = settings.quranLineHeight || DEFAULT_SETTINGS.quranLineHeight;
+
+	document.body.style.setProperty("--quran-key-font-family", fontFamily);
+	document.body.style.setProperty("--quran-key-font-size", `${fontSize}em`);
+	document.body.style.setProperty("--quran-key-line-height", String(lineHeight));
+	document.body.style.setProperty("--quran-key-line-height-loose", String(lineHeight + 0.4));
+	document.body.style.setProperty("--quran-key-color", settings.quranColor || DEFAULT_SETTINGS.quranColor);
 
 	let customStyleEl = document.getElementById(CUSTOM_STYLE_TAG_ID) as HTMLStyleElement | null;
 	if (!customStyleEl) {

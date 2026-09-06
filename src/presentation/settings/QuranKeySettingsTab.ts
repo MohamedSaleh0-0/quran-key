@@ -353,6 +353,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 								(c) => c.id !== cat.id
 							);
 							await this.save();
+							this.services.unregisterReflectionCategoryCommand(cat.id);
 							renderList();
 						})
 					);
@@ -375,10 +376,11 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			.addButton((btn) =>
 				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
 					if (!newId.trim() || !newName.trim()) return;
+					const trimmedId = newId.trim();
 					this.services.settings.customReflectionCategories = [
 						...this.services.settings.customReflectionCategories,
 						{
-							id: newId.trim(),
+							id: trimmedId,
 							name: newName.trim(),
 							organizationMode: "unified",
 							headingText: newName.trim(),
@@ -389,6 +391,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 						},
 					];
 					await this.save();
+					this.services.registerReflectionCategoryCommand(trimmedId);
 					renderList();
 				})
 			);

@@ -46,4 +46,17 @@ export interface AppServices {
 	buildReflectionOptions: () => ReflectionLinkOptions;
 	wrapEditor: (editor: Editor) => EditorPort;
 	saveSettings: () => Promise<void>;
+	/** Registers a single reflection category's dedicated command
+	 *  on-the-fly (so it's immediately bindable to a hotkey), without
+	 *  touching any other already-registered command. Used both by the
+	 *  Settings "add category" flow and by ReflectionCategoryPickerModal's
+	 *  "create new" flow — startup instead loops the whole catalog
+	 *  through registerAllCommands. */
+	registerReflectionCategoryCommand: (categoryId: string) => void;
+	/** Best-effort removal of a category's dedicated command (unofficial
+	 *  Obsidian API — see main.ts for the try/catch). If it fails or the
+	 *  API is gone in some future Obsidian version, the command just
+	 *  lingers harmlessly in the palette until the next reload; nothing
+	 *  else is affected. */
+	unregisterReflectionCategoryCommand: (categoryId: string) => void;
 }

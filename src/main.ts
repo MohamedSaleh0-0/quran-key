@@ -44,6 +44,8 @@ import { HttpTafsirRepository } from "./infrastructure/http/HttpTafsirRepository
 import { InMemoryInsertionMemento } from "./infrastructure/memory/InMemoryInsertionMemento";
 
 import type { AppServices } from "./presentation/AppServices";
+import { registerCommands } from "./presentation/commands/CommandRegistry";
+import { createLinkReflectionCommand } from "./presentation/commands/definitions/linkReflection";
 import { registerAllCommands } from "./presentation/commands/registerCommands";
 import { QuranKeySettingsTab } from "./presentation/settings/QuranKeySettingsTab";
 
@@ -75,7 +77,7 @@ export default class QuranKeyPlugin extends Plugin {
 		this.registerMarkdownPostProcessor((el) => {
 			createMarkdownPostProcessor(this.settings.wrapperStart, this.settings.wrapperEnd)(el);
 			if (this.settings.styleOrnateNumbers) {
-				createOrnateNumberPostProcessor(this.settings.ornateRingGlyph)(el);
+				createOrnateNumberPostProcessor()(el);
 			}
 		});
 
@@ -108,7 +110,7 @@ export default class QuranKeyPlugin extends Plugin {
 		this.editorExtension.length = 0;
 		this.editorExtension.push(createQuranHighlightExtension(this.settings.wrapperStart, this.settings.wrapperEnd));
 		if (this.settings.styleOrnateNumbers) {
-			this.editorExtension.push(createOrnateNumberHighlightExtension(this.settings.ornateRingGlyph));
+			this.editorExtension.push(createOrnateNumberHighlightExtension());
 		}
 		this.app.workspace.updateOptions();
 	}
@@ -129,7 +131,7 @@ export default class QuranKeyPlugin extends Plugin {
 			this.settings.maxSlidingWindowWords
 		);
 		const snippetExtractor = new SnippetExtractor(normalizer, this.settings.wrapperStart, this.settings.wrapperEnd);
-		const ornateConverter = new OrnateNumberConverter(this.settings.ornateRingGlyph);
+		const ornateConverter = new OrnateNumberConverter();
 		const formatter = new VerseOutputFormatter(ornateConverter, reference, (text) => normalizer.stripTashkeel(text));
 		const toggle = new ToggleSnippetView(snippetExtractor, formatter);
 
@@ -244,6 +246,18 @@ export default class QuranKeyPlugin extends Plugin {
 			buildReflectionOptions,
 			wrapEditor: (editor: Editor) => new ObsidianEditorAdapter(editor),
 			saveSettings: () => this.saveSettings(),
+			registerReflectionCategoryCommand: (categoryId: string) => {
+				registerCommands(this, [createLinkReflectionCommand(this.services, categoryId)]);
+			},
+			unregisterReflectionCategoryCommand: (categoryId: string) => {
+				try {
+					const commandId = `${this.manifest.id}:link-reflection-${categoryId}`;
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					(this.app as any).commands?.removeCommand?.(commandId);
+				} catch {
+					// Unofficial/undocumented API — degrade silently.
+				}
+			},
 		};
 
 		if (this.services) {

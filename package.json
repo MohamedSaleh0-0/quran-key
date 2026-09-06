@@ -1,12 +1,12 @@
 {
 	"name": "quran-key",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Enrich your Islamic knowledge with Quran research, tafsir, and tadabbur.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"embed-font": "node scripts/embed-font.mjs",
-		"build": "node scripts/embed-font.mjs && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"build:fonts": "node scripts/build-fonts.mjs",
+		"build": "node scripts/build-fonts.mjs && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test": "vitest run"
 	},
 	"license": "MIT",
@@ -21,7 +21,10 @@
 		"eslint-plugin-obsidianmd": "github:obsidianmd/eslint-plugin",
 		"obsidian": "latest",
 		"tslib": "^2.6.0",
+		"ttf2woff2": "^8.0.1",
 		"typescript": "^5.3.0",
-		"vitest": "^1.6.0"
+		"vitest": "^1.6.0",
+		"wasm-ttf2woff": "^1.0.0",
+		"wawoff2": "^2.0.1"
 	}
 }

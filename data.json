@@ -63,7 +63,7 @@
       "enabled": true
     }
   ],
-  "quranFontFamily": "'Amiri', 'KFGQPC Uthman Taha Naskh', serif",
+  "quranFontFamily": "",
   "quranFontSize": 1.1,
   "quranLineHeight": 2.1,
   "quranColor": "#dfc56b",
@@ -90,9 +90,15 @@
   "tafsirFetchDelayMs": 150,
   "tafsirFetchDelayThreshold": 2,
   "customReflectionCategories": [],
+  "ayahNotesFolder": "ملاحظات الآيات",
   "deleteSelectionAfterLinkingReflection": true,
+  "reflectionBacklinkAliasTemplate": "",
+  "reflectionBacklinkWrapTemplate": "{link}",
   "reflectionEntryPrefixTemplate": "- ",
+  "reflectionEntrySeparator": "",
+  "reflectionInsertionMode": "afterHeading",
   "reflectionFileNameTemplate": "{ayahText} ({surah} {verse})",
   "reflectionFileNameAyahTextMaxLength": 120,
+  "includeAyahTextInReflectionNote": true,
   "reflectionEntryHeadingLevel": "###"
 }
