@@ -9,6 +9,7 @@ interface RawAyah {
 	ayah_id: number;
 	surah_name: string;
 	text: string;
+	bismillah?: string;
 	page?: number;
 }
 
@@ -33,6 +34,7 @@ export class ObsidianQuranRepository implements QuranRepository {
 			ayahId: a.ayah_id,
 			surahName: a.surah_name,
 			text: a.text,
+			bismillah: a.bismillah,
 		}));
 
 		this.searchCorpusText = this.ayahs

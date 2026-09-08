@@ -6,4 +6,6 @@ export interface Ayah {
 	readonly ayahId: number;
 	readonly surahName: string;
 	readonly text: string;
+	/** Bismillah rendered before the first ayah in surahs where Tanzil stores it separately. */
+	readonly bismillah?: string;
 }

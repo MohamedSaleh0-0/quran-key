@@ -4,9 +4,10 @@
 	"description": "Toolkit for Islamic studies and Quran research with verse lookup, multi-source tafsir, and reflection notes.",
 	"main": "main.js",
 	"scripts": {
+		"quran:import": "node scripts/import-quran-xml.mjs",
 		"dev": "node esbuild.config.mjs",
 		"build:fonts": "node scripts/build-fonts.mjs",
-		"build": "node scripts/build-fonts.mjs && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"build": "node scripts/import-quran-xml.mjs && node scripts/build-fonts.mjs && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"test": "vitest run"
 	},
 	"license": "MIT",

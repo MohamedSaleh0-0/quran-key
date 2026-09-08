@@ -268,7 +268,8 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		const marker = linkTitle
 			? `[[${linkTitle}|${digits}]]`
 			: `<span class="quran-key-lazy-ayah" data-quran-key-surah="${ayah.surahId}" data-quran-key-ayah="${ayah.ayahId}">${digits}</span>`;
-		return `${ayah.text} ${marker}`.trim();
+		const text = ayah.bismillah ? `${ayah.bismillah} ${ayah.text}` : ayah.text;
+		return `${text} ${marker}`.trim();
 	}
 
 	private async materializeAyahLink(file: TFile, surahId: number, ayahId: number, ayahTitle: string): Promise<void> {

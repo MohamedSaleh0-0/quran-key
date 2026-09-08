@@ -20,6 +20,19 @@ for planned surah/ayah note workflows and the structure of plugin-generated note
 - Typography & Ornate Numbering: Integrated Uthmanic font stack (King Fahd Complex & Amiri Quran) with styled Arabic-Indic numerals in both Live Preview and Reading View.
 - Footnote & Utility Commands: Convert inline citations into markdown footnotes, strip tashkeel, or clean references with single hotkeys.
 
+### Quran text source
+
+The bundled Quran corpus is generated from the retained `quran-uthmani.xml`
+source file: Tanzil Quran Text (Uthmani, Version 1.1). The source file is kept
+unchanged, while `data/ayahs.json` is a generated application format. The
+importer preserves Uthmani text, pause marks, sajdah signs, rubʿ al-ḥizb signs,
+and separately stored Bismillah text.
+
+Run `npm run quran:import` after replacing the source file. The importer
+validates the 114 surahs and 6,236 ayahs before generating the JSON corpus.
+Tanzil attribution and usage terms are available at
+<https://tanzil.net/download/>.
+
 ---
 
 ## Demos & Workflows
