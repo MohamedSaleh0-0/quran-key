@@ -10,6 +10,8 @@ export class LogAyahEntryModal extends Modal {
 	private resultsEl!: HTMLElement;
 	private noteEl!: HTMLTextAreaElement;
 	private sectionEl!: HTMLSelectElement;
+	private rangeEndEl!: HTMLSelectElement;
+	private rangeEndLabel!: HTMLLabelElement;
 	private selectedAyah: Ayah | null = null;
 
 	constructor(app: App, private readonly services: AppServices) {
@@ -34,6 +36,14 @@ export class LogAyahEntryModal extends Modal {
 
 		this.resultsEl = contentEl.createDiv({ cls: "quran-key-picker-list quran-key-entry-results" });
 		this.renderResults();
+		this.rangeEndLabel = contentEl.createEl("label", {
+			text: t(this.locale, "entry.rangeEnd"),
+			cls: "quran-key-entry-label quran-key-entry-range-label",
+		});
+		this.rangeEndEl = contentEl.createEl("select", { cls: "quran-key-entry-section quran-key-entry-range" });
+		this.rangeEndLabel.htmlFor = this.rangeEndEl.id = `quran-key-entry-range-${Date.now()}`;
+		this.rangeEndEl.addEventListener("change", () => undefined);
+		this.renderRangeControl();
 
 		const sectionLabel = contentEl.createEl("label", { text: t(this.locale, "entry.section"), cls: "quran-key-entry-label" });
 		this.sectionEl = contentEl.createEl("select", { cls: "quran-key-entry-section" });
@@ -72,8 +82,29 @@ export class LogAyahEntryModal extends Modal {
 			item.addEventListener("click", () => {
 				this.selectedAyah = ayah;
 				this.renderResults();
+				this.renderRangeControl();
 			});
 		}
+	}
+
+	private renderRangeControl(): void {
+		this.rangeEndEl.empty();
+		const start = this.selectedAyah;
+		const enabled = start !== null;
+		this.rangeEndEl.disabled = !enabled;
+		this.rangeEndLabel.toggleClass("is-hidden", !enabled);
+		if (!start) return;
+
+		const ayahs = this.services.repository
+			.getAllAyahs()
+			.filter((ayah) => ayah.surahId === start.surahId && ayah.ayahId >= start.ayahId);
+		for (const ayah of ayahs) {
+			this.rangeEndEl.createEl("option", {
+				value: String(ayah.ayahId),
+				text: `${ayah.ayahId} — ${ayah.text.slice(0, 80)}`,
+			});
+		}
+		this.rangeEndEl.value = String(start.ayahId);
 	}
 
 	private async submit(): Promise<void> {
@@ -91,6 +122,7 @@ export class LogAyahEntryModal extends Modal {
 		if (!category) return;
 
 		const ayah = this.selectedAyah;
+		const endAyah = Number(this.rangeEndEl.value) || ayah.ayahId;
 		this.close();
 		try {
 			await this.services.useCases.linkReflection.executeDirect(
@@ -99,7 +131,7 @@ export class LogAyahEntryModal extends Modal {
 				ayah.surahId,
 				ayah.surahName,
 				ayah.ayahId,
-				ayah.ayahId,
+				endAyah,
 				this.services.buildReflectionOptions()
 			);
 		} catch {

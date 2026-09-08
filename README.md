@@ -58,7 +58,7 @@ Select your reflection text and choose a category to create or append directly t
 | `Log selection to reflection (choose category)` | Interactive modal to pick or create a reflection category for selected text. |
 | `Link related ayahs` | Multi-select modal to cross-link two or more related verses in frontmatter. |
 | `Open or create Quran surah note` | Choose a surah and open its complete mushaf-style note; ayah notes are created only when reached. |
-| `Log note on Quran ayah` | Search for an ayah, choose a reflection section, and write directly into its note from one modal. |
+| `Log note on Quran ayah` | Search for an ayah, optionally choose a range, select a reflection section, and write directly into the notes from one modal. |
 | `Convert Quran reference to footnote` | Converts inline `[Surah:Ayah]` to a numbered markdown footnote `[^quran1]`. |
 | `Remove Quran reference from line` | Strips matched Qur'anic citations from the current line. |
 | `Strip tashkeel from selection or line` | Removes diacritics/tashkeel from selection or active line. |

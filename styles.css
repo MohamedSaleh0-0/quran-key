@@ -195,6 +195,11 @@ a.quran-key-ayah-note-link:focus-visible {
 	width: 100%;
 }
 
+.quran-key-entry-range-label.is-hidden,
+.quran-key-entry-range:disabled {
+	display: none;
+}
+
 .quran-key-entry-section {
 	padding: 6px;
 }

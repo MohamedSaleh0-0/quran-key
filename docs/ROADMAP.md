@@ -74,6 +74,8 @@ authoritative metadata source has been selected.
 - Add safe repair and reconciliation commands for moved or renamed notes.
 - [x] Build a unified “log ayah entry” modal where the user can choose an ayah,
   choose a section, and write the entry without navigating between notes.
+- [x] Allow the same modal to apply an entry to an optional ayah range within
+  the selected surah.
 - Make the section catalog user-editable while keeping the default UI small
   and focused (for example Tadabbur, Benefits, Tafsir, and Questions).
 - [x] Keep entry dates available through an optional setting; the current dated
