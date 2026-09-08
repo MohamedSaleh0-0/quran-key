@@ -81,6 +81,9 @@ authoritative metadata source has been selected.
 - [x] Keep entry dates available through an optional setting; the current dated
   entry behavior already exists through the `{date}` prefix template.
 
+When entry dates are disabled, a prefix containing `{date}` is omitted as a
+whole so the default `### {date}` template cannot leave an empty heading.
+
 The unified modal should be the main guided workflow, while direct editing of
 ayah notes remains fully supported.
 

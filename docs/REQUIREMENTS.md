@@ -149,7 +149,9 @@ requirements that motivate the v2 rewrite: **customizability** and
 - FR-37: The plugin will provide a unified entry workflow for choosing an
   ayah, choosing a section, and writing the entry into the correct ayah note.
 - FR-38: Entry dates are configurable; users may keep or disable automatic
-  date insertion without losing the entry itself.
+  date insertion without losing the entry itself. If the configured prefix
+  consists of the date placeholder, disabling dates omits that prefix rather
+  than writing an empty heading.
 - FR-39: Users may optionally group a contiguous range or selected set of
   connected ayat into a topic/group note within a surah.
 - FR-40: A topic/group note contains the selected Quran content and links to

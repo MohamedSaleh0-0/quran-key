@@ -185,10 +185,11 @@ export class LinkReflectionToVerses {
 		locale: Locale
 	): string {
 		const lines: string[] = [];
-		const prefix = entryPrefixTemplate
-			.split("{date}")
-			.join(includeReflectionEntryDate ? formatDateISO(new Date()) : "")
-			.trim();
+		const prefix = includeReflectionEntryDate
+			? entryPrefixTemplate.split("{date}").join(formatDateISO(new Date())).trim()
+			: entryPrefixTemplate.includes("{date}")
+				? ""
+				: entryPrefixTemplate.trim();
 		if (prefix) lines.push(prefix, "");
 
 		if (isRange) {
