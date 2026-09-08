@@ -68,4 +68,18 @@ describe("VerseOutputFormatter", () => {
 		expect(output).toContain("[[al-fatihah-1|١]]");
 		expect(output).not.toContain("[[al-fatihah-1|بِسْمِ");
 	});
+
+	it("preserves Uthmani annotation and sequential tanween marks", () => {
+		const reference = VerseReference.compile("[{surah}:{verse}]");
+		const formatter = new VerseOutputFormatter(new OrnateNumberConverter("\u06DD"), reference, (t) => t);
+		const sourceText = "ءَامَنُوا۟ مَثَلًۭا";
+		const output = formatter.format([{ ...ayah, text: sourceText }], {
+			wrapperStart: "\uFD3F",
+			wrapperEnd: "\uFD3E",
+			useOrnateNumbers: false,
+			stripTashkeelOnOutput: false,
+		});
+
+		expect(output).toContain(sourceText);
+	});
 });

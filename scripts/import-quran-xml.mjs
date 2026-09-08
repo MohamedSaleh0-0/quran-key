@@ -4,7 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const sourcePath = path.join(projectRoot, "quran-uthmani.xml");
+const canonicalSourcePath = path.join(projectRoot, "quran-uthmani.xml");
+const displaySourcePath = path.join(projectRoot, "quran-uthmani-sequential.xml");
 const outputPath = path.join(projectRoot, "data", "ayahs.json");
 
 function decodeXmlEntities(value) {
@@ -37,9 +38,9 @@ function requiredNumber(attributes, name, context) {
 	return value;
 }
 
-function parseTanzilXml(xml) {
+function parseTanzilXml(xml, fileName) {
 	if (!xml.includes("Tanzil Quran Text (Uthmani, Version 1.1)")) {
-		throw new Error("quran-uthmani.xml does not identify itself as Tanzil Uthmani v1.1");
+		throw new Error(`${fileName} does not identify itself as Tanzil Uthmani v1.1`);
 	}
 
 	const ayahs = [];
@@ -77,14 +78,53 @@ function parseTanzilXml(xml) {
 		expectedSurahId += 1;
 	}
 
-	if (expectedSurahId !== 115) throw new Error(`Expected 114 surahs, found ${expectedSurahId - 1}`);
-	if (ayahs.length !== 6236) throw new Error(`Expected 6236 ayahs, found ${ayahs.length}`);
+	if (expectedSurahId !== 115) throw new Error(`${fileName}: expected 114 surahs, found ${expectedSurahId - 1}`);
+	if (ayahs.length !== 6236) throw new Error(`${fileName}: expected 6236 ayahs, found ${ayahs.length}`);
 	return ayahs;
 }
 
-const xml = fs.readFileSync(sourcePath, "utf8");
-const ayahs = parseTanzilXml(xml);
-const sha256 = crypto.createHash("sha256").update(xml, "utf8").digest("hex");
+const quranicMarks = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g;
+function letterSkeleton(value) {
+	return value
+		.normalize("NFC")
+		.replace(quranicMarks, "")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+function validateDisplayVariant(canonicalAyahs, displayAyahs) {
+	if (canonicalAyahs.length !== displayAyahs.length) {
+		throw new Error(`Display variant has ${displayAyahs.length} ayahs; canonical source has ${canonicalAyahs.length}`);
+	}
+
+	for (let index = 0; index < canonicalAyahs.length; index += 1) {
+		const canonical = canonicalAyahs[index];
+		const display = displayAyahs[index];
+		const reference = `${canonical.surah_id}:${canonical.ayah_id}`;
+		if (canonical.surah_id !== display.surah_id || canonical.ayah_id !== display.ayah_id) {
+			throw new Error(`Display variant changed ayah ordering at ${reference}`);
+		}
+		if (canonical.surah_name !== display.surah_name) {
+			throw new Error(`Display variant changed the surah name at ${reference}`);
+		}
+		if (letterSkeleton(canonical.text) !== letterSkeleton(display.text)) {
+			throw new Error(`Display variant changed Quran letters at ${reference}`);
+		}
+		if (letterSkeleton(canonical.bismillah ?? "") !== letterSkeleton(display.bismillah ?? "")) {
+			throw new Error(`Display variant changed Bismillah text at ${reference}`);
+		}
+	}
+}
+
+function sha256(value) {
+	return crypto.createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+const canonicalXml = fs.readFileSync(canonicalSourcePath, "utf8");
+const displayXml = fs.readFileSync(displaySourcePath, "utf8");
+const canonicalAyahs = parseTanzilXml(canonicalXml, "quran-uthmani.xml");
+const displayAyahs = parseTanzilXml(displayXml, "quran-uthmani-sequential.xml");
+validateDisplayVariant(canonicalAyahs, displayAyahs);
 const output = {
 	source: {
 		provider: "Tanzil Project",
@@ -93,11 +133,16 @@ const output = {
 		license: "Creative Commons Attribution 3.0",
 		url: "https://tanzil.net/",
 		file: "quran-uthmani.xml",
-		sha256,
-		derivedNotice: "Derived from Tanzil Quran Text (Uthmani, Version 1.1). The original source file is retained unchanged.",
+		canonicalFile: "quran-uthmani.xml",
+		canonicalSha256: sha256(canonicalXml),
+		displayFile: "quran-uthmani-sequential.xml",
+		displaySha256: sha256(displayXml),
+		displayProfile: "sequential-tanween",
+		fontFamily: "me_quran",
+		derivedNotice: "Canonical Tanzil Uthmani text is retained unchanged. The generated text field uses Tanzil's extended sequential-tanween display profile and is validated against the canonical letter skeleton.",
 	},
-	ayahs,
+	ayahs: displayAyahs,
 };
 
 fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`, "utf8");
-console.log(`Imported ${ayahs.length} ayahs from quran-uthmani.xml into data/ayahs.json`);
+console.log(`Imported ${displayAyahs.length} ayahs from quran-uthmani-sequential.xml into data/ayahs.json`);

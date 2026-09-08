@@ -22,15 +22,24 @@ for planned surah/ayah note workflows and the structure of plugin-generated note
 
 ### Quran text source
 
-The bundled Quran corpus is generated from the retained `quran-uthmani.xml`
-source file: Tanzil Quran Text (Uthmani, Version 1.1). The source file is kept
-unchanged, while `data/ayahs.json` is a generated application format. The
+The bundled Quran corpus retains `quran-uthmani.xml` unchanged as the canonical
+reference: Tanzil Quran Text (Uthmani, Version 1.1). The generated
+`data/ayahs.json` uses Tanzil's extended `quran-uthmani-sequential.xml` display
+profile, which adds sequential tanween marks while preserving the same Quranic
+letters and Uthmani signs. The importer validates both files against each other
+before generating the application corpus, and records both source hashes. The
 importer preserves Uthmani text, pause marks, sajdah signs, rubʿ al-ḥizb signs,
-and separately stored Bismillah text.
+and separately stored Bismillah text. The matching embedded `me_quran` font is
+used first for Quran text. Tanzil documents that this font is required for
+correctly rendering sequential tanween data; it also keeps Quranic annotation
+marks such as U+06DF aligned inside the plugin's ornate verse wrapper. The
+canonical source remains available for audit, while the runtime display text is
+never silently normalized or rewritten.
 
 Run `npm run quran:import` after replacing the source file. The importer
-validates the 114 surahs and 6,236 ayahs before generating the JSON corpus.
-Tanzil attribution and usage terms are available at
+validates the 114 surahs and 6,236 ayahs in both source files before generating
+the JSON corpus. Tanzil attribution, display options, and usage terms are
+available at
 <https://tanzil.net/download/>.
 
 ---

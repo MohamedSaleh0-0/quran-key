@@ -21,7 +21,7 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	normalizationRules: seedNormalizationRules(),
 
 	// Qur'anic text styling
-	quranFontFamily: "'KFGQPC Uthmanic Script HAFS', 'Amiri Quran', serif",
+	quranFontFamily: "'me_quran', 'KFGQPC Uthmanic Script HAFS', 'Amiri Quran', serif",
 	quranFontSize: 1.3,
 	quranLineHeight: 2.4,
 	quranColor: "#dfc56b",
