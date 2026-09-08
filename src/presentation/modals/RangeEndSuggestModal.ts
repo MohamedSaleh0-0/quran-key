@@ -114,6 +114,6 @@ export class RangeEndSuggestModal extends SuggestModal<Ayah> {
 			void this.onVerseSelectOverride(rangeAyahs);
 			return;
 		}
-		this.services.useCases.extract.insertAyahs(this.services.wrapEditor(this.editor), this.startPos, this.endPos, rangeAyahs, "");
+		void this.services.useCases.extract.insertAyahs(this.services.wrapEditor(this.editor), this.startPos, this.endPos, rangeAyahs, "");
 	}
 }

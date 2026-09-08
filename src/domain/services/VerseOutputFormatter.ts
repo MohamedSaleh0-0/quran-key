@@ -7,6 +7,9 @@ export interface FormattingOptions {
 	wrapperEnd: string;
 	useOrnateNumbers: boolean;
 	stripTashkeelOnOutput: boolean;
+	/** Optional note titles keyed as `${surahId}:${ayahId}`. Only the ayah
+	 * marker is linked; the Quran text remains plain text. */
+	ayahNoteLinks?: ReadonlyMap<string, string>;
 }
 
 /** Builds the final `﴿ ayah text (n) ﴾ [Surah:n-m]` string. Every glyph is
@@ -23,7 +26,10 @@ export class VerseOutputFormatter {
 		if (ayahs.length === 0) return "";
 		const formatted = ayahs.map((a) => {
 			const text = options.stripTashkeelOnOutput ? this.stripTashkeelFn(a.text) : a.text;
-			return `${text} (${a.ayahId})`;
+			const key = `${a.surahId}:${a.ayahId}`;
+			const target = options.ayahNoteLinks?.get(key);
+			const marker = target ? `[[${target}|(${a.ayahId})]]` : `(${a.ayahId})`;
+			return `${text} ${marker}`;
 		});
 		const core = `${options.wrapperStart} ${formatted.join(" ")} ${options.wrapperEnd}`;
 		const finalCore = options.useOrnateNumbers ? this.ornateConverter.applyOrnateNumbers(core) : core;

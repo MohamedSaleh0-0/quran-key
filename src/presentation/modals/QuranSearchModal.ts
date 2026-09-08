@@ -144,6 +144,6 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 			void this.onVerseSelectOverride([item]);
 			return;
 		}
-		this.services.useCases.extract.insertAyahs(this.services.wrapEditor(this.editor), start, end, [item], this.currentQuery);
+		void this.services.useCases.extract.insertAyahs(this.services.wrapEditor(this.editor), start, end, [item], this.currentQuery);
 	}
 }

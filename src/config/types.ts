@@ -77,10 +77,14 @@ export interface PluginConfig {
 	// --- Reflections ---
 	customReflectionCategories: ReflectionCategoryDescriptor[];
 	ayahNotesFolder: string;
+	surahNotesFolder: string;
+	surahNoteFileNameTemplate: string;
+	linkAyahMarkersOnInsert: boolean;
 	deleteSelectionAfterLinkingReflection: boolean;
 	reflectionBacklinkAliasTemplate: string;
 	reflectionBacklinkWrapTemplate: string;
 	reflectionEntryPrefixTemplate: string;
+	includeReflectionEntryDate: boolean;
 	reflectionEntrySeparator: string;
 	reflectionInsertionMode: ReflectionInsertionMode;
 	reflectionFileNameTemplate: string;

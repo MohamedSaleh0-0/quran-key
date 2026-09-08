@@ -20,6 +20,8 @@ export interface AyahNoteRef {
 }
 
 export interface AyahNoteRepository {
+	ensureSurahNote(surahId: number, surahName: string): Promise<AyahNoteRef>;
+
 	appendEntry(
 		identity: AyahIdentity,
 		category: ReflectionCategory,

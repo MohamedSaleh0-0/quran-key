@@ -195,6 +195,33 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				},
 			},
 			{
+				key: "surahNotesFolder",
+				type: "text",
+				label: { ar: "مجلد ملاحظات السور", en: "Surah notes folder" },
+				description: {
+					ar: "المجلد الذي تُحفظ فيه ملاحظة كل سورة.",
+					en: "Folder where one complete note is saved for each surah.",
+				},
+			},
+			{
+				key: "surahNoteFileNameTemplate",
+				type: "text",
+				label: { ar: "صيغة عنوان ملف السورة", en: "Surah note filename template" },
+				description: {
+					ar: "المتغير المتاح: {surah}.",
+					en: "Available placeholder: {surah}.",
+				},
+			},
+			{
+				key: "linkAyahMarkersOnInsert",
+				type: "toggle",
+				label: { ar: "ربط أرقام الآيات بالملاحظات", en: "Link ayah markers to notes" },
+				description: {
+					ar: "عند إدراج آية من الاستخراج أو البحث، ينشئ ملاحظتها ويربط رقمها فقط، دون ربط نص الآية.",
+					en: "When inserting an ayah from extraction or search, create its note and link only the ayah marker, not the Quran text.",
+				},
+			},
+			{
 				key: "includeAyahTextInReflectionNote",
 				type: "toggle",
 				label: { ar: "تضمين نص الآية في أول الملاحظة", en: "Include ayah text at the top" },
@@ -268,6 +295,15 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				description: {
 					ar: "المتغير المتاح: {date}. مثال: «### {date}».",
 					en: "Available placeholder: {date}. e.g. '### {date}'.",
+				},
+			},
+			{
+				key: "includeReflectionEntryDate",
+				type: "toggle",
+				label: { ar: "إضافة تاريخ الإدخال", en: "Add entry date" },
+				description: {
+					ar: "يُدرج التاريخ عند احتواء صيغة الإدخال على {date}.",
+					en: "Insert the date when the entry prefix contains {date}.",
 				},
 			},
 		],

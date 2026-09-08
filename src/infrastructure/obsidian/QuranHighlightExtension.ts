@@ -4,7 +4,10 @@ import type { PluginConfig } from "../../config/types";
 import { DEFAULT_SETTINGS } from "../../config/defaults";
 
 const HIGHLIGHT_CLASS = "cm-quran-key-text";
+const MARKDOWN_BLOCK_CLASS = "quran-key-text-block";
 const ORNATE_NUMBER_CLASS = "quran-key-ornate-number";
+const AYAH_NOTE_LINK_CLASS = "quran-key-ayah-note-link";
+const LAZY_AYAH_CLASS = "quran-key-lazy-ayah";
 const ARABIC_INDIC_DIGITS = "\u0660-\u0669";
 
 function escapeRegex(literal: string): string {
@@ -114,7 +117,49 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 		}
 	}
 
-	return walk;
+	return (el: HTMLElement) => {
+		walk(el);
+		// A wikilink around the ayah marker splits the Quran text into several
+		// DOM nodes, so the text-node walker above cannot see both wrapper
+		// glyphs. Mark the containing block as a fallback styling boundary.
+		for (const block of Array.from(el.querySelectorAll("p, li, blockquote"))) {
+			const text = block.textContent ?? "";
+			if (text.includes(wrapperStart) && text.includes(wrapperEnd)) block.classList.add(MARKDOWN_BLOCK_CLASS);
+		}
+		for (const link of Array.from(el.querySelectorAll("a.internal-link"))) {
+			const label = link.textContent?.trim() ?? "";
+			if (/^[()\u0660-\u0669\u06F0-\u06F9]+$/.test(label)) link.classList.add(AYAH_NOTE_LINK_CLASS);
+		}
+	};
+}
+
+export function createLazyAyahMarkerPostProcessor(
+	openAyahNote: (surahId: number, ayahId: number) => Promise<void>
+): (el: HTMLElement) => void {
+	return (el) => {
+		for (const marker of Array.from(el.querySelectorAll<HTMLElement>(`[data-quran-key-surah][data-quran-key-ayah].${LAZY_AYAH_CLASS}`))) {
+			if (marker.dataset.quranKeyBound === "true") continue;
+			const surahId = Number(marker.dataset.quranKeySurah);
+			const ayahId = Number(marker.dataset.quranKeyAyah);
+			if (!Number.isInteger(surahId) || !Number.isInteger(ayahId)) continue;
+
+			marker.dataset.quranKeyBound = "true";
+			marker.setAttribute("role", "button");
+			marker.setAttribute("tabindex", "0");
+			marker.setAttribute("aria-label", `Open ayah note ${surahId}:${ayahId}`);
+
+			const open = () => {
+				void openAyahNote(surahId, ayahId).catch(() => undefined);
+			};
+			marker.addEventListener("click", open);
+			marker.addEventListener("keydown", (event) => {
+				if (event.key === "Enter" || event.key === " ") {
+					event.preventDefault();
+					open();
+				}
+			});
+		}
+	};
 }
 
 export function applyStyleVariables(settings: PluginConfig): void {

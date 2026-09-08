@@ -11,7 +11,8 @@
 /* --- المتغيرات والتنسيق الأساسي للشواهد القرآنية (محرر + عرض القراءة) --- */
 .cm-quran-key-text,
 .quran-key-text,
-span.cm-quran-key-text {
+span.cm-quran-key-text,
+.quran-key-text-block {
 	font-family: var(--quran-key-font-family, 'KFGQPC Uthmanic Script HAFS', 'Amiri Quran', serif);
 	font-size: var(--quran-key-font-size, 1.3em);
 	line-height: var(--quran-key-line-height, 2.4);
@@ -25,6 +26,30 @@ span.cm-quran-key-text {
 	font-variant-ligatures: contextual common-ligatures;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
+}
+
+/* The ayah marker remains a real Obsidian link, but should look like a
+ * Quranic end marker rather than a conventional underlined hyperlink. */
+a.quran-key-ayah-note-link,
+a.quran-key-ayah-note-link:hover {
+	color: inherit;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+/* Uncreated ayah notes use the same visible marker, while Reading View makes
+ * the marker itself the lazy action target. */
+span.quran-key-lazy-ayah {
+	color: inherit;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+span.quran-key-lazy-ayah:focus-visible,
+a.quran-key-ayah-note-link:focus-visible {
+	outline: 1px solid var(--interactive-accent);
+	outline-offset: 2px;
+	border-radius: 50%;
 }
 
 /* --- الرقم المزخرف: حلقة الخلفية + الرقم متمركز فوقها --- */
@@ -148,6 +173,36 @@ span.cm-quran-key-text {
 .quran-key-picker-hint {
 	font-size: 0.8em;
 	color: var(--text-muted);
+}
+
+.quran-key-entry-modal {
+	min-width: min(720px, 90vw);
+}
+
+.quran-key-entry-results {
+	max-height: 240px;
+}
+
+.quran-key-entry-label {
+	display: block;
+	margin-top: 14px;
+	margin-bottom: 5px;
+	color: var(--text-muted);
+}
+
+.quran-key-entry-section,
+.quran-key-entry-textarea {
+	width: 100%;
+}
+
+.quran-key-entry-section {
+	padding: 6px;
+}
+
+.quran-key-entry-textarea {
+	min-height: 140px;
+	margin-top: 12px;
+	resize: vertical;
 }
 
 .quran-key-settings-textarea {

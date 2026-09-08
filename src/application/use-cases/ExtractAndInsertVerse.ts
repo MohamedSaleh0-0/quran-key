@@ -47,23 +47,24 @@ export class ExtractAndInsertVerse {
 		private readonly toggle: ToggleSnippetView,
 		private readonly wrapperStart: string,
 		private readonly wrapperEnd: string,
-		private readonly getFormattingOptions: () => FormattingOptions
+		private readonly prepareFormattingOptions: (ayahs: readonly Ayah[]) => Promise<FormattingOptions>
 	) {}
 
-	execute(editor: EditorPort, onAmbiguity: AmbiguityHandler): boolean {
+	async execute(editor: EditorPort, onAmbiguity: AmbiguityHandler): Promise<boolean> {
 		const cursor = editor.getCursor();
 		const currentLine = editor.getLine(cursor.line);
 
 		// FR-9
 		const last = this.memento.get();
 		if (last) {
+			const formattingOptions = await this.prepareFormattingOptions(last.ayahs);
 			const toggled = this.toggle.attempt(
 				last,
 				currentLine,
 				cursor.line,
 				this.wrapperStart,
 				this.wrapperEnd,
-				this.getFormattingOptions()
+				formattingOptions
 			);
 			if (toggled) {
 				editor.setLine(cursor.line, toggled.output);
@@ -91,7 +92,7 @@ export class ExtractAndInsertVerse {
 			const cropped = this.snippetExtractor.extractRange(actualAyah.text, parts[0].trim(), parts[1]?.trim() ?? "");
 			if (cropped && cropped !== actualAyah.text) {
 				const dummy: Ayah = { ...actualAyah, text: cropped };
-				editor.setLine(cursor.line, this.formatter.format([dummy], this.getFormattingOptions()));
+				editor.setLine(cursor.line, this.formatter.format([dummy], await this.prepareFormattingOptions([actualAyah])));
 				return true;
 			}
 		}
@@ -99,7 +100,7 @@ export class ExtractAndInsertVerse {
 		// FR-11
 		const selectedText = editor.getSelection().trim();
 		if (selectedText.length > 0) {
-			return this.resolveTextQuery(editor, selectedText, editor.getCursor("from"), editor.getCursor("to"), onAmbiguity);
+			return await this.resolveTextQuery(editor, selectedText, editor.getCursor("from"), editor.getCursor("to"), onAmbiguity);
 		}
 
 		// FR-12
@@ -109,7 +110,7 @@ export class ExtractAndInsertVerse {
 			const innerText = curlyMatch[1].trim();
 			const start: EditorPosition = { line: cursor.line, ch: currentLine.indexOf(fullCurly) };
 			const end: EditorPosition = { line: cursor.line, ch: start.ch + fullCurly.length };
-			return this.resolveTextQuery(editor, innerText, start, end, onAmbiguity);
+			return await this.resolveTextQuery(editor, innerText, start, end, onAmbiguity);
 		}
 
 		if (currentLine.trim().length === 0) return false;
@@ -126,32 +127,32 @@ export class ExtractAndInsertVerse {
 			const targetIds = this.parseVerseNumbers(match[2]);
 			const matched = this.repository.getAllAyahs().filter((a) => a.surahId === surah.id && targetIds.includes(a.ayahId));
 			if (matched.length > 0) {
-				this.insert(editor, start, end, matched, "");
+				await this.insert(editor, start, end, matched, "");
 				return true;
 			}
 		}
 
 		// FR-14
-		return this.executeSlidingWindow(editor, currentLine, cursor.line, onAmbiguity);
+		return await this.executeSlidingWindow(editor, currentLine, cursor.line, onAmbiguity);
 	}
 
-	private resolveTextQuery(
+	private async resolveTextQuery(
 		editor: EditorPort,
 		query: string,
 		start: EditorPosition,
 		end: EditorPosition,
 		onAmbiguity: AmbiguityHandler
-	): boolean {
+	): Promise<boolean> {
 		const matches = this.phraseMatcher.findMatches(query, this.repository.getAllAyahs());
 		if (matches.length === 1) {
-			this.insert(editor, start, end, [matches[0]], query);
+			await this.insert(editor, start, end, [matches[0]], query);
 			return true;
 		}
 		if (matches.length > 1) {
-			this.insert(editor, start, end, [matches[0]], query);
+			await this.insert(editor, start, end, [matches[0]], query);
 			const newEnd: EditorPosition = {
 				line: start.line,
-				ch: start.ch + this.formatter.format([matches[0]], this.getFormattingOptions()).length,
+				ch: start.ch + this.formatter.format([matches[0]], await this.prepareFormattingOptions([matches[0]])).length,
 			};
 			onAmbiguity(query, matches, start, newEnd); // FR-15
 			return true;
@@ -159,12 +160,12 @@ export class ExtractAndInsertVerse {
 		return false;
 	}
 
-	private executeSlidingWindow(
+	private async executeSlidingWindow(
 		editor: EditorPort,
 		lineText: string,
 		lineIdx: number,
 		onAmbiguity: AmbiguityHandler
-	): boolean {
+	): Promise<boolean> {
 		const slid = this.slidingWindow.find(lineText, this.repository.getAllAyahs(), this.repository.getSearchCorpusText());
 		if (!slid) return false;
 		const matchChIndex = lineText.indexOf(slid.segment);
@@ -174,12 +175,12 @@ export class ExtractAndInsertVerse {
 		const end: EditorPosition = { line: lineIdx, ch: matchChIndex + slid.segment.length };
 
 		if (slid.ayahs.length === 1) {
-			this.insert(editor, start, end, [slid.ayahs[0]], slid.segment);
+			await this.insert(editor, start, end, [slid.ayahs[0]], slid.segment);
 		} else {
-			this.insert(editor, start, end, [slid.ayahs[0]], slid.segment);
+			await this.insert(editor, start, end, [slid.ayahs[0]], slid.segment);
 			const newEnd: EditorPosition = {
 				line: start.line,
-				ch: start.ch + this.formatter.format([slid.ayahs[0]], this.getFormattingOptions()).length,
+				ch: start.ch + this.formatter.format([slid.ayahs[0]], await this.prepareFormattingOptions([slid.ayahs[0]])).length,
 			};
 			onAmbiguity(slid.segment, slid.ayahs, start, newEnd);
 		}
@@ -189,15 +190,15 @@ export class ExtractAndInsertVerse {
 	/** Public so presentation code (the search/range-end modals) can reuse
 	 *  the exact same insert-and-remember-for-toggle behavior as the
 	 *  extract command itself, instead of duplicating it. */
-	insertAyahs(editor: EditorPort, start: EditorPosition, end: EditorPosition, ayahs: Ayah[], query: string): string {
-		const output = this.formatter.format(ayahs, this.getFormattingOptions());
+	async insertAyahs(editor: EditorPort, start: EditorPosition, end: EditorPosition, ayahs: Ayah[], query: string): Promise<string> {
+		const output = this.formatter.format(ayahs, await this.prepareFormattingOptions(ayahs));
 		editor.replaceRange(output, start, end);
 		this.memento.set({ line: start.line, query, ayahs, isSnippet: false });
 		return output;
 	}
 
-	private insert(editor: EditorPort, start: EditorPosition, end: EditorPosition, ayahs: Ayah[], query: string): void {
-		this.insertAyahs(editor, start, end, ayahs, query);
+	private async insert(editor: EditorPort, start: EditorPosition, end: EditorPosition, ayahs: Ayah[], query: string): Promise<void> {
+		await this.insertAyahs(editor, start, end, ayahs, query);
 	}
 
 	private parseVerseNumbers(rangeStr: string): number[] {

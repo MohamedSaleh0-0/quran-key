@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS, migrateLegacySettings } from "./config/defaults";
 import type { PluginConfig } from "./config/types";
 import type { TafsirBook } from "./domain/entities/TafsirBook";
 import type { ReflectionCategory } from "./domain/entities/ReflectionCategory";
+import type { Ayah } from "./domain/entities/Ayah";
 import { ArabicNormalizer } from "./domain/services/ArabicNormalizer";
 import { PhraseMatcher } from "./domain/services/PhraseMatcher";
 import { FuzzyMatcher } from "./domain/services/FuzzyMatcher";
@@ -35,6 +36,7 @@ import { ObsidianAyahNoteRepository } from "./infrastructure/obsidian/ObsidianAy
 import {
 	applyStyleVariables,
 	cleanupStyleVariables,
+	createLazyAyahMarkerPostProcessor,
 	createMarkdownPostProcessor,
 	createOrnateNumberHighlightExtension,
 	createOrnateNumberPostProcessor,
@@ -60,6 +62,7 @@ export default class QuranKeyPlugin extends Plugin {
 	private readonly notice = new ObsidianNoticeAdapter();
 	private readonly memento = new InMemoryInsertionMemento();
 	private readonly editorExtension: Extension[] = [];
+	private lazyAyahNoteOpener: (surahId: number, ayahId: number) => Promise<void> = async () => undefined;
 
 	services!: AppServices;
 
@@ -76,6 +79,7 @@ export default class QuranKeyPlugin extends Plugin {
 
 		this.registerMarkdownPostProcessor((el) => {
 			createMarkdownPostProcessor(this.settings.wrapperStart, this.settings.wrapperEnd)(el);
+			createLazyAyahMarkerPostProcessor((surahId, ayahId) => this.lazyAyahNoteOpener(surahId, ayahId))(el);
 			if (this.settings.styleOrnateNumbers) {
 				createOrnateNumberPostProcessor()(el);
 			}
@@ -147,6 +151,12 @@ export default class QuranKeyPlugin extends Plugin {
 		const ayahNotes = new ObsidianAyahNoteRepository(this.app, () => ({
 			ayahNotesFolder: this.settings.ayahNotesFolder,
 			reflectionFileNameAyahTextMaxLength: this.settings.reflectionFileNameAyahTextMaxLength,
+			surahNotesFolder: this.settings.surahNotesFolder,
+			surahNoteFileNameTemplate: this.settings.surahNoteFileNameTemplate,
+			referenceFormat: this.settings.referenceFormat,
+			wrapperStart: this.settings.wrapperStart,
+			wrapperEnd: this.settings.wrapperEnd,
+			getSurahAyahs: (surahId) => this.repository.getAllAyahs().filter((ayah) => ayah.surahId === surahId),
 		}));
 
 		const getFormattingOptions = (): FormattingOptions => ({
@@ -155,6 +165,50 @@ export default class QuranKeyPlugin extends Plugin {
 			useOrnateNumbers: true,
 			stripTashkeelOnOutput: this.settings.stripTashkeel,
 		});
+
+		this.lazyAyahNoteOpener = async (surahId, ayahId) => {
+			const ayah = this.repository.findAyah(surahId, ayahId);
+			if (!ayah) return;
+			const title = await ayahNotes.resolveUnifiedNoteTitle(
+				{
+					surahId: ayah.surahId,
+					surahName: ayah.surahName,
+					ayahId: ayah.ayahId,
+					ayahTextRaw: ayah.text,
+					ayahTextBodyFormatted: formatter.format([ayah], getFormattingOptions()),
+				},
+				this.settings.reflectionFileNameTemplate,
+				this.settings.includeAyahTextInReflectionNote,
+				true
+			);
+			if (title) await this.app.workspace.openLinkText(title, "", false);
+		};
+
+		const prepareFormattingOptions = async (ayahs: readonly Ayah[]): Promise<FormattingOptions> => {
+			const base = getFormattingOptions();
+			if (!this.settings.linkAyahMarkersOnInsert) return base;
+
+			const links = new Map<string, string>();
+			// Keep this sequential: multiple ayahs from the same range may all
+			// need to create the same parent surah note.
+			for (const ayah of ayahs) {
+				const canonical = this.repository.findAyah(ayah.surahId, ayah.ayahId) ?? ayah;
+				const title = await ayahNotes.resolveUnifiedNoteTitle(
+					{
+						surahId: canonical.surahId,
+						surahName: canonical.surahName,
+						ayahId: canonical.ayahId,
+						ayahTextRaw: canonical.text,
+						ayahTextBodyFormatted: formatter.format([canonical], base),
+					},
+					this.settings.reflectionFileNameTemplate,
+					this.settings.includeAyahTextInReflectionNote,
+					true
+				);
+				if (title) links.set(`${canonical.surahId}:${canonical.ayahId}`, title);
+			}
+			return { ...base, ayahNoteLinks: links };
+		};
 
 		const linkReflection = new LinkReflectionToVerses(
 			this.repository,
@@ -179,7 +233,7 @@ export default class QuranKeyPlugin extends Plugin {
 			toggle,
 			this.settings.wrapperStart,
 			this.settings.wrapperEnd,
-			getFormattingOptions
+			prepareFormattingOptions
 		);
 
 		const search = new SearchQuranVerses(
@@ -214,6 +268,7 @@ export default class QuranKeyPlugin extends Plugin {
 			locale: this.settings.interfaceLanguage,
 			replaceSelectionWithBacklink: this.settings.deleteSelectionAfterLinkingReflection,
 			entryPrefixTemplate: this.settings.reflectionEntryPrefixTemplate.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
+			includeReflectionEntryDate: this.settings.includeReflectionEntryDate,
 			entrySeparator: this.settings.reflectionEntrySeparator.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
 			insertionMode: this.settings.reflectionInsertionMode,
 			includeAyahTextInNote: this.settings.includeAyahTextInReflectionNote,

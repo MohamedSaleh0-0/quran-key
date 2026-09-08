@@ -133,6 +133,30 @@ requirements that motivate the v2 rewrite: **customizability** and
   between books, and the Qur'anic-text style group (font, size, line
   height, color).
 
+### 4.9 Surah and ayah notes
+- FR-32: The plugin can create or open one complete surah note whose Quran
+  text is continuous mushaf-style text, with the ayah number as the note
+  interaction point.
+- FR-33: Ayah notes are lazy resources. Creating a surah note does not create
+  all ayah files or unresolved wikilinks for them.
+- FR-34: Activating an uncreated ayah marker creates its ayah note, ensures
+  the parent surah note, materializes a basename-only wikilink around the
+  ayah number, and opens the ayah note.
+- FR-35: Ayah-note links inserted by extraction/search are optional and link
+  only the ayah marker, never the Quran text.
+- FR-36: Generated ayah and surah notes include an empty `tags: []` YAML
+  variable, and the plugin does not invent or overwrite the user's tags.
+- FR-37: The plugin will provide a unified entry workflow for choosing an
+  ayah, choosing a section, and writing the entry into the correct ayah note.
+- FR-38: Entry dates are configurable; users may keep or disable automatic
+  date insertion without losing the entry itself.
+- FR-39: Users may optionally group a contiguous range or selected set of
+  connected ayat into a topic/group note within a surah.
+- FR-40: A topic/group note contains the selected Quran content and links to
+  its member ayah notes; member ayah notes can link back to the group.
+- FR-41: Topic/group creation is explicit and user-controlled. The plugin
+  must not automatically infer, create, or link groups.
+
 ## 5. New requirements for v2
 
 ### 5.1 Customizability (no source edits required)
@@ -169,6 +193,18 @@ requirements that motivate the v2 rewrite: **customizability** and
   `.quran-key-*` classes and driven by CSS custom properties that Settings
   writes at runtime (see `styles.css`, `QuranHighlightExtension.ts`).
 
+### 5.4 Interaction and settings quality
+- NFR-11: Common reflection actions should be available through a compact,
+  guided modal, while advanced section and automation options remain optional.
+- NFR-12: A future `@` section trigger and NLP suggestions must never write or
+  reorganize vault content without explicit user confirmation.
+- NFR-13: Settings should be grouped by user goal, use concise descriptions,
+  validate generated-note-affecting values, and provide a safe reset-to-defaults
+  action.
+- NFR-14: Advanced research features such as ayah grouping must be disabled by
+  default and independently toggleable through progressive disclosure, so the
+  basic workflow remains uncluttered while scholars can unlock the full toolset.
+
 ## 6. Constraints
 
 - Must run on desktop **and** mobile (`isDesktopOnly: false`) → no Node
@@ -188,7 +224,36 @@ requirements that motivate the v2 rewrite: **customizability** and
   `docs/ARCHITECTURE.md` §8).
 - A sidebar `ItemView` for browsing the corpus outside the editor.
 
-## 8. Traceability
+## 8. Planned surah and ayah notes
+
+The following requirements describe the next product direction. They are
+planned behavior, not yet shipped behavior.
+
+- SR-1: A surah note represents one complete surah and displays its Quran
+  text as continuous mushaf-style content.
+- SR-2: The ayah number is the interaction point for opening that ayah's
+  note; the link must be visually styled like a normal Quran ayah marker,
+  not like an ordinary underlined wikilink.
+- SR-3: Surah notes are created without creating all ayah-note files.
+- SR-4: Uncreated ayah notes must not be represented by unresolved wikilinks,
+  so unused ayat do not clutter the graph.
+- SR-5: Clicking or explicitly requesting an uncreated ayah lazily creates
+  its ayah note and opens it.
+- SR-6: An ayah note cannot exist without a parent surah note. Creation must
+  ensure the parent surah note exists first.
+- SR-7: Once an ayah note exists, the plugin may materialize a real Obsidian
+  link around its ayah number while preserving the continuous Quran layout.
+- SR-8: Generated-note refreshes, migrations, and repairs must preserve user
+  content outside explicitly managed generated regions.
+- SR-9: Ayah and surah notes expose a `tags: []` frontmatter variable for
+  user-defined classification; future surah metadata may add optional
+  classification fields or tags.
+- SR-10: An optional ayah-group note can represent a user-selected collection
+  of connected ayat and preserve both the Quran text and membership links.
+- SR-11: Ayah-group functionality is disabled by default and is exposed only
+  when its advanced-feature toggle is enabled.
+
+## 9. Traceability
 
 Every FR/NFR above maps to a specific module — see the table in
 `docs/ARCHITECTURE.md` §6 rather than duplicating it here.

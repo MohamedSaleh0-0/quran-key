@@ -11,6 +11,8 @@ import { createStripTashkeelCommand } from "./definitions/stripTashkeel";
 import { createLinkReflectionCommand } from "./definitions/linkReflection";
 import { createLinkReflectionPickerCommand } from "./definitions/linkReflectionCategoryPicker";
 import { createLinkAyatCommand } from "./definitions/linkAyat";
+import { createOpenSurahNoteCommand } from "./definitions/openSurahNote";
+import { createLogAyahEntryCommand } from "./definitions/logAyahEntry";
 
 /** The plugin's full command inventory. To add a new command: write a
  *  `create*Command(services)` factory next to these (see
@@ -37,5 +39,7 @@ export function registerAllCommands(plugin: Plugin, services: AppServices): void
 		...services.reflectionCatalog.all().map((cat) => createLinkReflectionCommand(services, cat.id)),
 		createLinkReflectionPickerCommand(services),
 		createLinkAyatCommand(services),
+		createOpenSurahNoteCommand(services),
+		createLogAyahEntryCommand(services),
 	]);
 }

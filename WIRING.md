@@ -1,4 +1,16 @@
-# Wiring these changes into `src/main.ts`
+# Historical wiring notes
+
+The changes described in this file are already wired into the current
+`src/main.ts`. Do not apply these instructions to the current codebase.
+
+The file is retained temporarily as historical context while the project
+documentation is being consolidated. The maintained architecture reference
+is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and the roadmap is in
+[docs/ROADMAP.md](docs/ROADMAP.md).
+
+---
+
+# Previous wiring instructions
 
 `main.ts` itself is mostly unchanged (still the single composition root —
 see docs/ARCHITECTURE.md §2/§6). Rather than reproducing the whole file,

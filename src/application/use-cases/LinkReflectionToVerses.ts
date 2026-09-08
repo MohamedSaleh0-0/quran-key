@@ -21,6 +21,7 @@ export interface ReflectionLinkOptions {
 	backlinkAliasTemplate: string;
 	backlinkWrapTemplate: string;
 	quoteFormattingOptions: FormattingOptions;
+	includeReflectionEntryDate: boolean;
 }
 
 export interface DetectedCitation {
@@ -67,6 +68,43 @@ export class LinkReflectionToVerses {
 		endAyah: number,
 		options: ReflectionLinkOptions
 	): Promise<void> {
+		const firstNoteTitle = await this.appendToAyahNotes(
+			reflectionText,
+			category,
+			surahId,
+			surahName,
+			startAyah,
+			endAyah,
+			options
+		);
+
+		if (options.replaceSelectionWithBacklink && firstNoteTitle !== null) {
+			const backlink = this.renderBacklink(firstNoteTitle, surahName, startAyah, reflectionText, options);
+			editor.replaceRange(backlink, selectionStart, selectionEnd);
+		}
+	}
+
+	async executeDirect(
+		reflectionText: string,
+		category: ReflectionCategory,
+		surahId: number,
+		surahName: string,
+		startAyah: number,
+		endAyah: number,
+		options: ReflectionLinkOptions
+	): Promise<void> {
+		await this.appendToAyahNotes(reflectionText, category, surahId, surahName, startAyah, endAyah, options);
+	}
+
+	private async appendToAyahNotes(
+		reflectionText: string,
+		category: ReflectionCategory,
+		surahId: number,
+		surahName: string,
+		startAyah: number,
+		endAyah: number,
+		options: ReflectionLinkOptions
+	): Promise<string | null> {
 		const isRange = endAyah > startAyah;
 		const quotedPassage = isRange ? this.buildQuotedPassage(surahId, startAyah, endAyah, options.quoteFormattingOptions) : null;
 		const entryMarkdown = this.buildEntryMarkdown(
@@ -77,6 +115,7 @@ export class LinkReflectionToVerses {
 			endAyah,
 			quotedPassage,
 			options.entryPrefixTemplate,
+			options.includeReflectionEntryDate,
 			options.locale
 		);
 
@@ -97,10 +136,7 @@ export class LinkReflectionToVerses {
 			if (firstNoteTitle === null) firstNoteTitle = ref.title;
 		}
 
-		if (options.replaceSelectionWithBacklink && firstNoteTitle !== null) {
-			const backlink = this.renderBacklink(firstNoteTitle, surahName, startAyah, reflectionText, options);
-			editor.replaceRange(backlink, selectionStart, selectionEnd);
-		}
+		return firstNoteTitle;
 	}
 
 	private buildIdentity(surahId: number, surahName: string, ayahId: number, ayah: Ayah | null, quoteFormatting: FormattingOptions) {
@@ -145,10 +181,14 @@ export class LinkReflectionToVerses {
 		endAyah: number,
 		quotedPassage: string | null,
 		entryPrefixTemplate: string,
+		includeReflectionEntryDate: boolean,
 		locale: Locale
 	): string {
 		const lines: string[] = [];
-		const prefix = entryPrefixTemplate.split("{date}").join(formatDateISO(new Date())).trim();
+		const prefix = entryPrefixTemplate
+			.split("{date}")
+			.join(includeReflectionEntryDate ? formatDateISO(new Date()) : "")
+			.trim();
 		if (prefix) lines.push(prefix, "");
 
 		if (isRange) {

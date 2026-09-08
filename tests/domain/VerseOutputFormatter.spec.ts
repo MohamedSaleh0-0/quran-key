@@ -50,6 +50,22 @@ describe("VerseOutputFormatter", () => {
 			useOrnateNumbers: true,
 			stripTashkeelOnOutput: false,
 		});
-		expect(output).toContain("\u06DD\u0661\u0662"); // ۝١٢
+		expect(output).toContain("\u0661\u0662"); // ١٢; the ring is rendered/styled separately in the UI
+	});
+
+	it("links only the ayah marker when a note target is provided", () => {
+		const reference = VerseReference.compile("[{surah}:{verse}]");
+		const formatter = new VerseOutputFormatter(new OrnateNumberConverter("\u06DD"), reference, (t) => t);
+		const output = formatter.format([ayah], {
+			wrapperStart: "\uFD3F",
+			wrapperEnd: "\uFD3E",
+			useOrnateNumbers: true,
+			stripTashkeelOnOutput: false,
+			ayahNoteLinks: new Map([["1:1", "al-fatihah-1"]]),
+		});
+
+		expect(output).toContain("بِسْمِ اللّهِ");
+		expect(output).toContain("[[al-fatihah-1|١]]");
+		expect(output).not.toContain("[[al-fatihah-1|بِسْمِ");
 	});
 });
