@@ -103,7 +103,7 @@ engine should be able to:
   result remains navigable back to the Quran Pedia source.
 - Support a deliberate choice between a snapshot export and a refreshable
   generated collection, without overwriting user prose.
-- Offer a quick section trigger, potentially using `@` while writing, that
+- [x] Offer an optional quick section trigger using `@` while writing, which
   opens section selection without forcing a large modal workflow.
 - Explore NLP-assisted suggestions for likely sections or ayat, always with
   explicit user confirmation before writing or moving content.

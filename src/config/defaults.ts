@@ -34,6 +34,7 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	maxSlidingWindowWords: 12,
 	interfaceLanguage: "ar",
 	searchStrategy: "literal",
+	enableAtSectionTrigger: false,
 
 	// Tafsir
 	defaultTafsirBookId: "saadi",

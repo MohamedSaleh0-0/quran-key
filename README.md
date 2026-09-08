@@ -78,6 +78,10 @@ You can target plugin elements using Obsidian snippets or via the Custom CSS fie
 | `.quran-key-analytics-dashboard` | The live analytics stat bar in the search modal. |
 | `.quran-key-picker-modal` | Modals for tafsir sources, category selection, and ayah linking. |
 
+Power-user options, including the optional `@` section trigger in the ayah
+entry modal, are available under Settings → Advanced and are disabled by
+default.
+
 ### Styling Examples
 
 ```css

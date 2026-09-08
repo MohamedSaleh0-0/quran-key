@@ -138,6 +138,21 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 		],
 	},
 	{
+		id: "advancedFeatures",
+		heading: { ar: "مزايا المستخدم المتقدم", en: "Power-user features" },
+		fields: [
+			{
+				key: "enableAtSectionTrigger",
+				type: "toggle",
+				label: { ar: "مُشغّل الأقسام @", en: "Enable @ section trigger" },
+				description: {
+					ar: "عند كتابة @ داخل نافذة تسجيل الملاحظة، افتح اختيار الأقسام. هذا الخيار معطل افتراضياً.",
+					en: "Typing @ in the log-entry modal opens section selection. Disabled by default.",
+				},
+			},
+		],
+	},
+	{
 		id: "style",
 		heading: { ar: "تنسيق مظهر الآيات", en: "Verse Style" },
 		fields: [

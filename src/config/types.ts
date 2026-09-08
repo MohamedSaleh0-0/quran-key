@@ -61,6 +61,7 @@ export interface PluginConfig {
 	maxSlidingWindowWords: number;
 	interfaceLanguage: Locale;
 	searchStrategy: SearchStrategy;
+	enableAtSectionTrigger: boolean;
 
 	// --- Tafsir ---
 	defaultTafsirBookId: string;

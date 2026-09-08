@@ -126,6 +126,12 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		new Setting(containerEl).setName(locale === "ar" ? "معايير محرك البحث والانزلاق" : "Engine Tunables").setHeading();
 		this.renderAdvancedTunables(containerEl, locale);
 
+		const advancedFeaturesSection = SETTINGS_SCHEMA.find((s) => s.id === "advancedFeatures");
+		if (advancedFeaturesSection) {
+			new Setting(containerEl).setName(advancedFeaturesSection.heading[locale]).setHeading();
+			for (const field of advancedFeaturesSection.fields) this.renderField(containerEl, field, locale);
+		}
+
 		new Setting(containerEl).setName(locale === "ar" ? "قواعد التطبيع" : "Normalization Rules").setHeading();
 		this.renderNormalizationRules(containerEl, locale);
 

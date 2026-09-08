@@ -4,6 +4,7 @@ import type { Ayah } from "../../domain/entities/Ayah";
 import type { ReflectionCategory } from "../../domain/entities/ReflectionCategory";
 import type { AppServices } from "../AppServices";
 import { t } from "../../config/strings";
+import { ReflectionCategoryPickerModal } from "./ReflectionCategoryPickerModal";
 
 export class LogAyahEntryModal extends Modal {
 	private searchEl!: HTMLInputElement;
@@ -55,6 +56,13 @@ export class LogAyahEntryModal extends Modal {
 		this.noteEl = contentEl.createEl("textarea", {
 			placeholder: t(this.locale, "entry.notePlaceholder"),
 			cls: "quran-key-entry-textarea",
+		});
+		this.noteEl.addEventListener("keydown", (event) => {
+			if (event.key !== "@" || !this.services.settings.enableAtSectionTrigger) return;
+			event.preventDefault();
+			new ReflectionCategoryPickerModal(this.app, this.services, (category) => {
+				this.sectionEl.value = category.id;
+			}).open();
 		});
 
 		const footer = contentEl.createDiv({ cls: "quran-key-picker-footer" });

@@ -198,8 +198,8 @@ requirements that motivate the v2 rewrite: **customizability** and
 ### 5.4 Interaction and settings quality
 - NFR-11: Common reflection actions should be available through a compact,
   guided modal, while advanced section and automation options remain optional.
-- NFR-12: A future `@` section trigger and NLP suggestions must never write or
-  reorganize vault content without explicit user confirmation.
+- NFR-12: The optional `@` section trigger and future NLP suggestions must
+  never write or reorganize vault content without explicit user confirmation.
 - NFR-13: Settings should be grouped by user goal, use concise descriptions,
   validate generated-note-affecting values, and provide a safe reset-to-defaults
   action.
