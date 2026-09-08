@@ -206,6 +206,8 @@ requirements that motivate the v2 rewrite: **customizability** and
 - NFR-14: Advanced research features such as ayah grouping must be disabled by
   default and independently toggleable through progressive disclosure, so the
   basic workflow remains uncluttered while scholars can unlock the full toolset.
+- NFR-15: Quran Pedia section extraction must be implemented in a pure,
+  testable service before it is connected to vault-wide commands or UI.
 
 ## 6. Constraints
 

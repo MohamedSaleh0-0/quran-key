@@ -93,6 +93,10 @@ The Quran Pedia is the growing, structured research layer formed by ayah
 notes, their sections, surah metadata, tafsir, and links between notes. The
 engine should be able to:
 
+- [x] Add a pure section-extraction foundation for the existing Markdown
+  heading sections.
+- [ ] Connect section extraction to ayah-note lookup and source links.
+
 - Extract one named section, such as Tadabbur or Benefits, from selected ayat.
 - Extract a named section from every ayah in a surah into a destination note.
 - Extract all matching sections from a selected ayah range, surah, or group of
