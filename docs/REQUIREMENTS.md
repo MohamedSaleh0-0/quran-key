@@ -208,6 +208,8 @@ requirements that motivate the v2 rewrite: **customizability** and
   basic workflow remains uncluttered while scholars can unlock the full toolset.
 - NFR-15: Quran Pedia section extraction must be implemented in a pure,
   testable service before it is connected to vault-wide commands or UI.
+- NFR-16: Reading sections for Quran Pedia extraction must not create or modify
+  ayah notes; source-note titles must be retained for later backlinks.
 
 ## 6. Constraints
 

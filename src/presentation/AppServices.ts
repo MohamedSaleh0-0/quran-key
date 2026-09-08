@@ -9,6 +9,7 @@ import type { ReflectionCategoryCatalog } from "../domain/services/ReflectionCat
 import type { AnalyzeLineContext } from "../application/use-cases/AnalyzeLineContext";
 import type { ConvertReferenceToFootnote } from "../application/use-cases/ConvertReferenceToFootnote";
 import type { ExtractAndInsertVerse } from "../application/use-cases/ExtractAndInsertVerse";
+import type { ExtractAyahSections } from "../application/use-cases/ExtractAyahSections";
 import type { FetchAndInsertTafsir, TafsirFormattingOptions } from "../application/use-cases/FetchAndInsertTafsir";
 import type { LinkReflectionToVerses, ReflectionLinkOptions } from "../application/use-cases/LinkReflectionToVerses";
 import type { LinkAyahsTogether } from "../application/use-cases/LinkAyahsTogether";
@@ -35,6 +36,7 @@ export interface AppServices {
 		search: SearchQuranVerses;
 		analyzeContext: AnalyzeLineContext;
 		extract: ExtractAndInsertVerse;
+		extractAyahSections: ExtractAyahSections;
 		fetchTafsir: FetchAndInsertTafsir;
 		removeReference: RemoveQuranReference;
 		convertToFootnote: ConvertReferenceToFootnote;

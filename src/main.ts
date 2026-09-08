@@ -21,6 +21,7 @@ import { VerseReference } from "./domain/value-objects/VerseReference";
 import { SearchQuranVerses } from "./application/use-cases/SearchQuranVerses";
 import { AnalyzeLineContext } from "./application/use-cases/AnalyzeLineContext";
 import { ExtractAndInsertVerse } from "./application/use-cases/ExtractAndInsertVerse";
+import { ExtractAyahSections } from "./application/use-cases/ExtractAyahSections";
 import { ToggleSnippetView } from "./application/use-cases/ToggleSnippetView";
 import { FetchAndInsertTafsir, type TafsirFormattingOptions } from "./application/use-cases/FetchAndInsertTafsir";
 import { LinkReflectionToVerses, type ReflectionLinkOptions } from "./application/use-cases/LinkReflectionToVerses";
@@ -220,6 +221,7 @@ export default class QuranKeyPlugin extends Plugin {
 		);
 
 		const linkAyahsTogether = new LinkAyahsTogether(ayahNotes, formatter);
+		const extractAyahSections = new ExtractAyahSections(ayahNotes);
 
 		const extract = new ExtractAndInsertVerse(
 			this.repository,
@@ -290,6 +292,7 @@ export default class QuranKeyPlugin extends Plugin {
 				search,
 				analyzeContext,
 				extract,
+				extractAyahSections,
 				fetchTafsir,
 				removeReference,
 				convertToFootnote,

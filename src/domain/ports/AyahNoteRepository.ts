@@ -1,4 +1,5 @@
 import type { ReflectionCategory } from "../entities/ReflectionCategory";
+import type { MarkdownSectionTarget } from "../services/MarkdownSectionExtractor";
 
 export interface AyahIdentity {
 	surahId: number;
@@ -19,8 +20,21 @@ export interface AyahNoteRef {
 	title: string;
 }
 
+export interface AyahSectionExtraction {
+	title: string;
+	surahId: number;
+	ayahId: number;
+	content: string;
+}
+
 export interface AyahNoteRepository {
 	ensureSurahNote(surahId: number, surahName: string): Promise<AyahNoteRef>;
+
+	extractSection(
+		surahId: number,
+		ayahId: number,
+		target: MarkdownSectionTarget
+	): Promise<AyahSectionExtraction | null>;
 
 	appendEntry(
 		identity: AyahIdentity,

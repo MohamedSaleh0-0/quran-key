@@ -95,7 +95,9 @@ engine should be able to:
 
 - [x] Add a pure section-extraction foundation for the existing Markdown
   heading sections.
-- [ ] Connect section extraction to ayah-note lookup and source links.
+- [x] Connect section extraction to existing ayah-note lookup and source-note
+  titles without creating or modifying notes.
+- [ ] Add a user-facing snapshot/export workflow.
 
 - Extract one named section, such as Tadabbur or Benefits, from selected ayat.
 - Extract a named section from every ayah in a surah into a destination note.

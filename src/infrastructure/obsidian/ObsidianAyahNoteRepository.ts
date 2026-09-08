@@ -6,9 +6,11 @@ import type {
 	AyahIdentity,
 	AyahNoteRef,
 	AyahNoteRepository,
+	AyahSectionExtraction,
 	ReflectionEntryFormatting,
 } from "../../domain/ports/AyahNoteRepository";
 import { HeadingSectionInserter } from "../../domain/services/HeadingSectionInserter";
+import { MarkdownSectionExtractor, type MarkdownSectionTarget } from "../../domain/services/MarkdownSectionExtractor";
 import { ReflectionFileNameBuilder } from "../../domain/services/ReflectionFileNameBuilder";
 
 function sanitizeFileNameSegment(segment: string): string {
@@ -49,6 +51,19 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		const file = await this.findOrCreateSurahNote(surahId, surahName, null, null);
 		await this.ensureTagsField(file);
 		return { title: file.basename };
+	}
+
+	async extractSection(
+		surahId: number,
+		ayahId: number,
+		target: MarkdownSectionTarget
+	): Promise<AyahSectionExtraction | null> {
+		const file = this.findExistingUnifiedFile(surahId, ayahId);
+		if (!file) return null;
+		const content = await this.app.vault.read(file);
+		const section = MarkdownSectionExtractor.extract(content, target);
+		if (!section) return null;
+		return { title: file.basename, surahId, ayahId, content: section };
 	}
 
 	async appendEntry(
