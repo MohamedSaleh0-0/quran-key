@@ -1,4 +1,4 @@
-const ARABIC_INDIC_DIGITS = "\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669";
+import { toArabicIndicDigits } from "./AyahMarkerFormatter";
 
 /** Converts "(N)" ayah-number markers into Arabic-Indic digits,
  *  e.g. "(12)" -> "١٢". The ring glyph (۝) that used to prefix this was
@@ -7,11 +7,6 @@ const ARABIC_INDIC_DIGITS = "\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0
  *  that ornamentation on top of it. */
 export class OrnateNumberConverter {
 	applyOrnateNumbers(text: string): string {
-		return text.replace(/\((\d+)\)/g, (_match, digits: string) =>
-			digits
-				.split("")
-				.map((d) => ARABIC_INDIC_DIGITS[parseInt(d, 10)])
-				.join("")
-		);
+		return text.replace(/\((\d+)\)/g, (_match, digits: string) => toArabicIndicDigits(digits));
 	}
 }

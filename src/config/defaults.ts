@@ -1,5 +1,6 @@
 import type { NormalizationRule, PluginConfig } from "./types";
 import builtinNormalizationRules from "../../data/normalizationRules.json";
+import { DEFAULT_QURAN_RENDERING_PROFILE } from "./quranRenderingProfiles";
 
 function seedNormalizationRules(): NormalizationRule[] {
 	return (builtinNormalizationRules as Array<Record<string, unknown>>).map((r) => ({
@@ -21,7 +22,9 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	normalizationRules: seedNormalizationRules(),
 
 	// Qur'anic text styling
-	quranFontFamily: "'me_quran', 'KFGQPC Uthmanic Script HAFS', 'Amiri Quran', serif",
+	quranRenderingProfile: DEFAULT_QURAN_RENDERING_PROFILE,
+	ayahMarkerStyle: "parenthesized",
+	quranFontFamily: "",
 	quranFontSize: 1.3,
 	quranLineHeight: 2.4,
 	quranColor: "#dfc56b",

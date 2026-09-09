@@ -13,6 +13,7 @@ import { createLinkReflectionPickerCommand } from "./definitions/linkReflectionC
 import { createLinkAyatCommand } from "./definitions/linkAyat";
 import { createOpenSurahNoteCommand } from "./definitions/openSurahNote";
 import { createLogAyahEntryCommand } from "./definitions/logAyahEntry";
+import { createOpenQuranDisplayLabCommand } from "./definitions/openQuranDisplayLab";
 
 /** The plugin's full command inventory. To add a new command: write a
  *  `create*Command(services)` factory next to these (see
@@ -41,5 +42,6 @@ export function registerAllCommands(plugin: Plugin, services: AppServices): void
 		createLinkAyatCommand(services),
 		createOpenSurahNoteCommand(services),
 		createLogAyahEntryCommand(services),
+		createOpenQuranDisplayLabCommand(services),
 	]);
 }

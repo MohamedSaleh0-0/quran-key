@@ -157,6 +157,35 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 		heading: { ar: "تنسيق مظهر الآيات", en: "Verse Style" },
 		fields: [
 			{
+				key: "quranRenderingProfile",
+				type: "dropdown",
+				label: { ar: "نسخة اختبار عرض النص القرآني", en: "Quran display test profile" },
+				description: {
+					ar: "يبدّل معًا مصدر النص والخط المقترح. يمكن فتح «مختبر عرض النص القرآني» من لوحة الأوامر للمقارنة الحية.",
+					en: "Changes the text corpus and matching font together. Use the Quran display lab command for a live comparison.",
+				},
+				dropdownOptions: [
+					{ value: "tanzil-sequential-me-quran", label: "Tanzil الممتد + me_quran" },
+					{ value: "tanzil-uthmani-me-quran", label: "Tanzil القياسي + me_quran" },
+					{ value: "tanzil-uthmani-kfgqpc", label: "Tanzil القياسي + KFGQPC" },
+					{ value: "tanzil-uthmani-qpc-v18", label: "Tanzil القياسي + QPC Hafs v18" },
+				],
+			},
+			{
+				key: "ayahMarkerStyle",
+				type: "dropdown",
+				label: { ar: "شكل علامة نهاية الآية", en: "Ayah ending marker" },
+				description: {
+					ar: "اختبر الأرقام وحدها، أو داخل قوسين، أو علامة ۝ مع الرقم. يؤثر على الآيات الجديدة والملاحظات الجديدة فقط.",
+					en: "Test bare digits, parenthesized digits, or ۝ with the number. Affects newly generated text and notes only.",
+				},
+				dropdownOptions: [
+					{ value: "plain", label: "١٠٤" },
+					{ value: "parenthesized", label: "(١٠٤)" },
+					{ value: "end-symbol", label: "۝١٠٤" },
+				],
+			},
+			{
 				key: "quranFontSize",
 				type: "slider",
 				label: { ar: "حجم الخط", en: "Font size" },

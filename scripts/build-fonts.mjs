@@ -20,6 +20,11 @@ const ME_QURAN_CANDIDATES = [
 	path.join(FONTS_DIR, "me-quran.woff2"),
 ];
 
+const QPC_HAFS_V18_CANDIDATES = [
+	path.join(FONTS_DIR, "UthmanicHafs1Ver18.woff2"),
+	path.join(FONTS_DIR, "UthmanicHafs1Ver18.ttf"),
+];
+
 const AMIRI_CANDIDATES = [
 	path.join(FONTS_DIR, "AmiriQuran.woff2"),
 	path.join(FONTS_DIR, "AmiriQuran.ttf"),
@@ -65,9 +70,10 @@ async function main() {
 
 	const kfgqpcFile = resolveFile(KFGQPC_CANDIDATES);
 	const meQuranFile = resolveFile(ME_QURAN_CANDIDATES);
+	const qpcHafsV18File = resolveFile(QPC_HAFS_V18_CANDIDATES);
 	const amiriFile = resolveFile(AMIRI_CANDIDATES);
 
-	if (!kfgqpcFile && !meQuranFile && !amiriFile) {
+	if (!kfgqpcFile && !meQuranFile && !qpcHafsV18File && !amiriFile) {
 		console.warn("\n[build-fonts] تنبيه: لم يتم العثور على ملفات الخطوط داخل assets/fonts-src/.");
 		console.warn("ضع ملف 'UthmanicHafs.woff2' أو 'AmiriQuran.woff2' داخل المجلد ليتم دمجهما.");
 		return;
@@ -80,6 +86,9 @@ async function main() {
 	}
 	if (meQuranFile) {
 		fontFaceBlocks += buildFontFace("me_quran", meQuranFile);
+	}
+	if (qpcHafsV18File) {
+		fontFaceBlocks += buildFontFace("QPC Hafs v18", qpcHafsV18File);
 	}
 	if (amiriFile) {
 		fontFaceBlocks += buildFontFace("Amiri Quran", amiriFile);
@@ -97,6 +106,7 @@ async function main() {
 	stylesContent = stylesContent.replace(markerRegex, "");
 	stylesContent = stylesContent.replace(/\/\* === KFGQPC Uthmanic Font Embedded[\s\S]*?\}\s*/g, "");
 	stylesContent = stylesContent.replace(/\/\* === me_quran Font Embedded[\s\S]*?\}\s*/g, "");
+	stylesContent = stylesContent.replace(/\/\* === QPC Hafs v18 Font Embedded[\s\S]*?\}\s*/g, "");
 	stylesContent = stylesContent.replace(/\/\* === Amiri Quran Font[\s\S]*?\}\s*/g, "");
 
 	fs.writeFileSync(STYLES_PATH, fontFaceBlocks + stylesContent.trimStart(), "utf-8");

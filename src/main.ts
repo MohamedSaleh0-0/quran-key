@@ -4,6 +4,7 @@ import type { Extension } from "@codemirror/state";
 
 import { DEFAULT_SETTINGS, migrateLegacySettings } from "./config/defaults";
 import type { PluginConfig } from "./config/types";
+import { getQuranRenderingProfile } from "./config/quranRenderingProfiles";
 import type { TafsirBook } from "./domain/entities/TafsirBook";
 import type { ReflectionCategory } from "./domain/entities/ReflectionCategory";
 import type { Ayah } from "./domain/entities/Ayah";
@@ -70,7 +71,11 @@ export default class QuranKeyPlugin extends Plugin {
 	async onload(): Promise<void> {
 		await this.loadSettings();
 
-		this.repository = new ObsidianQuranRepository(this.app.vault, new ArabicNormalizer(this.settings.normalizationRules));
+		this.repository = new ObsidianQuranRepository(
+			this.app.vault,
+			new ArabicNormalizer(this.settings.normalizationRules),
+			getQuranRenderingProfile(this.settings.quranRenderingProfile).textProfile
+		);
 		await this.repository.loadAll();
 
 		this.refreshStyles();
@@ -122,7 +127,11 @@ export default class QuranKeyPlugin extends Plugin {
 
 	private rebuildCoreServices(): void {
 		const normalizer = new ArabicNormalizer(this.settings.normalizationRules);
-		this.repository = new ObsidianQuranRepository(this.app.vault, normalizer);
+		this.repository = new ObsidianQuranRepository(
+			this.app.vault,
+			normalizer,
+			getQuranRenderingProfile(this.settings.quranRenderingProfile).textProfile
+		);
 		void this.repository.loadAll();
 
 		const reference = VerseReference.compile(this.settings.referenceFormat);
@@ -157,6 +166,7 @@ export default class QuranKeyPlugin extends Plugin {
 			referenceFormat: this.settings.referenceFormat,
 			wrapperStart: this.settings.wrapperStart,
 			wrapperEnd: this.settings.wrapperEnd,
+			ayahMarkerStyle: this.settings.ayahMarkerStyle,
 			getSurahAyahs: (surahId) => this.repository.getAllAyahs().filter((ayah) => ayah.surahId === surahId),
 		}));
 
@@ -165,6 +175,7 @@ export default class QuranKeyPlugin extends Plugin {
 			wrapperEnd: this.settings.wrapperEnd,
 			useOrnateNumbers: true,
 			stripTashkeelOnOutput: this.settings.stripTashkeel,
+			ayahMarkerStyle: this.settings.ayahMarkerStyle,
 		});
 
 		this.lazyAyahNoteOpener = async (surahId, ayahId) => {

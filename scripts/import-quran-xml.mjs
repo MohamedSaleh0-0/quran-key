@@ -7,6 +7,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const canonicalSourcePath = path.join(projectRoot, "quran-uthmani.xml");
 const displaySourcePath = path.join(projectRoot, "quran-uthmani-sequential.xml");
 const outputPath = path.join(projectRoot, "data", "ayahs.json");
+const canonicalOutputPath = path.join(projectRoot, "data", "ayahs-canonical.json");
 
 function decodeXmlEntities(value) {
 	return value.replace(/&(?:quot|apos|amp|lt|gt|#x[0-9a-f]+|#[0-9]+);/gi, (entity) => {
@@ -125,24 +126,43 @@ const displayXml = fs.readFileSync(displaySourcePath, "utf8");
 const canonicalAyahs = parseTanzilXml(canonicalXml, "quran-uthmani.xml");
 const displayAyahs = parseTanzilXml(displayXml, "quran-uthmani-sequential.xml");
 validateDisplayVariant(canonicalAyahs, displayAyahs);
-const output = {
-	source: {
-		provider: "Tanzil Project",
-		edition: "Uthmani",
-		version: "1.1",
-		license: "Creative Commons Attribution 3.0",
-		url: "https://tanzil.net/",
-		file: "quran-uthmani.xml",
-		canonicalFile: "quran-uthmani.xml",
-		canonicalSha256: sha256(canonicalXml),
-		displayFile: "quran-uthmani-sequential.xml",
-		displaySha256: sha256(displayXml),
-		displayProfile: "sequential-tanween",
-		fontFamily: "me_quran",
-		derivedNotice: "Canonical Tanzil Uthmani text is retained unchanged. The generated text field uses Tanzil's extended sequential-tanween display profile and is validated against the canonical letter skeleton.",
-	},
-	ayahs: displayAyahs,
-};
 
-fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`, "utf8");
-console.log(`Imported ${displayAyahs.length} ayahs from quran-uthmani-sequential.xml into data/ayahs.json`);
+function buildOutput(ayahs, displayProfile, displayFile, fontFamily, derivedNotice) {
+	return {
+		source: {
+			provider: "Tanzil Project",
+			edition: "Uthmani",
+			version: "1.1",
+			license: "Creative Commons Attribution 3.0",
+			url: "https://tanzil.net/",
+			file: "quran-uthmani.xml",
+			canonicalFile: "quran-uthmani.xml",
+			canonicalSha256: sha256(canonicalXml),
+			displayFile,
+			displaySha256: sha256(displayFile === "quran-uthmani.xml" ? canonicalXml : displayXml),
+			displayProfile,
+			fontFamily,
+			derivedNotice,
+		},
+		ayahs,
+	};
+}
+
+const canonicalOutput = buildOutput(
+	canonicalAyahs,
+	"canonical-uthmani",
+	"quran-uthmani.xml",
+	"font-independent",
+	"Canonical Tanzil Uthmani text retained unchanged for source/font comparison in the display laboratory."
+);
+const sequentialOutput = buildOutput(
+	displayAyahs,
+	"sequential-tanween",
+	"quran-uthmani-sequential.xml",
+	"me_quran",
+	"Canonical Tanzil Uthmani text is retained unchanged. The generated text field uses Tanzil's extended sequential-tanween display profile and is validated against the canonical letter skeleton."
+);
+
+fs.writeFileSync(canonicalOutputPath, `${JSON.stringify(canonicalOutput, null, 2)}\n`, "utf8");
+fs.writeFileSync(outputPath, `${JSON.stringify(sequentialOutput, null, 2)}\n`, "utf8");
+console.log(`Imported ${canonicalAyahs.length} canonical and ${displayAyahs.length} sequential ayahs into data/`);

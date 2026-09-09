@@ -2,7 +2,9 @@ import type { Vault } from "obsidian";
 import type { Ayah } from "../../domain/entities/Ayah";
 import type { QuranRepository } from "../../domain/ports/QuranRepository";
 import type { ArabicNormalizer } from "../../domain/services/ArabicNormalizer";
-import sampleCorpus from "../../../data/ayahs.json";
+import type { QuranTextProfile } from "../../config/quranRenderingProfiles";
+import sequentialCorpus from "../../../data/ayahs.json";
+import canonicalCorpus from "../../../data/ayahs-canonical.json";
 
 interface RawAyah {
 	surah_id: number;
@@ -17,16 +19,19 @@ export class ObsidianQuranRepository implements QuranRepository {
 	private ayahs: Ayah[] = [];
 	private searchCorpusText = "";
 
-	constructor(private readonly vault: Vault, private readonly normalizer: ArabicNormalizer) {
+	constructor(
+		private readonly vault: Vault,
+		private readonly normalizer: ArabicNormalizer,
+		private readonly textProfile: QuranTextProfile = "tanzil-sequential"
+	) {
 		void this.vault;
 	}
 
 	async loadAll(): Promise<void> {
 		if (this.ayahs.length > 0) return;
 
-		const raw: RawAyah[] = Array.isArray(sampleCorpus)
-			? sampleCorpus
-			: (sampleCorpus as { ayahs: RawAyah[] }).ayahs;
+		const corpus = this.textProfile === "tanzil-canonical" ? canonicalCorpus : sequentialCorpus;
+		const raw: RawAyah[] = Array.isArray(corpus) ? corpus : (corpus as { ayahs: RawAyah[] }).ayahs;
 
 		this.ayahs = raw.map((a, index) => ({
 			id: index + 1,

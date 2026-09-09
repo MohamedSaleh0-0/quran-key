@@ -17,7 +17,7 @@ for planned surah/ayah note workflows and the structure of plugin-generated note
 - Unified Ayah Journaling: Record reflections, benefits, and notes under dedicated headings inside a single unified note per ayah, or configure separate category folders.
 - Surah & Ayah Notes: Open a complete surah as continuous mushaf-style text, then click an ayah marker to lazily create and open its note.
 - Related Verse Linking: Group and cross-link semantically related ayahs together via frontmatter metadata.
-- Typography & Ornate Numbering: Integrated Uthmanic font stack (King Fahd Complex & Amiri Quran) with styled Arabic-Indic numerals in both Live Preview and Reading View.
+- Typography & Display Lab: Compare verified Uthmani text/font candidates and ayah-ending markers before choosing the production rendering.
 - Footnote & Utility Commands: Convert inline citations into markdown footnotes, strip tashkeel, or clean references with single hotkeys.
 
 ### Quran text source
@@ -41,6 +41,20 @@ validates the 114 surahs and 6,236 ayahs in both source files before generating
 the JSON corpus. Tanzil attribution, display options, and usage terms are
 available at
 <https://tanzil.net/download/>.
+
+### Display testing laboratory
+
+Run **Open Quran display laboratory** from Obsidian's command palette to compare
+four local candidates: Tanzil canonical or sequential text, rendered with
+`me_quran`, the bundled KFGQPC font, or QPC Hafs v18. Every card contains the
+same short, deliberately non-insertable visual test strip: ornate brackets,
+tatweel and dagger alif, hamza and madd, U+06DF, normal/sequential tanween,
+pause marks, rubʿ al-hizb, sajdah, and an ayah ending marker.
+
+Selecting a candidate switches the text corpus and its font together for new
+searches, insertions, and newly created surah notes. Existing vault content is
+never rewritten. The ayah-ending marker can also be tested independently as
+bare Arabic-Indic digits, parenthesized digits, or `۝` plus the number.
 
 ---
 

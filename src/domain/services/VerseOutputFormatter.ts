@@ -1,12 +1,16 @@
 import type { Ayah } from "../entities/Ayah";
 import type { CompiledVerseReference } from "../value-objects/VerseReference";
 import type { OrnateNumberConverter } from "./OrnateNumberConverter";
+import { formatAyahMarker, type AyahMarkerStyle } from "./AyahMarkerFormatter";
 
 export interface FormattingOptions {
 	wrapperStart: string;
 	wrapperEnd: string;
 	useOrnateNumbers: boolean;
 	stripTashkeelOnOutput: boolean;
+	/** Explicit marker style used by the display laboratory. Omit to retain the
+	 * legacy `useOrnateNumbers` behavior for callers outside the plugin shell. */
+	ayahMarkerStyle?: AyahMarkerStyle;
 	/** Optional note titles keyed as `${surahId}:${ayahId}`. Only the ayah
 	 * marker is linked; the Quran text remains plain text. */
 	ayahNoteLinks?: ReadonlyMap<string, string>;
@@ -28,11 +32,14 @@ export class VerseOutputFormatter {
 			const text = options.stripTashkeelOnOutput ? this.stripTashkeelFn(a.text) : a.text;
 			const key = `${a.surahId}:${a.ayahId}`;
 			const target = options.ayahNoteLinks?.get(key);
-			const marker = target ? `[[${target}|(${a.ayahId})]]` : `(${a.ayahId})`;
+			const rawMarker = options.ayahMarkerStyle
+				? formatAyahMarker(a.ayahId, options.ayahMarkerStyle)
+				: `(${a.ayahId})`;
+			const marker = target ? `[[${target}|${rawMarker}]]` : rawMarker;
 			return `${text} ${marker}`;
 		});
 		const core = `${options.wrapperStart} ${formatted.join(" ")} ${options.wrapperEnd}`;
-		const finalCore = options.useOrnateNumbers ? this.ornateConverter.applyOrnateNumbers(core) : core;
+		const finalCore = options.ayahMarkerStyle || !options.useOrnateNumbers ? core : this.ornateConverter.applyOrnateNumbers(core);
 
 		const first = ayahs[0];
 		const last = ayahs[ayahs.length - 1];

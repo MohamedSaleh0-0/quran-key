@@ -12,6 +12,7 @@ import type {
 import { HeadingSectionInserter } from "../../domain/services/HeadingSectionInserter";
 import { MarkdownSectionExtractor, type MarkdownSectionTarget } from "../../domain/services/MarkdownSectionExtractor";
 import { ReflectionFileNameBuilder } from "../../domain/services/ReflectionFileNameBuilder";
+import { formatAyahMarker, type AyahMarkerStyle } from "../../domain/services/AyahMarkerFormatter";
 
 function sanitizeFileNameSegment(segment: string): string {
 	return segment.replace(/[\\/:*?"<>|]/g, "").trim();
@@ -25,16 +26,8 @@ export interface AyahNoteSettingsSource {
 	referenceFormat: string;
 	wrapperStart: string;
 	wrapperEnd: string;
+	ayahMarkerStyle: AyahMarkerStyle;
 	getSurahAyahs: (surahId: number) => readonly Ayah[];
-}
-
-const ARABIC_INDIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
-
-function arabicIndicNumber(value: number): string {
-	return String(value)
-		.split("")
-		.map((digit) => ARABIC_INDIC_DIGITS[Number(digit)])
-		.join("");
 }
 
 function basenameWithoutExtension(path: string): string {
@@ -264,7 +257,7 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 	}
 
 	private renderSurahAyah(ayah: Ayah, linkTitle: string | null): string {
-		const digits = arabicIndicNumber(ayah.ayahId);
+		const digits = formatAyahMarker(ayah.ayahId, this.getSettings().ayahMarkerStyle);
 		const marker = linkTitle
 			? `[[${linkTitle}|${digits}]]`
 			: `<span class="quran-key-lazy-ayah" data-quran-key-surah="${ayah.surahId}" data-quran-key-ayah="${ayah.ayahId}">${digits}</span>`;
@@ -273,7 +266,7 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 	}
 
 	private async materializeAyahLink(file: TFile, surahId: number, ayahId: number, ayahTitle: string): Promise<void> {
-		const digits = arabicIndicNumber(ayahId);
+		const digits = formatAyahMarker(ayahId, this.getSettings().ayahMarkerStyle);
 		const marker = `<span class="quran-key-lazy-ayah" data-quran-key-surah="${surahId}" data-quran-key-ayah="${ayahId}">${digits}</span>`;
 		const link = `[[${ayahTitle}|${digits}]]`;
 		await this.app.vault.process(file, (current) => (current.includes(marker) ? current.replace(marker, link) : current));

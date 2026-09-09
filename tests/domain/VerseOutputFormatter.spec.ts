@@ -82,4 +82,18 @@ describe("VerseOutputFormatter", () => {
 
 		expect(output).toContain(sourceText);
 	});
+
+	it("uses an explicit end-symbol marker without rewriting it", () => {
+		const reference = VerseReference.compile("[{surah}:{verse}]");
+		const formatter = new VerseOutputFormatter(new OrnateNumberConverter("\u06DD"), reference, (t) => t);
+		const output = formatter.format([{ ...ayah, ayahId: 104 }], {
+			wrapperStart: "\uFD3F",
+			wrapperEnd: "\uFD3E",
+			useOrnateNumbers: true,
+			stripTashkeelOnOutput: false,
+			ayahMarkerStyle: "end-symbol",
+		});
+
+		expect(output).toContain("۝١٠٤");
+	});
 });

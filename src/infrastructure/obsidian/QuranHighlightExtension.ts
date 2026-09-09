@@ -2,6 +2,7 @@ import { Decoration, MatchDecorator, ViewPlugin } from "@codemirror/view";
 import type { DecorationSet, EditorView, ViewUpdate } from "@codemirror/view";
 import type { PluginConfig } from "../../config/types";
 import { DEFAULT_SETTINGS } from "../../config/defaults";
+import { getQuranRenderingProfile } from "../../config/quranRenderingProfiles";
 
 const HIGHLIGHT_CLASS = "cm-quran-key-text";
 const MARKDOWN_BLOCK_CLASS = "quran-key-text-block";
@@ -128,7 +129,7 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 		}
 		for (const link of Array.from(el.querySelectorAll("a.internal-link"))) {
 			const label = link.textContent?.trim() ?? "";
-			if (/^[()\u0660-\u0669\u06F0-\u06F9]+$/.test(label)) link.classList.add(AYAH_NOTE_LINK_CLASS);
+			if (/^[()۝\u0660-\u0669\u06F0-\u06F9]+$/.test(label)) link.classList.add(AYAH_NOTE_LINK_CLASS);
 		}
 	};
 }
@@ -163,7 +164,7 @@ export function createLazyAyahMarkerPostProcessor(
 }
 
 export function applyStyleVariables(settings: PluginConfig): void {
-	const fontFamily = settings.quranFontFamily?.trim() || DEFAULT_SETTINGS.quranFontFamily;
+	const fontFamily = settings.quranFontFamily?.trim() || getQuranRenderingProfile(settings.quranRenderingProfile).fontFamily;
 	const fontSize = settings.quranFontSize || DEFAULT_SETTINGS.quranFontSize;
 	const lineHeight = settings.quranLineHeight || DEFAULT_SETTINGS.quranLineHeight;
 
