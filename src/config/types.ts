@@ -1,4 +1,3 @@
-import type { QuranRenderingProfileId } from "./quranRenderingProfiles";
 import type { AyahMarkerStyle } from "../domain/services/AyahMarkerFormatter";
 
 export type Locale = "ar" | "en";
@@ -31,6 +30,7 @@ export interface ReflectionCategoryDescriptor {
 	headingLevel: string;
 	folder: string;
 	isBuiltin: boolean;
+	dedicatedCommand?: boolean;
 }
 
 export interface NormalizationRule {
@@ -51,10 +51,7 @@ export interface PluginConfig {
 	normalizationRules: NormalizationRule[];
 
 	// --- Qur'anic text styling ---
-	quranRenderingProfile: QuranRenderingProfileId;
 	ayahMarkerStyle: AyahMarkerStyle;
-	/** Optional manual override; leave empty to use the selected test profile's font. */
-	quranFontFamily: string;
 	quranFontSize: number;
 	quranLineHeight: number;
 	quranColor: string;

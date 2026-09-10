@@ -1,10 +1,9 @@
-import { Plugin } from "obsidian";
+import { Plugin, TFile } from "obsidian";
 import type { Editor } from "obsidian";
 import type { Extension } from "@codemirror/state";
 
 import { DEFAULT_SETTINGS, migrateLegacySettings } from "./config/defaults";
 import type { PluginConfig } from "./config/types";
-import { getQuranRenderingProfile } from "./config/quranRenderingProfiles";
 import type { TafsirBook } from "./domain/entities/TafsirBook";
 import type { ReflectionCategory } from "./domain/entities/ReflectionCategory";
 import type { Ayah } from "./domain/entities/Ayah";
@@ -74,7 +73,6 @@ export default class QuranKeyPlugin extends Plugin {
 		this.repository = new ObsidianQuranRepository(
 			this.app.vault,
 			new ArabicNormalizer(this.settings.normalizationRules),
-			getQuranRenderingProfile(this.settings.quranRenderingProfile).textProfile
 		);
 		await this.repository.loadAll();
 
@@ -83,9 +81,11 @@ export default class QuranKeyPlugin extends Plugin {
 		this.refreshHighlightExtension();
 		this.registerEditorExtension(this.editorExtension);
 
-		this.registerMarkdownPostProcessor((el) => {
+		this.registerMarkdownPostProcessor((el, ctx) => {
 			createMarkdownPostProcessor(this.settings.wrapperStart, this.settings.wrapperEnd)(el);
-			createLazyAyahMarkerPostProcessor((surahId, ayahId) => this.lazyAyahNoteOpener(surahId, ayahId))(el);
+			const sourceFile = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+			const surahId = sourceFile instanceof TFile ? Number(this.app.metadataCache.getFileCache(sourceFile)?.frontmatter?.surahId) : NaN;
+			createLazyAyahMarkerPostProcessor((surahId, ayahId) => this.lazyAyahNoteOpener(surahId, ayahId), surahId)(el);
 			if (this.settings.styleOrnateNumbers) {
 				createOrnateNumberPostProcessor()(el);
 			}
@@ -130,7 +130,6 @@ export default class QuranKeyPlugin extends Plugin {
 		this.repository = new ObsidianQuranRepository(
 			this.app.vault,
 			normalizer,
-			getQuranRenderingProfile(this.settings.quranRenderingProfile).textProfile
 		);
 		void this.repository.loadAll();
 

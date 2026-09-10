@@ -61,8 +61,9 @@
       "enabled": true
     }
   ],
-  "quranFontFamily": "",
-  "quranFontSize": 1.1,
+  "quranRenderingProfile": "tanzil-uthmani-qpc-v18",
+  "ayahMarkerStyle": "plain",
+  "quranFontSize": 1.2,
   "quranLineHeight": 2.1,
   "quranColor": "#dfc56b",
   "styleOrnateNumbers": true,
@@ -72,6 +73,7 @@
   "maxSlidingWindowWords": 12,
   "interfaceLanguage": "en",
   "searchStrategy": "literal",
+  "enableAtSectionTrigger": false,
   "defaultTafsirBookId": "saadi",
   "favoriteBooksIds": [],
   "customTafsirBooks": [],
@@ -81,24 +83,44 @@
     "favorites",
     "default"
   ],
-  "includeAyahTextInTafsir": true,
+  "includeAyahTextInTafsir": false,
   "useHorizontalDivider": true,
   "rangeHeadingLevel": "###",
   "bookHeadingLevel": "####",
   "tafsirFetchDelayMs": 150,
   "tafsirFetchDelayThreshold": 2,
-  "customReflectionCategories": [],
+  "customReflectionCategories": [
+    {
+      "id": "custom-mtuihu23",
+      "name": "تفسير السعدي",
+      "organizationMode": "unified",
+      "headingText": "تفسير السعدي",
+      "headingLevel": "###",
+      "folder": "",
+      "isBuiltin": false
+    },
+    {
+      "id": "custom-mtuipu04",
+      "name": "اختبار",
+      "organizationMode": "unified",
+      "headingText": "اختبار",
+      "headingLevel": "###",
+      "folder": "",
+      "isBuiltin": false
+    }
+  ],
   "ayahNotesFolder": "ملاحظات الآيات",
-  "deleteSelectionAfterLinkingReflection": true,
+  "surahNotesFolder": "سور القرآن",
+  "surahNoteFileNameTemplate": "{surah}",
+  "linkAyahMarkersOnInsert": true,
+  "deleteSelectionAfterLinkingReflection": false,
   "reflectionBacklinkAliasTemplate": "",
   "reflectionBacklinkWrapTemplate": "{link}",
   "reflectionEntryPrefixTemplate": "- ",
+  "includeReflectionEntryDate": true,
   "reflectionEntrySeparator": "",
   "reflectionInsertionMode": "afterHeading",
   "reflectionFileNameTemplate": "{ayahText} ({surah} {verse})",
   "reflectionFileNameAyahTextMaxLength": 120,
-  "includeAyahTextInReflectionNote": true,
-  "useOrnateNumbers": false,
-  "ornateRingGlyph": "۝",
-  "reflectionEntryHeadingLevel": "###"
+  "includeAyahTextInReflectionNote": true
 }

@@ -6,6 +6,7 @@ import type { TafsirRepository } from "../../domain/ports/TafsirRepository";
 import type { TafsirCatalog } from "../../domain/services/TafsirCatalog";
 import type { Locale, TafsirResolutionStrategy } from "../../config/types";
 import { t } from "../../config/strings";
+import { OrnateNumberConverter } from "../../domain/services/OrnateNumberConverter";
 
 export interface TafsirFormattingOptions {
 	locale: Locale;
@@ -23,6 +24,8 @@ export interface TafsirFormattingOptions {
 }
 
 export class FetchAndInsertTafsir {
+	private readonly ornateNumberConverter = new OrnateNumberConverter();
+
 	constructor(
 		private readonly quranRepository: QuranRepository,
 		private readonly tafsirRepository: TafsirRepository,
@@ -99,7 +102,12 @@ export class FetchAndInsertTafsir {
 								: `${rawContent}\n\n`;
 					}
 				}
-				finalOutput += formatBookContent(book.name, combinedBookText, options.bookHeadingLevel, options.locale);
+				finalOutput += formatBookContent(
+					book.name,
+					this.ornateNumberConverter.removeInnerMarkerParentheses(combinedBookText, options.wrapperStart, options.wrapperEnd),
+					options.bookHeadingLevel,
+					options.locale
+				);
 				if (options.useHorizontalDivider && bIdx < selectedBooks.length - 1) {
 					finalOutput += "---\n\n";
 				}

@@ -5,8 +5,8 @@ export class ReflectionCategoryCatalog {
 
 	constructor(builtin: readonly ReflectionCategory[], custom: readonly ReflectionCategory[]) {
 		const byId = new Map<string, ReflectionCategory>();
-		for (const c of builtin) byId.set(c.id, c);
-		for (const c of custom) byId.set(c.id, c);
+		for (const c of builtin) byId.set(c.id, { ...c, dedicatedCommand: c.dedicatedCommand === true });
+		for (const c of custom) byId.set(c.id, { ...c, dedicatedCommand: c.dedicatedCommand === true });
 		this.categories = Array.from(byId.values());
 	}
 

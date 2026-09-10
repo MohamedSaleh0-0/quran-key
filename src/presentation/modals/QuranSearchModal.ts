@@ -141,6 +141,7 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 		const start = this.startPos ?? toPosition(this.editor.getCursor("from"));
 		const end = this.endPos ?? toPosition(this.editor.getCursor("to"));
 		if (this.onVerseSelectOverride) {
+			this.close();
 			void this.onVerseSelectOverride([item]);
 			return;
 		}

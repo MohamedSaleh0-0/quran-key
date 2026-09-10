@@ -22,39 +22,21 @@ for planned surah/ayah note workflows and the structure of plugin-generated note
 
 ### Quran text source
 
-The bundled Quran corpus retains `quran-uthmani.xml` unchanged as the canonical
-reference: Tanzil Quran Text (Uthmani, Version 1.1). The generated
-`data/ayahs.json` uses Tanzil's extended `quran-uthmani-sequential.xml` display
-profile, which adds sequential tanween marks while preserving the same Quranic
-letters and Uthmani signs. The importer validates both files against each other
-before generating the application corpus, and records both source hashes. The
-importer preserves Uthmani text, pause marks, sajdah signs, rubʿ al-ḥizb signs,
-and separately stored Bismillah text. The matching embedded `me_quran` font is
-used first for Quran text. Tanzil documents that this font is required for
-correctly rendering sequential tanween data; it also keeps Quranic annotation
-marks such as U+06DF aligned inside the plugin's ornate verse wrapper. The
-canonical source remains available for audit, while the runtime display text is
-never silently normalized or rewritten.
+The bundled Quran corpus is based on Tanzil Quran Text (Uthmani, Version 1.1).
+Production rendering uses one fixed display: the canonical corpus with the
+embedded QPC Hafs v18 font. U+06DF is omitted from the generated production
+text because this font does not render it reliably. Sequential tanween is not
+inserted into stored production text, keeping copying and searching safe.
+
+This is a deliberate source decision; the alternatives considered and the
+conditions for any future corpus replacement are recorded in
+[`docs/QURAN_SOURCE_DECISION.md`](docs/QURAN_SOURCE_DECISION.md).
 
 Run `npm run quran:import` after replacing the source file. The importer
-validates the 114 surahs and 6,236 ayahs in both source files before generating
-the JSON corpus. Tanzil attribution, display options, and usage terms are
+validates the 114 surahs and 6,236 ayahs before generating the JSON corpus.
+Tanzil attribution, display options, and usage terms are
 available at
 <https://tanzil.net/download/>.
-
-### Display testing laboratory
-
-Run **Open Quran display laboratory** from Obsidian's command palette to compare
-four local candidates: Tanzil canonical or sequential text, rendered with
-`me_quran`, the bundled KFGQPC font, or QPC Hafs v18. Every card contains the
-same short, deliberately non-insertable visual test strip: ornate brackets,
-tatweel and dagger alif, hamza and madd, U+06DF, normal/sequential tanween,
-pause marks, rubʿ al-hizb, sajdah, and an ayah ending marker.
-
-Selecting a candidate switches the text corpus and its font together for new
-searches, insertions, and newly created surah notes. Existing vault content is
-never rewritten. The ayah-ending marker can also be tested independently as
-bare Arabic-Indic digits, parenthesized digits, or `۝` plus the number.
 
 ---
 

@@ -13,21 +13,18 @@ import { createLinkReflectionPickerCommand } from "./definitions/linkReflectionC
 import { createLinkAyatCommand } from "./definitions/linkAyat";
 import { createOpenSurahNoteCommand } from "./definitions/openSurahNote";
 import { createLogAyahEntryCommand } from "./definitions/logAyahEntry";
-import { createOpenQuranDisplayLabCommand } from "./definitions/openQuranDisplayLab";
 
 /** The plugin's full command inventory. To add a new command: write a
  *  `create*Command(services)` factory next to these (see
  *  docs/ARCHITECTURE.md §8) and add it to this array — nothing else
  *  changes.
  *
- *  Reflection categories are the one exception to "one line per command"
- *  above: every category in the catalog (builtin + custom, whatever
- *  exists at startup) gets its own command generated from the same
- *  factory, so a user can bind a hotkey directly to "Log selection as
- *  تدبرات الشيخ فلان" without that category needing a hardcoded line
- *  here. Categories created *after* startup (Settings, or the picker's
- *  "create new" flow) register their command immediately at creation
- *  time instead — see AppServices.registerReflectionCategoryCommand. */
+ *  Reflection category commands are generated from the same factory, but
+ *  only for categories whose `dedicatedCommand` setting is enabled. All
+ *  categories — including newly created permanent categories — remain
+ *  available in the general "choose category" command. The settings toggle
+ *  registers or unregisters the optional dedicated command at runtime.
+ */
 export function registerAllCommands(plugin: Plugin, services: AppServices): void {
 	register(plugin, [
 		createOpenGlobalSearchCommand(services),
@@ -37,11 +34,10 @@ export function registerAllCommands(plugin: Plugin, services: AppServices): void
 		createRemoveReferenceCommand(services),
 		createConvertToFootnoteCommand(services),
 		createStripTashkeelCommand(services),
-		...services.reflectionCatalog.all().map((cat) => createLinkReflectionCommand(services, cat.id)),
+		...services.reflectionCatalog.all().filter((cat) => cat.dedicatedCommand === true).map((cat) => createLinkReflectionCommand(services, cat.id)),
 		createLinkReflectionPickerCommand(services),
 		createLinkAyatCommand(services),
 		createOpenSurahNoteCommand(services),
 		createLogAyahEntryCommand(services),
-		createOpenQuranDisplayLabCommand(services),
 	]);
 }

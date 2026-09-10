@@ -22,6 +22,24 @@ vault data.
 - [x] Remove stale implementation instructions and documentation artifacts.
 - [x] Define acceptance behavior for lazy surah and ayah note creation.
 
+### Phase 0.5 — Quran rendering baseline
+
+- [x] Select canonical Tanzil Uthmani as the bundled production corpus.
+- [x] Select QPC Hafs v18 as the production Unicode font.
+- [x] Add the scoped `U+06DF` donor-glyph override.
+- [x] Ship one canonical Quran display using QPC Hafs v18.
+- [x] Record the source decision and corpus provenance.
+- [x] Add corpus integrity tests for all 6,236 ayat.
+- [x] Add the typography regression strip and automated checks.
+- [ ] Manually verify the regression strip in Obsidian Reading View,
+  Live Preview, and Source mode.
+- [ ] Manually verify generated surah notes and ayah-marker interaction.
+- [ ] Confirm rendering on a clean Obsidian vault before release.
+
+The remaining unchecked items are release verification tasks, not alternate
+rendering designs. Tanween stacking remains a documented limitation of the
+canonical-text/QPC architecture.
+
 ## Surah and ayah note direction
 
 The target experience is a complete surah note that reads like a normal

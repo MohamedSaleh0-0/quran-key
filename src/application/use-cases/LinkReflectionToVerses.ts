@@ -79,7 +79,7 @@ export class LinkReflectionToVerses {
 		);
 
 		if (options.replaceSelectionWithBacklink && firstNoteTitle !== null) {
-			const backlink = this.renderBacklink(firstNoteTitle, surahName, startAyah, reflectionText, options);
+			const backlink = this.renderBacklink(firstNoteTitle, category, surahName, startAyah, reflectionText, options);
 			editor.replaceRange(backlink, selectionStart, selectionEnd);
 		}
 	}
@@ -150,9 +150,18 @@ export class LinkReflectionToVerses {
 		};
 	}
 
-	private renderBacklink(noteTitle: string, surahName: string, ayahId: number, ayahText: string, options: ReflectionLinkOptions): string {
+	private renderBacklink(
+		noteTitle: string,
+		category: ReflectionCategory,
+		surahName: string,
+		ayahId: number,
+		ayahText: string,
+		options: ReflectionLinkOptions
+	): string {
 		const alias = options.backlinkAliasTemplate
 			? options.backlinkAliasTemplate
+					.split("{category}")
+					.join(category.name)
 					.split("{surah}")
 					.join(surahName)
 					.split("{verse}")
@@ -160,7 +169,9 @@ export class LinkReflectionToVerses {
 					.split("{ayahText}")
 					.join(ayahText)
 			: "";
-		const link = alias ? `[[${noteTitle}|${alias}]]` : `[[${noteTitle}]]`;
+		const heading = category.headingText.trim();
+		const target = heading ? `${noteTitle}#${heading}` : noteTitle;
+		const link = alias ? `[[${target}|${alias}]]` : `[[${target}]]`;
 		return options.backlinkWrapTemplate.split("{link}").join(link);
 	}
 

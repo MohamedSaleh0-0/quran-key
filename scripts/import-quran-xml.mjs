@@ -69,10 +69,13 @@ function parseTanzilXml(xml, fileName) {
 			const ayah = {
 				surah_id: surahId,
 				ayah_id: ayahId,
-				text: ayaAttributes.text,
+				// QPC Hafs v18 does not render U+06DF reliably. It is a decorative
+				// Quranic mark, so omit it from the single production corpus rather
+				// than ship a visibly broken glyph.
+				text: ayaAttributes.text.replace(/\u06DF/g, ""),
 				surah_name: surahName,
 			};
-			if (ayaAttributes.bismillah) ayah.bismillah = ayaAttributes.bismillah;
+			if (ayaAttributes.bismillah) ayah.bismillah = ayaAttributes.bismillah.replace(/\u06DF/g, "");
 			ayahs.push(ayah);
 			expectedAyahId += 1;
 		}
@@ -142,6 +145,8 @@ function buildOutput(ayahs, displayProfile, displayFile, fontFamily, derivedNoti
 			displaySha256: sha256(displayFile === "quran-uthmani.xml" ? canonicalXml : displayXml),
 			displayProfile,
 			fontFamily,
+			runtimeRole: displayProfile === "canonical-uthmani" ? "production" : "laboratory-only",
+			decision: "The plugin runtime uses canonical Tanzil Uthmani text. The sequential variant is retained only for font comparison.",
 			derivedNotice,
 		},
 		ayahs,
@@ -153,7 +158,7 @@ const canonicalOutput = buildOutput(
 	"canonical-uthmani",
 	"quran-uthmani.xml",
 	"font-independent",
-	"Canonical Tanzil Uthmani text retained unchanged for source/font comparison in the display laboratory."
+		"Canonical Tanzil Uthmani text with unsupported U+06DF decorative marks omitted for reliable production rendering."
 );
 const sequentialOutput = buildOutput(
 	displayAyahs,

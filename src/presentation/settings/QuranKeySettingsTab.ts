@@ -106,7 +106,11 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const reflectionsSection = SETTINGS_SCHEMA.find((s) => s.id === "reflections");
 		if (reflectionsSection) {
 			new Setting(containerEl).setName(reflectionsSection.heading[locale]).setHeading();
-			for (const field of reflectionsSection.fields) this.renderField(containerEl, field, locale);
+			const linkingEnabled = this.services.settings.deleteSelectionAfterLinkingReflection;
+			for (const field of reflectionsSection.fields) {
+				if (!linkingEnabled && (field.key === "reflectionBacklinkAliasTemplate" || field.key === "reflectionBacklinkWrapTemplate")) continue;
+				this.renderField(containerEl, field, locale);
+			}
 		}
 	}
 
@@ -182,6 +186,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 					toggle.setValue(Boolean(settings[field.key])).onChange(async (value) => {
 						settings[field.key] = value;
 						await this.save();
+						if (field.key === "deleteSelectionAfterLinkingReflection") this.display();
 					})
 				);
 				break;
@@ -433,6 +438,18 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 					});
 
 				new Setting(body)
+					.setName(locale === "ar" ? "إظهار أمرك الخاص" : "Dedicated command")
+					.setDesc(locale === "ar" ? "أضف أمراً مستقلاً لهذا التصنيف إلى لوحة الأوامر." : "Add a separate command for this category to the command palette.")
+					.addToggle((toggle) =>
+						toggle.setValue(cat.dedicatedCommand === true).onChange(async (value) => {
+							patchCategory(cat.id, { dedicatedCommand: value });
+							await this.save();
+							if (value) this.services.registerReflectionCategoryCommand(cat.id);
+							else this.services.unregisterReflectionCategoryCommand(cat.id);
+						})
+					);
+
+				new Setting(body)
 					.setName(locale === "ar" ? "العنوان" : "Heading")
 					.setDesc(locale === "ar" ? "مثل: ### تدبرات" : "e.g. ### Reflections")
 					.addText((tx) =>
@@ -496,10 +513,10 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 							headingLevel: "###",
 							folder: "",
 							isBuiltin: false,
+							dedicatedCommand: false,
 						},
 					];
 					await this.save();
-					this.services.registerReflectionCategoryCommand(trimmedId);
 					renderList();
 				})
 			);

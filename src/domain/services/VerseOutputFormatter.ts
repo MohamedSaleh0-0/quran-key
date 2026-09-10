@@ -8,8 +8,7 @@ export interface FormattingOptions {
 	wrapperEnd: string;
 	useOrnateNumbers: boolean;
 	stripTashkeelOnOutput: boolean;
-	/** Explicit marker style used by the display laboratory. Omit to retain the
-	 * legacy `useOrnateNumbers` behavior for callers outside the plugin shell. */
+	/** Explicit marker style used by generated Quran text. */
 	ayahMarkerStyle?: AyahMarkerStyle;
 	/** Optional note titles keyed as `${surahId}:${ayahId}`. Only the ayah
 	 * marker is linked; the Quran text remains plain text. */

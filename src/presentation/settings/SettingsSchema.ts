@@ -157,21 +157,6 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 		heading: { ar: "تنسيق مظهر الآيات", en: "Verse Style" },
 		fields: [
 			{
-				key: "quranRenderingProfile",
-				type: "dropdown",
-				label: { ar: "نسخة اختبار عرض النص القرآني", en: "Quran display test profile" },
-				description: {
-					ar: "يبدّل معًا مصدر النص والخط المقترح. يمكن فتح «مختبر عرض النص القرآني» من لوحة الأوامر للمقارنة الحية.",
-					en: "Changes the text corpus and matching font together. Use the Quran display lab command for a live comparison.",
-				},
-				dropdownOptions: [
-					{ value: "tanzil-sequential-me-quran", label: "Tanzil الممتد + me_quran" },
-					{ value: "tanzil-uthmani-me-quran", label: "Tanzil القياسي + me_quran" },
-					{ value: "tanzil-uthmani-kfgqpc", label: "Tanzil القياسي + KFGQPC" },
-					{ value: "tanzil-uthmani-qpc-v18", label: "Tanzil القياسي + QPC Hafs v18" },
-				],
-			},
-			{
 				key: "ayahMarkerStyle",
 				type: "dropdown",
 				label: { ar: "شكل علامة نهاية الآية", en: "Ayah ending marker" },
@@ -300,18 +285,18 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				key: "deleteSelectionAfterLinkingReflection",
 				type: "toggle",
 				label: { ar: "استبدال النص المحدد برابط للآية", en: "Replace selection with link" },
-				description: {
-					ar: "استبدال النص المختار برابط لملاحظة الآية بدلاً من تركه كنسخة مكررة.",
-					en: "Replace selected text with a backlink to the ayah note.",
+				 description: {
+					ar: "استبدال النص المختار برابط إلى ملاحظة الآية وقسم التصنيف بدلاً من تركه كنسخة مكررة.",
+					en: "Replace selected text with a backlink to the ayah note and category heading.",
 				},
 			},
 			{
 				key: "reflectionBacklinkAliasTemplate",
 				type: "text",
 				label: { ar: "صيغة الاسم المستعار للرابط (alias)", en: "Link alias template" },
-				description: {
-					ar: "المتغيرات المتاحة: {surah} و {verse} و {ayahText}. اتركه فارغاً لرابط صريح.",
-					en: "Available placeholders: {surah}, {verse}, {ayahText}. Leave empty for plain link.",
+				 description: {
+					ar: "المتغيرات المتاحة: {category} و {surah} و {verse} و {ayahText}. اتركه فارغاً لرابط صريح.",
+					en: "Available placeholders: {category}, {surah}, {verse}, and {ayahText}. Leave empty for a plain link.",
 				},
 			},
 			{

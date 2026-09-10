@@ -8,4 +8,5 @@ export interface ReflectionCategory {
 	readonly headingLevel: string;
 	readonly folder: string;
 	readonly isBuiltin: boolean;
+	readonly dedicatedCommand?: boolean;
 }

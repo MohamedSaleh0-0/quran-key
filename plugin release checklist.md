@@ -1,5 +1,25 @@
 \# Obsidian Plugin Publishing Checklist (2026)
 
+## Quran Key implementation status
+
+Completed in the current rendering phase:
+
+- [x] Canonical Tanzil Uthmani is the production corpus.
+- [x] QPC Hafs v18 is the production font.
+- [x] `U+06DF` has a scoped donor-glyph override.
+- [x] Sequential-tanween text is laboratory-only.
+- [x] Corpus integrity and rendering regression tests pass.
+
+Still required before release:
+
+- [ ] Manual visual QA in Obsidian Reading View, Live Preview, and Source mode.
+- [ ] Manual surah-note and lazy ayah-note workflow QA.
+- [ ] Clean-vault verification.
+- [ ] Final version/release artifact review.
+
+See `docs/ROADMAP.md` and `docs/QURAN_SOURCE_DECISION.md` for the detailed
+implementation state and source decision.
+
 
 
 Obsidian relaunched its plugin submission system in May 2026. Submissions now go through \*\*Obsidian Community\*\* (community.obsidian.md), not a GitHub pull request against `community-plugins.json`. There are two layers of review:

@@ -2,7 +2,6 @@ import { Decoration, MatchDecorator, ViewPlugin } from "@codemirror/view";
 import type { DecorationSet, EditorView, ViewUpdate } from "@codemirror/view";
 import type { PluginConfig } from "../../config/types";
 import { DEFAULT_SETTINGS } from "../../config/defaults";
-import { getQuranRenderingProfile } from "../../config/quranRenderingProfiles";
 
 const HIGHLIGHT_CLASS = "cm-quran-key-text";
 const MARKDOWN_BLOCK_CLASS = "quran-key-text-block";
@@ -135,23 +134,52 @@ export function createMarkdownPostProcessor(wrapperStart: string, wrapperEnd: st
 }
 
 export function createLazyAyahMarkerPostProcessor(
-	openAyahNote: (surahId: number, ayahId: number) => Promise<void>
+	openAyahNote: (surahId: number, ayahId: number) => Promise<void>,
+	surahId: number
 ): (el: HTMLElement) => void {
 	return (el) => {
-		for (const marker of Array.from(el.querySelectorAll<HTMLElement>(`[data-quran-key-surah][data-quran-key-ayah].${LAZY_AYAH_CLASS}`))) {
-			if (marker.dataset.quranKeyBound === "true") continue;
-			const surahId = Number(marker.dataset.quranKeySurah);
-			const ayahId = Number(marker.dataset.quranKeyAyah);
-			if (!Number.isInteger(surahId) || !Number.isInteger(ayahId)) continue;
+		if (!Number.isInteger(surahId)) return;
+		const quranBlocks = Array.from(el.querySelectorAll<HTMLElement>(`.${HIGHLIGHT_CLASS}`));
+		const markerPattern = /[٠-٩]+/g;
+		for (const block of quranBlocks) {
+			decorateLazyMarkers(block, surahId, markerPattern, openAyahNote);
+		}
+	};
+}
 
-			marker.dataset.quranKeyBound = "true";
+function decorateLazyMarkers(
+	root: HTMLElement,
+	 surahId: number,
+	pattern: RegExp,
+	openAyahNote: (surahId: number, ayahId: number) => Promise<void>
+): void {
+	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+	const textNodes: Text[] = [];
+	let current: Node | null;
+	while ((current = walker.nextNode())) {
+		if (current.parentElement?.closest(`.${LAZY_AYAH_CLASS}, a.internal-link`)) continue;
+		textNodes.push(current as Text);
+	}
+
+	for (const textNode of textNodes) {
+		const text = textNode.nodeValue ?? "";
+		pattern.lastIndex = 0;
+		if (!pattern.test(text)) continue;
+		pattern.lastIndex = 0;
+		const fragment = document.createDocumentFragment();
+		let lastIndex = 0;
+		let match: RegExpExecArray | null;
+		while ((match = pattern.exec(text)) !== null) {
+			if (match.index > lastIndex) fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+			const marker = document.createElement("span");
+			marker.className = LAZY_AYAH_CLASS;
+			marker.dataset.quranKeySurah = String(surahId);
+			marker.dataset.quranKeyAyah = String(arabicIndicToNumber(match[0]));
+			marker.textContent = match[0];
 			marker.setAttribute("role", "button");
 			marker.setAttribute("tabindex", "0");
-			marker.setAttribute("aria-label", `Open ayah note ${surahId}:${ayahId}`);
-
-			const open = () => {
-				void openAyahNote(surahId, ayahId).catch(() => undefined);
-			};
+			marker.setAttribute("aria-label", `Open ayah note ${surahId}:${marker.dataset.quranKeyAyah}`);
+			const open = () => void openAyahNote(surahId, Number(marker.dataset.quranKeyAyah)).catch(() => undefined);
 			marker.addEventListener("click", open);
 			marker.addEventListener("keydown", (event) => {
 				if (event.key === "Enter" || event.key === " ") {
@@ -159,12 +187,20 @@ export function createLazyAyahMarkerPostProcessor(
 					open();
 				}
 			});
+			fragment.appendChild(marker);
+			lastIndex = match.index + match[0].length;
 		}
-	};
+		if (lastIndex < text.length) fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+		textNode.parentNode?.replaceChild(fragment, textNode);
+	}
+}
+
+function arabicIndicToNumber(value: string): number {
+	return Number(value.replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))));
 }
 
 export function applyStyleVariables(settings: PluginConfig): void {
-	const fontFamily = settings.quranFontFamily?.trim() || getQuranRenderingProfile(settings.quranRenderingProfile).fontFamily;
+	const fontFamily = "'QPC Hafs v18', serif";
 	const fontSize = settings.quranFontSize || DEFAULT_SETTINGS.quranFontSize;
 	const lineHeight = settings.quranLineHeight || DEFAULT_SETTINGS.quranLineHeight;
 

@@ -1,10 +1,9 @@
 import { Notice } from "obsidian";
 import type { CommandDefinition } from "../CommandRegistry";
 import type { AppServices } from "../../AppServices";
-import type { ReflectionCategory } from "../../../domain/entities/ReflectionCategory";
 import { ReflectionCategoryPickerModal } from "../../modals/ReflectionCategoryPickerModal";
-import { QuranSearchModal } from "../../modals/QuranSearchModal";
 import { t } from "../../../config/strings";
+import type { ReflectionDestination } from "../../modals/ReflectionCategoryPickerModal";
 
 export function createLinkReflectionPickerCommand(services: AppServices): CommandDefinition {
 	return {
@@ -21,34 +20,39 @@ export function createLinkReflectionPickerCommand(services: AppServices): Comman
 			const from = editorPort.getCursor("from");
 			const to = editorPort.getCursor("to");
 
-			new ReflectionCategoryPickerModal(services.app, services, (cat: ReflectionCategory) => {
-				const link = (surahId: number, surahName: string, startAyah: number, endAyah: number) =>
-					services.useCases.linkReflection.execute(
+			const activeFile = services.app.workspace.getActiveFile();
+			const frontmatter = activeFile ? services.app.metadataCache.getFileCache(activeFile)?.frontmatter : undefined;
+			const noteDestination =
+				frontmatter?.type === "quran-ayah" && Number.isInteger(Number(frontmatter.surahId)) && Number.isInteger(Number(frontmatter.ayahId))
+					? services.repository.findAyah(Number(frontmatter.surahId), Number(frontmatter.ayahId))
+					: null;
+			const detected = services.useCases.linkReflection.detectExistingCitation(selectedText);
+			const initialDestination: ReflectionDestination | null = noteDestination
+				? { surahId: noteDestination.surahId, surahName: noteDestination.surahName, startAyah: noteDestination.ayahId, endAyah: noteDestination.ayahId }
+				: detected
+					? { surahId: detected.surahId, surahName: detected.surahName, startAyah: detected.startAyah, endAyah: detected.endAyah }
+					: null;
+
+			new ReflectionCategoryPickerModal(
+				services.app,
+				services,
+				async (cat, destination) => {
+					if (!destination) return;
+					await services.useCases.linkReflection.execute(
 						editorPort,
 						from,
 						to,
 						selectedText,
 						cat,
-						surahId,
-						surahName,
-						startAyah,
-						endAyah,
+						destination.surahId,
+						destination.surahName,
+						destination.startAyah,
+						destination.endAyah,
 						services.buildReflectionOptions()
 					);
-
-				const detected = services.useCases.linkReflection.detectExistingCitation(selectedText);
-				if (detected) {
-					void link(detected.surahId, detected.surahName, detected.startAyah, detected.endAyah);
-					return;
-				}
-
-				new QuranSearchModal(services, editor, "", null, null, null, async (ayahs) => {
-					if (ayahs.length === 0) return;
-					const first = ayahs[0];
-					const last = ayahs[ayahs.length - 1];
-					await link(first.surahId, first.surahName, first.ayahId, last.ayahId);
-				}).open();
-			}).open();
+				},
+				{ destination: initialDestination, editor, requireDestination: true }
+			).open();
 		},
 	};
 }

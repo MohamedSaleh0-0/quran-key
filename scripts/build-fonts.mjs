@@ -4,32 +4,9 @@ import path from "node:path";
 const STYLES_PATH = path.resolve("styles.css");
 const FONTS_DIR = path.resolve("assets/fonts-src");
 
-const KFGQPC_CANDIDATES = [
-	path.join(FONTS_DIR, "UthmanicHafs.woff"),
-	path.join(FONTS_DIR, "UthmanicHafs.woff2"),
-	path.join(FONTS_DIR, "UthmanicHafs.ttf"),
-	path.join(FONTS_DIR, "KFGQPC.woff"),
-	path.join(FONTS_DIR, "KFGQPC.woff2"),
-	path.join(FONTS_DIR, "KFGQPC.ttf"),
-];
-
-const ME_QURAN_CANDIDATES = [
-	path.join(FONTS_DIR, "me_quran.ttf"),
-	path.join(FONTS_DIR, "me-quran.ttf"),
-	path.join(FONTS_DIR, "me_quran.woff2"),
-	path.join(FONTS_DIR, "me-quran.woff2"),
-];
-
 const QPC_HAFS_V18_CANDIDATES = [
 	path.join(FONTS_DIR, "UthmanicHafs1Ver18.woff2"),
 	path.join(FONTS_DIR, "UthmanicHafs1Ver18.ttf"),
-];
-
-const AMIRI_CANDIDATES = [
-	path.join(FONTS_DIR, "AmiriQuran.woff2"),
-	path.join(FONTS_DIR, "AmiriQuran.ttf"),
-	path.join(FONTS_DIR, "amiri-quran.woff2"),
-	path.join(FONTS_DIR, "amiri-quran.ttf"),
 ];
 
 function resolveFile(candidates) {
@@ -63,35 +40,40 @@ function buildFontFace(family, filePath) {
 }\n`;
 }
 
+function buildGlyphOverrideFontFace(family, filePath, unicodeRange) {
+	const buffer = fs.readFileSync(filePath);
+	const format = detectFormat(filePath);
+	const base64 = buffer.toString("base64");
+	const sizeKb = (buffer.length / 1024).toFixed(1);
+
+	console.log(`[build-fonts] Embedding ${family} (${unicodeRange}) from ${path.basename(filePath)} (${sizeKb} KB)`);
+
+	return `@font-face {
+\tfont-family: '${family}';
+\tsrc: url('data:font/${format};base64,${base64}') format('${format}');
+\tfont-weight: normal;
+\tfont-style: normal;
+\tfont-display: swap;
+\tunicode-range: ${unicodeRange};
+}\n`;
+}
+
 async function main() {
 	if (!fs.existsSync(FONTS_DIR)) {
 		fs.mkdirSync(FONTS_DIR, { recursive: true });
 	}
 
-	const kfgqpcFile = resolveFile(KFGQPC_CANDIDATES);
-	const meQuranFile = resolveFile(ME_QURAN_CANDIDATES);
 	const qpcHafsV18File = resolveFile(QPC_HAFS_V18_CANDIDATES);
-	const amiriFile = resolveFile(AMIRI_CANDIDATES);
-
-	if (!kfgqpcFile && !meQuranFile && !qpcHafsV18File && !amiriFile) {
+	if (!qpcHafsV18File) {
 		console.warn("\n[build-fonts] تنبيه: لم يتم العثور على ملفات الخطوط داخل assets/fonts-src/.");
-		console.warn("ضع ملف 'UthmanicHafs.woff2' أو 'AmiriQuran.woff2' داخل المجلد ليتم دمجهما.");
+		console.warn("ضع ملف 'UthmanicHafs1Ver18.woff2' داخل المجلد ليتم دمجه.");
 		return;
 	}
 
 	let fontFaceBlocks = "/* === AUTO-GENERATED EMBEDDED FONTS - DO NOT EDIT MANUALLY === */\n";
 
-	if (kfgqpcFile) {
-		fontFaceBlocks += buildFontFace("KFGQPC Uthmanic Script HAFS", kfgqpcFile);
-	}
-	if (meQuranFile) {
-		fontFaceBlocks += buildFontFace("me_quran", meQuranFile);
-	}
 	if (qpcHafsV18File) {
 		fontFaceBlocks += buildFontFace("QPC Hafs v18", qpcHafsV18File);
-	}
-	if (amiriFile) {
-		fontFaceBlocks += buildFontFace("Amiri Quran", amiriFile);
 	}
 
 	fontFaceBlocks += "/* === END AUTO-GENERATED EMBEDDED FONTS === */\n\n";
@@ -108,6 +90,7 @@ async function main() {
 	stylesContent = stylesContent.replace(/\/\* === me_quran Font Embedded[\s\S]*?\}\s*/g, "");
 	stylesContent = stylesContent.replace(/\/\* === QPC Hafs v18 Font Embedded[\s\S]*?\}\s*/g, "");
 	stylesContent = stylesContent.replace(/\/\* === Amiri Quran Font[\s\S]*?\}\s*/g, "");
+	stylesContent = stylesContent.replace(/\/\* === QPC Hafs v18 Glyph Overrides[\s\S]*?\/\* === END QPC Hafs v18 Glyph Overrides === \*\/\s*/g, "");
 
 	fs.writeFileSync(STYLES_PATH, fontFaceBlocks + stylesContent.trimStart(), "utf-8");
 	console.log("[build-fonts] styles.css was successfully updated with offline Base64 fonts!");

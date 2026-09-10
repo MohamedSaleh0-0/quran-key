@@ -13,6 +13,15 @@ const ayah: Ayah = {
 };
 
 describe("VerseOutputFormatter", () => {
+	it("removes only ayah-number parentheses inside ornate wrappers", () => {
+		const converter = new OrnateNumberConverter();
+		const text = "﴿فَيَئُوسٌ قَنُوطٌ (٤٩)﴾ ونص (٤٩) خارج القوس";
+
+		expect(converter.removeInnerMarkerParentheses(text, "﴿", "﴾")).toBe(
+			"﴿فَيَئُوسٌ قَنُوطٌ ٤٩﴾ ونص (٤٩) خارج القوس"
+		);
+	});
+
 	it("wraps text, appends the ayah number, and the compiled reference", () => {
 		const reference = VerseReference.compile("[{surah}:{verse}]");
 		const formatter = new VerseOutputFormatter(new OrnateNumberConverter("\u06DD"), reference, (t) => t);

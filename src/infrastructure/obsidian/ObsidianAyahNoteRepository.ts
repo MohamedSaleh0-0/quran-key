@@ -258,19 +258,23 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 
 	private renderSurahAyah(ayah: Ayah, linkTitle: string | null): string {
 		const digits = formatAyahMarker(ayah.ayahId, this.getSettings().ayahMarkerStyle);
-		const marker = linkTitle
-			? `[[${linkTitle}|${digits}]]`
-			: `<span class="quran-key-lazy-ayah" data-quran-key-surah="${ayah.surahId}" data-quran-key-ayah="${ayah.ayahId}">${digits}</span>`;
+		const marker = linkTitle ? `[[${linkTitle}|${digits}]]` : digits;
 		const text = ayah.bismillah ? `${ayah.bismillah} ${ayah.text}` : ayah.text;
 		return `${text} ${marker}`.trim();
 	}
 
 	private async materializeAyahLink(file: TFile, surahId: number, ayahId: number, ayahTitle: string): Promise<void> {
 		const digits = formatAyahMarker(ayahId, this.getSettings().ayahMarkerStyle);
-		const marker = `<span class="quran-key-lazy-ayah" data-quran-key-surah="${surahId}" data-quran-key-ayah="${ayahId}">${digits}</span>`;
 		const link = `[[${ayahTitle}|${digits}]]`;
-		await this.app.vault.process(file, (current) => (current.includes(marker) ? current.replace(marker, link) : current));
+		const ayah = this.getSettings().getSurahAyahs(surahId).find((item) => item.ayahId === ayahId);
+		if (!ayah) return;
+		const text = ayah.bismillah ? `${ayah.bismillah} ${ayah.text}` : ayah.text;
+		await this.app.vault.process(file, (current) => {
+			const marker = `${text} ${digits}`;
+			return current.includes(marker) ? current.replace(marker, `${text} ${link}`) : current;
+		});
 	}
+
 
 	private async appendToOwnFolderNote(
 		identity: AyahIdentity,
