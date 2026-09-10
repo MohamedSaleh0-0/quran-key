@@ -1,6 +1,6 @@
 {
 	"name": "quran-key",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "Toolkit for Islamic studies and Quran research with verse lookup, multi-source tafsir, and reflection notes.",
 	"main": "main.js",
 	"scripts": {
