@@ -1,5 +1,6 @@
 import { Decoration, MatchDecorator, ViewPlugin } from "@codemirror/view";
 import type { DecorationSet, EditorView, ViewUpdate } from "@codemirror/view";
+import { createEl } from "obsidian";
 import type { PluginConfig } from "../../config/types";
 import { DEFAULT_SETTINGS } from "../../config/defaults";
 
@@ -171,8 +172,7 @@ function decorateLazyMarkers(
 		let match: RegExpExecArray | null;
 		while ((match = pattern.exec(text)) !== null) {
 			if (match.index > lastIndex) fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-			const marker = document.createElement("span");
-			marker.className = LAZY_AYAH_CLASS;
+			const marker = createEl("span", { cls: LAZY_AYAH_CLASS });
 			marker.dataset.quranKeySurah = String(surahId);
 			marker.dataset.quranKeyAyah = String(arabicIndicToNumber(match[0]));
 			marker.textContent = match[0];

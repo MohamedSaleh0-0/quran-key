@@ -1,7 +1,6 @@
 import { Modal, Notice } from "obsidian";
 import type { App } from "obsidian";
 import type { Ayah } from "../../domain/entities/Ayah";
-import type { ReflectionCategory } from "../../domain/entities/ReflectionCategory";
 import type { AppServices } from "../AppServices";
 import { t } from "../../config/strings";
 import { ReflectionCategoryPickerModal } from "./ReflectionCategoryPickerModal";

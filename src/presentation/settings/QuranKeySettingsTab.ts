@@ -157,7 +157,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			.addButton((btn) =>
 				btn
 					.setButtonText(locale === "ar" ? "إعادة الضبط" : "Reset to Defaults")
-					.setWarning()
+					.setDestructive()
 					.onClick(async () => {
 						const confirmed = window.confirm(
 							locale === "ar"
