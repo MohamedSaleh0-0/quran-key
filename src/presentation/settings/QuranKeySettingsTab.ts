@@ -105,11 +105,24 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 
 		const reflectionsSection = SETTINGS_SCHEMA.find((s) => s.id === "reflections");
 		if (reflectionsSection) {
-			new Setting(containerEl).setName(reflectionsSection.heading[locale]).setHeading();
-			const linkingEnabled = this.services.settings.deleteSelectionAfterLinkingReflection;
-			for (const field of reflectionsSection.fields) {
-				if (!linkingEnabled && (field.key === "reflectionBacklinkAliasTemplate" || field.key === "reflectionBacklinkWrapTemplate")) continue;
-				this.renderField(containerEl, field, locale);
+			const groups: Array<{ title: Record<Locale, string>; keys: string[] }> = [
+				{
+					title: { ar: "ملفات ملاحظات الآيات", en: "Ayah note files" },
+					keys: ["ayahNotesFolder", "surahNotesFolder", "surahNoteFileNameTemplate", "reflectionFileNameTemplate", "ayahNoteTemplate", "linkAyahMarkersOnInsert"],
+				},
+				{
+					title: { ar: "سجل التدبر", en: "Reflection log" },
+					keys: ["reflectionEntryTemplate", "includeReflectionEntryDate", "reflectionInsertionMode", "reflectionCategoryDelimiter", "showReflectionSuccessNotice"],
+				},
+			];
+			for (const group of groups) {
+				new Setting(containerEl).setName(group.title[locale]).setHeading();
+				for (const key of group.keys) {
+					const field = reflectionsSection.fields.find((candidate) => candidate.key === key);
+					if (field) {
+						this.renderField(containerEl, field, locale);
+					}
+				}
 			}
 		}
 	}
@@ -186,7 +199,6 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 					toggle.setValue(Boolean(settings[field.key])).onChange(async (value) => {
 						settings[field.key] = value;
 						await this.save();
-						if (field.key === "deleteSelectionAfterLinkingReflection") this.display();
 					})
 				);
 				break;

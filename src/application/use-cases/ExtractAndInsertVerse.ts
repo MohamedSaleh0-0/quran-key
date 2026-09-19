@@ -143,6 +143,11 @@ export class ExtractAndInsertVerse {
 		end: EditorPosition,
 		onAmbiguity: AmbiguityHandler
 	): Promise<boolean> {
+		const textRange = this.resolveTextRange(query);
+		if (textRange) {
+			await this.insert(editor, start, end, textRange, query);
+			return true;
+		}
 		const matches = this.phraseMatcher.findMatches(query, this.repository.getAllAyahs());
 		if (matches.length === 1) {
 			await this.insert(editor, start, end, [matches[0]], query);
@@ -158,6 +163,23 @@ export class ExtractAndInsertVerse {
 			return true;
 		}
 		return false;
+	}
+
+	/** Resolves `start phrase - end phrase` to a contiguous range in one surah.
+	 * This is intentionally limited to the general Quran extraction command;
+	 * reflection logging remains one ayah per note. */
+	private resolveTextRange(query: string): Ayah[] | null {
+		const match = query.match(/^\s*(.+?)\s+-\s+(.+?)\s*$/);
+		if (!match) return null;
+		const startMatches = this.phraseMatcher.findMatches(match[1], this.repository.getAllAyahs());
+		const endMatches = this.phraseMatcher.findMatches(match[2], this.repository.getAllAyahs());
+		if (startMatches.length !== 1 || endMatches.length !== 1) return null;
+		const start = startMatches[0];
+		const end = endMatches[0];
+		if (start.surahId !== end.surahId || start.ayahId > end.ayahId) return null;
+		return this.repository
+			.getAllAyahs()
+			.filter((ayah) => ayah.surahId === start.surahId && ayah.ayahId >= start.ayahId && ayah.ayahId <= end.ayahId);
 	}
 
 	private async executeSlidingWindow(
@@ -198,7 +220,34 @@ export class ExtractAndInsertVerse {
 	}
 
 	private async insert(editor: EditorPort, start: EditorPosition, end: EditorPosition, ayahs: Ayah[], query: string): Promise<void> {
-		await this.insertAyahs(editor, start, end, ayahs, query);
+		const formattingOptions = await this.prepareFormattingOptions(ayahs);
+		const output = this.formatter.format(ayahs, formattingOptions);
+		const preview = this.buildSnippetPreview(ayahs, query, formattingOptions);
+
+		if (preview && start.line === end.line) {
+			// Keep the cited words as a real undo state immediately before the full
+			// ayah. CodeMirror uses the distinct user-event names as a history
+			// boundary, so Ctrl+Z restores the preview instead of the pre-command
+			// prose.
+			editor.replaceRange(preview, start, end, "input.quran-key-snippet");
+			const previewEnd: EditorPosition = { line: start.line, ch: start.ch + preview.length };
+			editor.replaceRange(output, start, previewEnd, "input.quran-key-full");
+		} else {
+			editor.replaceRange(output, start, end);
+		}
+		this.memento.set({ line: start.line, query, ayahs, isSnippet: false });
+	}
+
+	private buildSnippetPreview(
+		ayahs: readonly Ayah[],
+		query: string,
+		formattingOptions: FormattingOptions
+	): string | null {
+		if (ayahs.length !== 1 || !query.trim()) return null;
+		const ayah = ayahs[0];
+		const snippet = this.snippetExtractor.extractSnippet(ayah.text, query);
+		if (!snippet || snippet === ayah.text) return null;
+		return this.formatter.format([{ ...ayah, text: snippet }], formattingOptions);
 	}
 
 	private parseVerseNumbers(rangeStr: string): number[] {

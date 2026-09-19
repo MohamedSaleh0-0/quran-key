@@ -41,6 +41,9 @@ import {
 	createMarkdownPostProcessor,
 	createOrnateNumberHighlightExtension,
 	createOrnateNumberPostProcessor,
+	createAyahWikilinkSyntaxExtension,
+	createQuranListFormattingExtension,
+	createReflectionBlockIdExtension,
 	createQuranHighlightExtension,
 } from "./infrastructure/obsidian/QuranHighlightExtension";
 import { HttpTafsirRepository } from "./infrastructure/http/HttpTafsirRepository";
@@ -51,6 +54,7 @@ import { registerCommands } from "./presentation/commands/CommandRegistry";
 import { createLinkReflectionCommand } from "./presentation/commands/definitions/linkReflection";
 import { registerAllCommands } from "./presentation/commands/registerCommands";
 import { QuranKeySettingsTab } from "./presentation/settings/QuranKeySettingsTab";
+import { t } from "./config/strings";
 
 import builtinTafsirBooksData from "../data/tafsirBooks.json";
 import builtinReflectionCategoriesData from "../data/reflectionCategories.json";
@@ -119,6 +123,9 @@ export default class QuranKeyPlugin extends Plugin {
 	private refreshHighlightExtension(): void {
 		this.editorExtension.length = 0;
 		this.editorExtension.push(createQuranHighlightExtension(this.settings.wrapperStart, this.settings.wrapperEnd));
+		this.editorExtension.push(createAyahWikilinkSyntaxExtension());
+		this.editorExtension.push(createQuranListFormattingExtension(this.settings.wrapperStart, this.settings.wrapperEnd));
+		this.editorExtension.push(createReflectionBlockIdExtension());
 		if (this.settings.styleOrnateNumbers) {
 			this.editorExtension.push(createOrnateNumberHighlightExtension());
 		}
@@ -189,7 +196,7 @@ export default class QuranKeyPlugin extends Plugin {
 					ayahTextBodyFormatted: formatter.format([ayah], getFormattingOptions()),
 				},
 				this.settings.reflectionFileNameTemplate,
-				this.settings.includeAyahTextInReflectionNote,
+				this.settings.ayahNoteTemplate,
 				true
 			);
 			if (title) await this.app.workspace.openLinkText(title, "", false);
@@ -213,7 +220,7 @@ export default class QuranKeyPlugin extends Plugin {
 						ayahTextBodyFormatted: formatter.format([canonical], base),
 					},
 					this.settings.reflectionFileNameTemplate,
-					this.settings.includeAyahTextInReflectionNote,
+						this.settings.ayahNoteTemplate,
 					true
 				);
 				if (title) links.set(`${canonical.surahId}:${canonical.ayahId}`, title);
@@ -278,15 +285,13 @@ export default class QuranKeyPlugin extends Plugin {
 
 		const buildReflectionOptions = (): ReflectionLinkOptions => ({
 			locale: this.settings.interfaceLanguage,
-			replaceSelectionWithBacklink: this.settings.deleteSelectionAfterLinkingReflection,
-			entryPrefixTemplate: this.settings.reflectionEntryPrefixTemplate.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
+			entryTemplate: this.settings.reflectionEntryTemplate.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
 			includeReflectionEntryDate: this.settings.includeReflectionEntryDate,
-			entrySeparator: this.settings.reflectionEntrySeparator.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
+			showSuccessNotice: this.settings.showReflectionSuccessNotice,
+			onSuccess: (category) => this.notice.show(t(this.settings.interfaceLanguage, "reflection.success", { category: category.name })),
 			insertionMode: this.settings.reflectionInsertionMode,
-			includeAyahTextInNote: this.settings.includeAyahTextInReflectionNote,
+			noteTemplate: this.settings.ayahNoteTemplate.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
 			fileNameTemplate: this.settings.reflectionFileNameTemplate,
-			backlinkAliasTemplate: this.settings.reflectionBacklinkAliasTemplate,
-			backlinkWrapTemplate: this.settings.reflectionBacklinkWrapTemplate,
 			quoteFormattingOptions: getFormattingOptions(),
 		});
 

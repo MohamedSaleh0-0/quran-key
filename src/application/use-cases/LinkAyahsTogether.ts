@@ -23,7 +23,7 @@ export class LinkAyahsTogether {
 	async execute(
 		ayahs: readonly Ayah[],
 		fileNameTemplate: string,
-		includeAyahText: boolean,
+		noteTemplate: string,
 		quoteFormatting: FormattingOptions
 	): Promise<void> {
 		if (ayahs.length < 2) return; // nothing to link
@@ -40,13 +40,13 @@ export class LinkAyahsTogether {
 		// linking is symmetric even when some of these ayahs have never
 		// had a note before.
 		const titles = await Promise.all(
-			identities.map((id) => this.ayahNotes.resolveUnifiedNoteTitle(id, fileNameTemplate, includeAyahText, true))
+			identities.map((id) => this.ayahNotes.resolveUnifiedNoteTitle(id, fileNameTemplate, noteTemplate, true))
 		);
 
 		for (let i = 0; i < identities.length; i++) {
 			const others = titles.filter((_, j) => j !== i).filter((title): title is string => title !== null);
 			if (others.length === 0) continue;
-			await this.ayahNotes.linkRelatedAyat(identities[i], fileNameTemplate, includeAyahText, others);
+			await this.ayahNotes.linkRelatedAyat(identities[i], fileNameTemplate, noteTemplate, others);
 		}
 	}
 }

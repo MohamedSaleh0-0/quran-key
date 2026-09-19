@@ -2,8 +2,7 @@ import type { Editor } from "obsidian";
 import type { CursorAnchor, EditorPort, EditorPosition } from "../../domain/ports/EditorPort";
 
 /** Obsidian's public `Editor` type doesn't declare `cm`, but the
- *  underlying CodeMirror instance is reachable at runtime (v1 relied on
- *  this too) to get one grouped undo step instead of two. Scoped to this
+ *  underlying CodeMirror instance is reachable at runtime. Scoped to this
  *  single adapter method so nothing above infrastructure ever touches
  *  CodeMirror directly. */
 interface EditorWithCm extends Editor {
@@ -32,12 +31,12 @@ export class ObsidianEditorAdapter implements EditorPort {
 		this.editor.setLine(line, text);
 	}
 
-	replaceRange(text: string, from: EditorPosition, to: EditorPosition): void {
+	replaceRange(text: string, from: EditorPosition, to: EditorPosition, historyEvent = "input"): void {
 		const editor = this.editor as EditorWithCm;
 		if (editor.cm && typeof editor.cm.dispatch === "function" && typeof editor.posToOffset === "function") {
 			const fromOffset = editor.posToOffset(from);
 			const toOffset = editor.posToOffset(to);
-			editor.cm.dispatch({ changes: { from: fromOffset, to: toOffset, insert: text }, userEvent: "input" });
+			editor.cm.dispatch({ changes: { from: fromOffset, to: toOffset, insert: text }, userEvent: historyEvent });
 			return;
 		}
 		this.editor.replaceRange(text, from, to);

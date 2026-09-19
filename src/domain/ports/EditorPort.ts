@@ -13,7 +13,7 @@ export interface EditorPort {
 	getLine(line: number): string;
 	lineCount(): number;
 	setLine(line: number, text: string): void;
-	replaceRange(text: string, from: EditorPosition, to: EditorPosition): void;
+	replaceRange(text: string, from: EditorPosition, to: EditorPosition, historyEvent?: string): void;
 	getSelection(): string;
 	getValue(): string;
 }

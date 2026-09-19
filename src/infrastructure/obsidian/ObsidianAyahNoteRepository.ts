@@ -13,6 +13,7 @@ import { HeadingSectionInserter } from "../../domain/services/HeadingSectionInse
 import { MarkdownSectionExtractor, type MarkdownSectionTarget } from "../../domain/services/MarkdownSectionExtractor";
 import { ReflectionFileNameBuilder } from "../../domain/services/ReflectionFileNameBuilder";
 import { formatAyahMarker, type AyahMarkerStyle } from "../../domain/services/AyahMarkerFormatter";
+import { renderAyahNoteTemplate } from "../../domain/services/ReflectionEntrySyntax";
 
 function sanitizeFileNameSegment(segment: string): string {
 	return segment.replace(/[\\/:*?"<>|]/g, "").trim();
@@ -63,21 +64,22 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		identity: AyahIdentity,
 		category: ReflectionCategory,
 		entryMarkdown: string,
-		formatting: ReflectionEntryFormatting
+		formatting: ReflectionEntryFormatting,
+		blockId?: string
 	): Promise<AyahNoteRef> {
 		if (category.organizationMode === "ownFolder") {
-			return this.appendToOwnFolderNote(identity, category, entryMarkdown, formatting);
+			return this.appendToOwnFolderNote(identity, category, entryMarkdown, formatting, blockId);
 		}
-		return this.appendToUnifiedNote(identity, category, entryMarkdown, formatting);
+		return this.appendToUnifiedNote(identity, category, entryMarkdown, formatting, blockId);
 	}
 
 	async linkRelatedAyat(
 		identity: AyahIdentity,
 		fileNameTemplate: string,
-		includeAyahText: boolean,
+		noteTemplate: string,
 		relatedNoteTitles: readonly string[]
 	): Promise<AyahNoteRef> {
-		const file = await this.findOrCreateUnifiedNote(identity, fileNameTemplate, includeAyahText);
+		const file = await this.findOrCreateUnifiedNote(identity, fileNameTemplate, noteTemplate);
 		await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 			const existing = Array.isArray(fm.relatedAyat) ? (fm.relatedAyat as string[]) : [];
 			const merged = new Set(existing);
@@ -90,13 +92,13 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 	async resolveUnifiedNoteTitle(
 		identity: AyahIdentity,
 		fileNameTemplate: string,
-		includeAyahText: boolean,
+		noteTemplate: string,
 		createIfMissing: boolean
 	): Promise<string | null> {
 		if (!createIfMissing) {
 			return this.findExistingUnifiedFile(identity.surahId, identity.ayahId)?.basename ?? null;
 		}
-		const file = await this.findOrCreateUnifiedNote(identity, fileNameTemplate, includeAyahText);
+			const file = await this.findOrCreateUnifiedNote(identity, fileNameTemplate, noteTemplate);
 		return file.basename;
 	}
 
@@ -104,9 +106,10 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		identity: AyahIdentity,
 		category: ReflectionCategory,
 		entryMarkdown: string,
-		formatting: ReflectionEntryFormatting
+		formatting: ReflectionEntryFormatting,
+		blockId?: string
 	): Promise<AyahNoteRef> {
-		const file = await this.findOrCreateUnifiedNote(identity, formatting.fileNameTemplate, formatting.includeAyahText);
+		const file = await this.findOrCreateUnifiedNote(identity, formatting.fileNameTemplate, formatting.noteTemplate);
 		await this.app.vault.process(file, (current) =>
 			HeadingSectionInserter.insertEntry(
 				current,
@@ -116,12 +119,12 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 					parentHeadingLevel: null,
 					parentHeadingText: null,
 					insertionMode: formatting.insertionMode,
-					separator: formatting.entrySeparator,
+					separator: "",
 				},
 				entryMarkdown
 			)
 		);
-		return { title: file.basename };
+		return { title: file.basename, blockId };
 	}
 
 	private findExistingUnifiedFile(surahId: number, ayahId: number): TFile | null {
@@ -135,7 +138,7 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		return null;
 	}
 
-	private async findOrCreateUnifiedNote(identity: AyahIdentity, fileNameTemplate: string, includeAyahText: boolean): Promise<TFile> {
+	private async findOrCreateUnifiedNote(identity: AyahIdentity, fileNameTemplate: string, noteTemplate: string): Promise<TFile> {
 		const existing = this.findExistingUnifiedFile(identity.surahId, identity.ayahId);
 		if (existing) {
 			await this.ensureExistingAyahParent(existing, identity);
@@ -166,7 +169,7 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 			"",
 			"",
 		].join("\n");
-		const body = includeAyahText ? `${identity.ayahTextBodyFormatted}\n\n` : "";
+		const body = renderAyahNoteTemplate(noteTemplate, identity.ayahTextBodyFormatted);
 		return this.app.vault.create(path, `${frontmatter}${body}`);
 	}
 
@@ -280,14 +283,16 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		identity: AyahIdentity,
 		category: ReflectionCategory,
 		entryMarkdown: string,
-		formatting: ReflectionEntryFormatting
+		formatting: ReflectionEntryFormatting,
+		blockId?: string
 	): Promise<AyahNoteRef> {
-		const unified = await this.findOrCreateUnifiedNote(identity, formatting.fileNameTemplate, formatting.includeAyahText);
+		const unified = await this.findOrCreateUnifiedNote(identity, formatting.fileNameTemplate, formatting.noteTemplate);
 		const ownFile = await this.findOrCreateOwnFolderNote(category, identity, formatting.fileNameTemplate, unified.basename);
 
 		await this.app.vault.process(ownFile, (current) => {
 			const trimmed = current.replace(/\s+$/, "");
-			return trimmed.length > 0 ? `${trimmed}${formatting.entrySeparator}${entryMarkdown}\n` : `${entryMarkdown}\n`;
+			const renderedEntry = entryMarkdown.endsWith("\n") ? entryMarkdown : `${entryMarkdown}\n`;
+			return trimmed.length > 0 ? `${trimmed}${entryMarkdown.startsWith("\n") ? "" : "\n"}${renderedEntry}` : renderedEntry;
 		});
 
 		await this.app.vault.process(unified, (current) =>
@@ -299,13 +304,13 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 					parentHeadingLevel: null,
 					parentHeadingText: null,
 					insertionMode: "afterHeading",
-					separator: formatting.entrySeparator,
+					separator: "",
 				},
 				`[[${ownFile.basename}]]`
 			)
 		);
 
-		return { title: ownFile.basename };
+		return { title: ownFile.basename, blockId };
 	}
 
 	private findExistingOwnFolderFile(category: ReflectionCategory, surahId: number, ayahId: number): TFile | null {

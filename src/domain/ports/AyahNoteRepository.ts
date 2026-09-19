@@ -11,13 +11,13 @@ export interface AyahIdentity {
 
 export interface ReflectionEntryFormatting {
 	insertionMode: "afterHeading" | "endOfSection";
-	entrySeparator: string;
-	includeAyahText: boolean;
+	noteTemplate: string;
 	fileNameTemplate: string;
 }
 
 export interface AyahNoteRef {
 	title: string;
+	blockId?: string;
 }
 
 export interface AyahSectionExtraction {
@@ -40,20 +40,21 @@ export interface AyahNoteRepository {
 		identity: AyahIdentity,
 		category: ReflectionCategory,
 		entryMarkdown: string,
-		formatting: ReflectionEntryFormatting
+		formatting: ReflectionEntryFormatting,
+		blockId?: string
 	): Promise<AyahNoteRef>;
 
 	linkRelatedAyat(
 		identity: AyahIdentity,
 		fileNameTemplate: string,
-		includeAyahText: boolean,
+		noteTemplate: string,
 		relatedNoteTitles: readonly string[]
 	): Promise<AyahNoteRef>;
 
 	resolveUnifiedNoteTitle(
 		identity: AyahIdentity,
 		fileNameTemplate: string,
-		includeAyahText: boolean,
+		noteTemplate: string,
 		createIfMissing: boolean
 	): Promise<string | null>;
 }

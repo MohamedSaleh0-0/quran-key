@@ -84,14 +84,18 @@ export interface PluginConfig {
 	surahNotesFolder: string;
 	surahNoteFileNameTemplate: string;
 	linkAyahMarkersOnInsert: boolean;
-	deleteSelectionAfterLinkingReflection: boolean;
-	reflectionBacklinkAliasTemplate: string;
-	reflectionBacklinkWrapTemplate: string;
+	showReflectionSuccessNotice: boolean;
+	reflectionCategoryDelimiter: string;
+	reflectionEntryTemplate: string;
 	reflectionEntryPrefixTemplate: string;
 	includeReflectionEntryDate: boolean;
+	/** @deprecated Log spacing is now part of reflectionEntryTemplate. */
 	reflectionEntrySeparator: string;
 	reflectionInsertionMode: ReflectionInsertionMode;
 	reflectionFileNameTemplate: string;
 	reflectionFileNameAyahTextMaxLength: number;
+	/** Markdown body template for a newly-created ayah note. Supports {ayah}. */
+	ayahNoteTemplate: string;
+	/** @deprecated Migrated to ayahNoteTemplate. */
 	includeAyahTextInReflectionNote: boolean;
 }

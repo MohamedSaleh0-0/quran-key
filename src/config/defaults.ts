@@ -54,15 +54,16 @@ export const DEFAULT_SETTINGS: PluginConfig = {
 	surahNotesFolder: "سور القرآن",
 	surahNoteFileNameTemplate: "{surah}",
 	linkAyahMarkersOnInsert: false,
-	deleteSelectionAfterLinkingReflection: true,
-	reflectionBacklinkAliasTemplate: "",
-	reflectionBacklinkWrapTemplate: "{link}",
+	showReflectionSuccessNotice: true,
+	reflectionCategoryDelimiter: "--",
+	reflectionEntryTemplate: "- {content} — {date}",
 	reflectionEntryPrefixTemplate: "### {date}",
 	includeReflectionEntryDate: true,
-	reflectionEntrySeparator: "\n\n---\n\n",
+	reflectionEntrySeparator: "\n",
 	reflectionInsertionMode: "afterHeading",
 	reflectionFileNameTemplate: "{ayahText} ({surah} {verse})",
 	reflectionFileNameAyahTextMaxLength: 60,
+	ayahNoteTemplate: "{ayah}\n\n",
 	includeAyahTextInReflectionNote: true,
 };
 
@@ -71,6 +72,19 @@ export function migrateLegacySettings(raw: Partial<PluginConfig> | undefined): P
 	let migrated = raw;
 	if ((raw as { referenceFormat?: string }).referenceFormat === "[Surah:Verse]") {
 		migrated = { ...migrated, referenceFormat: "[{surah}:{verse}]" };
+	}
+	if (raw.reflectionEntryTemplate === undefined && raw.reflectionEntryPrefixTemplate !== undefined) {
+		const legacy = String(raw.reflectionEntryPrefixTemplate);
+		migrated = {
+			...migrated,
+			reflectionEntryTemplate: legacy === "### {date}" ? DEFAULT_SETTINGS.reflectionEntryTemplate : `- {content} — ${legacy}`,
+		};
+	}
+	if (raw.ayahNoteTemplate === undefined && raw.includeAyahTextInReflectionNote !== undefined) {
+		migrated = {
+			...migrated,
+			ayahNoteTemplate: raw.includeAyahTextInReflectionNote ? DEFAULT_SETTINGS.ayahNoteTemplate : "",
+		};
 	}
 	return migrated;
 }

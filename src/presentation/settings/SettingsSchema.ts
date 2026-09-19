@@ -251,12 +251,12 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				},
 			},
 			{
-				key: "includeAyahTextInReflectionNote",
-				type: "toggle",
-				label: { ar: "تضمين نص الآية في أول الملاحظة", en: "Include ayah text at the top" },
+				key: "ayahNoteTemplate",
+				type: "textarea",
+				label: { ar: "قالب ملاحظة الآية", en: "Ayah note template" },
 				description: {
-					ar: "كتابة نص الآية مرة واحدة عند إنشاء الملف لأول مرة.",
-					en: "Write verse text once when creating the note.",
+					ar: "قالب جسم الملف عند إنشائه. المتغير {ayah} يدرج نص الآية المنسق؛ اتركه فارغًا لإنشاء ملف بلا نص آية.",
+					en: "Template for a newly-created ayah note body. {ayah} inserts the formatted ayah; leave empty for no ayah text.",
 				},
 			},
 			{
@@ -273,39 +273,21 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				],
 			},
 			{
-				key: "reflectionEntrySeparator",
-				type: "textarea",
-				label: { ar: "الفاصل بين المُدخلات", en: "Entry separator" },
-				description: {
-					ar: "نص يُدرج بين التدوينات المتتالية (يدعم أسطر فارغة).",
-					en: "Text inserted between consecutive entries.",
-				},
-			},
-			{
-				key: "deleteSelectionAfterLinkingReflection",
+				key: "showReflectionSuccessNotice",
 				type: "toggle",
-				label: { ar: "استبدال النص المحدد برابط للآية", en: "Replace selection with link" },
-				 description: {
-					ar: "استبدال النص المختار برابط إلى ملاحظة الآية وقسم التصنيف بدلاً من تركه كنسخة مكررة.",
-					en: "Replace selected text with a backlink to the ayah note and category heading.",
-				},
-			},
-			{
-				key: "reflectionBacklinkAliasTemplate",
-				type: "text",
-				label: { ar: "صيغة الاسم المستعار للرابط (alias)", en: "Link alias template" },
-				 description: {
-					ar: "المتغيرات المتاحة: {category} و {surah} و {verse} و {ayahText}. اتركه فارغاً لرابط صريح.",
-					en: "Available placeholders: {category}, {surah}, {verse}, and {ayahText}. Leave empty for a plain link.",
-				},
-			},
-			{
-				key: "reflectionBacklinkWrapTemplate",
-				type: "text",
-				label: { ar: "صيغة إحاطة الرابط", en: "Link wrap template" },
+				label: { ar: "إظهار إشعار نجاح التسجيل", en: "Show reflection success notice" },
 				description: {
-					ar: "المتغير الوحيد: {link}. مثال: «↳ نُقل إلى {link}».",
-					en: "Only {link} placeholder is available.",
+					ar: "يعرض إشعارًا صغيرًا بعد تسجيل الملاحظة بنجاح.",
+					en: "Show a small notice after a reflection is logged successfully.",
+				},
+			},
+			{
+				key: "reflectionCategoryDelimiter",
+				type: "text",
+				label: { ar: "فاصل التصنيف السريع", en: "Quick category delimiter" },
+				description: {
+					ar: "مثال: content -- تدبرات. ما بعد الفاصل يُعامل كاسم التصنيف.",
+					en: "Example: content -- Reflections. Text after the delimiter is treated as the category.",
 				},
 			},
 			{
@@ -318,12 +300,12 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				},
 			},
 			{
-				key: "reflectionEntryPrefixTemplate",
-				type: "text",
-				label: { ar: "صيغة بداية كل مُدخل", en: "Entry prefix template" },
+				key: "reflectionEntryTemplate",
+				type: "textarea",
+				label: { ar: "صيغة كل تدوينة", en: "Reflection entry template" },
 				description: {
-					ar: "المتغير المتاح: {date}. مثال: «### {date}».",
-					en: "Available placeholder: {date}. e.g. '### {date}'.",
+					ar: "المتغيرات المتاحة: {content} و {date}. مثال: «- {content} — {date}».",
+					en: "Available placeholders: {content} and {date}. Example: '- {content} — {date}'.",
 				},
 			},
 			{
@@ -331,8 +313,8 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				type: "toggle",
 				label: { ar: "إضافة تاريخ الإدخال", en: "Add entry date" },
 				description: {
-					ar: "يُدرج التاريخ عند احتواء صيغة الإدخال على {date}.",
-					en: "Insert the date when the entry prefix contains {date}.",
+					ar: "يُدرج التاريخ عند احتواء صيغة التدوينة على {date}.",
+					en: "Insert the date when the entry template contains {date}.",
 				},
 			},
 		],

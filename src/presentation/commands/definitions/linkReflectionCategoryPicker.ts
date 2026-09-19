@@ -1,9 +1,12 @@
 import { Notice } from "obsidian";
 import type { CommandDefinition } from "../CommandRegistry";
 import type { AppServices } from "../../AppServices";
-import { ReflectionCategoryPickerModal } from "../../modals/ReflectionCategoryPickerModal";
 import { t } from "../../../config/strings";
 import type { ReflectionDestination } from "../../modals/ReflectionCategoryPickerModal";
+import { LogAyahEntryModal } from "../../modals/LogAyahEntryModal";
+import { QuranSearchModal } from "../../modals/QuranSearchModal";
+import { parseReflectionInput } from "../../../domain/services/ReflectionEntrySyntax";
+import { createTemporaryReflectionCategory } from "../../../domain/services/TemporaryReflectionCategory";
 
 export function createLinkReflectionPickerCommand(services: AppServices): CommandDefinition {
 	return {
@@ -17,8 +20,7 @@ export function createLinkReflectionPickerCommand(services: AppServices): Comman
 				new Notice(t(locale, "reflection.noSelection"));
 				return;
 			}
-			const from = editorPort.getCursor("from");
-			const to = editorPort.getCursor("to");
+			const parsed = parseReflectionInput(selectedText, services.settings.reflectionCategoryDelimiter);
 
 			const activeFile = services.app.workspace.getActiveFile();
 			const frontmatter = activeFile ? services.app.metadataCache.getFileCache(activeFile)?.frontmatter : undefined;
@@ -33,26 +35,44 @@ export function createLinkReflectionPickerCommand(services: AppServices): Comman
 					? { surahId: detected.surahId, surahName: detected.surahName, startAyah: detected.startAyah, endAyah: detected.endAyah }
 					: null;
 
-			new ReflectionCategoryPickerModal(
-				services.app,
-				services,
-				async (cat, destination) => {
-					if (!destination) return;
-					await services.useCases.linkReflection.execute(
-						editorPort,
-						from,
-						to,
-						selectedText,
-						cat,
-						destination.surahId,
-						destination.surahName,
-						destination.startAyah,
-						destination.endAyah,
-						services.buildReflectionOptions()
-					);
-				},
-				{ destination: initialDestination, editor, requireDestination: true }
-			).open();
+			if (!parsed.categoryName) {
+				const initialAyah = initialDestination
+					? services.repository.findAyah(initialDestination.surahId, initialDestination.startAyah)
+					: null;
+				new LogAyahEntryModal(services.app, services, selectedText, initialAyah).open();
+				return;
+			}
+
+			const category = services.reflectionCatalog
+				.all()
+				.find((candidate) => candidate.id.toLowerCase() === parsed.categoryName!.toLowerCase() || candidate.name.trim().toLowerCase() === parsed.categoryName!.toLowerCase());
+			const destinationCategory = category ?? createTemporaryReflectionCategory(parsed.categoryName);
+
+			const log = (destination: ReflectionDestination) =>
+				services.useCases.linkReflection.execute(
+					parsed.content,
+					destinationCategory,
+					destination.surahId,
+					destination.surahName,
+					destination.startAyah,
+					destination.startAyah,
+					services.buildReflectionOptions()
+				);
+
+			if (initialDestination) {
+				void log(initialDestination).catch(() => new Notice(t(locale, "entry.failed")));
+				return;
+			}
+
+			new QuranSearchModal(services, editor, "", null, null, null, async (ayahs) => {
+				const first = ayahs[0];
+				if (!first) return;
+				try {
+					await log({ surahId: first.surahId, surahName: first.surahName, startAyah: first.ayahId, endAyah: first.ayahId });
+				} catch {
+					new Notice(t(locale, "entry.failed"));
+				}
+			}).open();
 		},
 	};
 }

@@ -137,7 +137,7 @@ export class LinkAyatModal extends Modal {
 		await this.services.useCases.linkAyahsTogether.execute(
 			ayahs,
 			this.services.settings.reflectionFileNameTemplate,
-			this.services.settings.includeAyahTextInReflectionNote,
+			this.services.settings.ayahNoteTemplate,
 			{
 				wrapperStart: this.services.settings.wrapperStart,
 				wrapperEnd: this.services.settings.wrapperEnd,

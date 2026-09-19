@@ -10,12 +10,14 @@ export class LogAyahEntryModal extends Modal {
 	private resultsEl!: HTMLElement;
 	private noteEl!: HTMLTextAreaElement;
 	private sectionEl!: HTMLSelectElement;
-	private rangeEndEl!: HTMLSelectElement;
-	private rangeEndLabel!: HTMLLabelElement;
-	private selectedAyah: Ayah | null = null;
+	private destinationEl!: HTMLElement;
+	private selectedAyah: Ayah | null;
+	private matches: Ayah[] = [];
+	private highlightedIndex = -1;
 
-	constructor(app: App, private readonly services: AppServices) {
+	constructor(app: App, private readonly services: AppServices, private readonly initialNoteText = "", initialAyah: Ayah | null = null) {
 		super(app);
+		this.selectedAyah = initialAyah;
 	}
 
 	private get locale() {
@@ -33,17 +35,27 @@ export class LogAyahEntryModal extends Modal {
 			placeholder: t(this.locale, "entry.searchPlaceholder"),
 		});
 		this.searchEl.addEventListener("input", () => this.renderResults());
+		this.searchEl.addEventListener("keydown", (event) => {
+			if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+				if (this.matches.length === 0) return;
+				event.preventDefault();
+				const direction = event.key === "ArrowDown" ? 1 : -1;
+				this.highlightedIndex = this.highlightedIndex < 0 ? (direction > 0 ? 0 : this.matches.length - 1) :
+					(this.highlightedIndex + direction + this.matches.length) % this.matches.length;
+				this.renderResults(false);
+				return;
+			}
+			if (event.key === "Enter" && this.matches.length > 0) {
+				event.preventDefault();
+				const index = this.highlightedIndex >= 0 ? this.highlightedIndex : 0;
+				this.selectAyah(this.matches[index]);
+			}
+		});
 
 		this.resultsEl = contentEl.createDiv({ cls: "quran-key-picker-list quran-key-entry-results" });
 		this.renderResults();
-		this.rangeEndLabel = contentEl.createEl("label", {
-			text: t(this.locale, "entry.rangeEnd"),
-			cls: "quran-key-entry-label quran-key-entry-range-label",
-		});
-		this.rangeEndEl = contentEl.createEl("select", { cls: "quran-key-entry-section quran-key-entry-range" });
-		this.rangeEndLabel.htmlFor = this.rangeEndEl.id = `quran-key-entry-range-${Date.now()}`;
-		this.rangeEndEl.addEventListener("change", () => undefined);
-		this.renderRangeControl();
+		this.destinationEl = contentEl.createDiv({ cls: "quran-key-entry-destination" });
+		this.renderDestination();
 
 		const sectionLabel = contentEl.createEl("label", { text: t(this.locale, "entry.section"), cls: "quran-key-entry-label" });
 		this.sectionEl = contentEl.createEl("select", { cls: "quran-key-entry-section" });
@@ -56,6 +68,15 @@ export class LogAyahEntryModal extends Modal {
 			placeholder: t(this.locale, "entry.notePlaceholder"),
 			cls: "quran-key-entry-textarea",
 		});
+		this.noteEl.value = this.selectedAyah
+			? this.services.useCases.linkReflection.cleanReflectionText(
+					this.initialNoteText,
+					this.selectedAyah.surahId,
+					this.selectedAyah.ayahId,
+					this.services.settings.wrapperStart,
+					this.services.settings.wrapperEnd
+				  )
+			: this.initialNoteText;
 		this.noteEl.addEventListener("keydown", (event) => {
 			if (event.key !== "@" || !this.services.settings.enableAtSectionTrigger) return;
 			event.preventDefault();
@@ -70,48 +91,46 @@ export class LogAyahEntryModal extends Modal {
 		this.searchEl.focus();
 	}
 
-	private renderResults(): void {
+	private renderResults(resetHighlight = true): void {
 		this.resultsEl.empty();
 		const query = this.searchEl.value.trim();
-		if (!query) return;
+		if (!query) {
+			this.matches = [];
+			this.highlightedIndex = -1;
+			return;
+		}
 
-		const matches = this.services.useCases.search.execute(query).slice(0, this.services.settings.maxSuggestionResults);
-		if (matches.length === 0) {
+		this.matches = this.services.useCases.search.execute(query).slice(0, this.services.settings.maxSuggestionResults);
+		if (resetHighlight) this.highlightedIndex = this.matches.length > 0 ? 0 : -1;
+		if (this.matches.length === 0) {
 			this.resultsEl.createDiv({ text: t(this.locale, "linkAyat.empty") });
 			return;
 		}
 
-		for (const ayah of matches) {
+		for (const [index, ayah] of this.matches.entries()) {
 			const item = this.resultsEl.createDiv({ cls: "quran-key-picker-item" });
 			item.toggleClass("is-active", this.selectedAyah?.id === ayah.id);
+			item.toggleClass("is-selected", this.highlightedIndex === index);
 			item.createSpan({ text: ayah.text, cls: "quran-key-picker-item-name" });
 			item.createSpan({ text: `${ayah.surahName} ${ayah.ayahId}`, cls: "quran-key-modal-alias" });
-			item.addEventListener("click", () => {
-				this.selectedAyah = ayah;
-				this.renderResults();
-				this.renderRangeControl();
-			});
+			item.addEventListener("click", () => this.selectAyah(ayah));
 		}
 	}
 
-	private renderRangeControl(): void {
-		this.rangeEndEl.empty();
-		const start = this.selectedAyah;
-		const enabled = start !== null;
-		this.rangeEndEl.disabled = !enabled;
-		this.rangeEndLabel.toggleClass("is-hidden", !enabled);
-		if (!start) return;
+	private selectAyah(ayah: Ayah): void {
+		this.selectedAyah = ayah;
+		this.renderResults(false);
+		this.renderDestination();
+		this.noteEl?.focus();
+	}
 
-		const ayahs = this.services.repository
-			.getAllAyahs()
-			.filter((ayah) => ayah.surahId === start.surahId && ayah.ayahId >= start.ayahId);
-		for (const ayah of ayahs) {
-			this.rangeEndEl.createEl("option", {
-				value: String(ayah.ayahId),
-				text: `${ayah.ayahId} — ${ayah.text.slice(0, 80)}`,
-			});
-		}
-		this.rangeEndEl.value = String(start.ayahId);
+	private renderDestination(): void {
+		if (!this.destinationEl) return;
+		this.destinationEl.empty();
+		if (!this.selectedAyah) return;
+		this.destinationEl.createSpan({
+			text: `${this.locale === "ar" ? "الآية المستهدفة:" : "Destination ayah:"} ${this.selectedAyah.surahName} ${this.selectedAyah.ayahId}`,
+		});
 	}
 
 	private async submit(): Promise<void> {
@@ -129,7 +148,6 @@ export class LogAyahEntryModal extends Modal {
 		if (!category) return;
 
 		const ayah = this.selectedAyah;
-		const endAyah = Number(this.rangeEndEl.value) || ayah.ayahId;
 		this.close();
 		try {
 			await this.services.useCases.linkReflection.executeDirect(
@@ -138,7 +156,7 @@ export class LogAyahEntryModal extends Modal {
 				ayah.surahId,
 				ayah.surahName,
 				ayah.ayahId,
-				endAyah,
+				ayah.ayahId,
 				this.services.buildReflectionOptions()
 			);
 		} catch {

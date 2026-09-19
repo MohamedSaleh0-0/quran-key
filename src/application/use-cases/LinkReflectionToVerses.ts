@@ -1,6 +1,5 @@
 import type { Ayah } from "../../domain/entities/Ayah";
 import type { ReflectionCategory } from "../../domain/entities/ReflectionCategory";
-import type { EditorPort, EditorPosition } from "../../domain/ports/EditorPort";
 import type { AyahNoteRepository } from "../../domain/ports/AyahNoteRepository";
 import type { QuranRepository } from "../../domain/ports/QuranRepository";
 import type { CompiledVerseReference } from "../../domain/value-objects/VerseReference";
@@ -8,20 +7,18 @@ import type { ArabicNormalizer } from "../../domain/services/ArabicNormalizer";
 import type { ReflectionCategoryCatalog } from "../../domain/services/ReflectionCategoryCatalog";
 import type { FormattingOptions, VerseOutputFormatter } from "../../domain/services/VerseOutputFormatter";
 import type { Locale, ReflectionInsertionMode } from "../../config/types";
-import { t } from "../../config/strings";
+import { formatArabicDate, renderReflectionEntry } from "../../domain/services/ReflectionEntrySyntax";
 
 export interface ReflectionLinkOptions {
 	locale: Locale;
-	replaceSelectionWithBacklink: boolean;
-	entryPrefixTemplate: string;
-	entrySeparator: string;
+	entryTemplate: string;
 	insertionMode: ReflectionInsertionMode;
-	includeAyahTextInNote: boolean;
+	noteTemplate: string;
 	fileNameTemplate: string;
-	backlinkAliasTemplate: string;
-	backlinkWrapTemplate: string;
 	quoteFormattingOptions: FormattingOptions;
 	includeReflectionEntryDate: boolean;
+	showSuccessNotice: boolean;
+	onSuccess?: (category: ReflectionCategory) => void;
 }
 
 export interface DetectedCitation {
@@ -29,13 +26,6 @@ export interface DetectedCitation {
 	surahName: string;
 	startAyah: number;
 	endAyah: number;
-}
-
-function formatDateISO(date: Date): string {
-	const y = date.getFullYear();
-	const m = (date.getMonth() + 1 < 10 ? "0" : "") + (date.getMonth() + 1);
-	const d = (date.getDate() < 10 ? "0" : "") + date.getDate();
-	return `${y}-${m}-${d}`;
 }
 
 export class LinkReflectionToVerses {
@@ -49,17 +39,34 @@ export class LinkReflectionToVerses {
 	) {}
 
 	detectExistingCitation(text: string): DetectedCitation | null {
-		const match = this.reference.find(text);
-		if (!match) return null;
-		const surah = this.repository.findSurahByName(this.normalizer.normalizeForSearch(match.surahName));
-		if (!surah) return null;
-		return { surahId: surah.id, surahName: surah.name, startAyah: match.startAyah, endAyah: match.endAyah };
+		for (const match of this.reference.findAll(text)) {
+			const surah = this.repository.findSurahByName(this.normalizer.normalizeForSearch(match.surahName));
+			if (surah && this.repository.findAyah(surah.id, match.startAyah)) {
+				return { surahId: surah.id, surahName: surah.name, startAyah: match.startAyah, endAyah: match.endAyah };
+			}
+		}
+
+		// A selection may contain Quran text but no recognizable reference.
+		// Prefer the longest quote so short phrases embedded in the reflection
+		// do not win over the actual selected verse.
+		const normalizedSelection = this.normalizer.normalizeForSearch(text);
+		const matches = this.repository
+			.getAllAyahs()
+			.map((ayah) => ({ ayah, quote: this.normalizer.normalizeForSearch(ayah.text) }))
+			.filter(({ quote }) => quote.length >= 10 && normalizedSelection.includes(quote))
+			.sort((a, b) => b.quote.length - a.quote.length);
+		const match = matches[0]?.ayah;
+		return match
+			? { surahId: match.surahId, surahName: match.surahName, startAyah: match.ayahId, endAyah: match.ayahId }
+			: null;
+	}
+
+	cleanReflectionText(text: string, surahId: number, ayahId: number, wrapperStart: string, wrapperEnd: string): string {
+		const ayah = this.repository.findAyah(surahId, ayahId);
+		return ayah ? this.removeCurrentAyahCitation(text, ayah, wrapperStart, wrapperEnd) : text.trim();
 	}
 
 	async execute(
-		editor: EditorPort,
-		selectionStart: EditorPosition,
-		selectionEnd: EditorPosition,
 		reflectionText: string,
 		category: ReflectionCategory,
 		surahId: number,
@@ -68,7 +75,7 @@ export class LinkReflectionToVerses {
 		endAyah: number,
 		options: ReflectionLinkOptions
 	): Promise<void> {
-		const firstNoteTitle = await this.appendToAyahNotes(
+		await this.appendToAyahNotes(
 			reflectionText,
 			category,
 			surahId,
@@ -78,10 +85,7 @@ export class LinkReflectionToVerses {
 			options
 		);
 
-		if (options.replaceSelectionWithBacklink && firstNoteTitle !== null) {
-			const backlink = this.renderBacklink(firstNoteTitle, category, surahName, startAyah, reflectionText, options);
-			editor.replaceRange(backlink, selectionStart, selectionEnd);
-		}
+		if (options.showSuccessNotice) options.onSuccess?.(category);
 	}
 
 	async executeDirect(
@@ -94,6 +98,7 @@ export class LinkReflectionToVerses {
 		options: ReflectionLinkOptions
 	): Promise<void> {
 		await this.appendToAyahNotes(reflectionText, category, surahId, surahName, startAyah, endAyah, options);
+		if (options.showSuccessNotice) options.onSuccess?.(category);
 	}
 
 	private async appendToAyahNotes(
@@ -104,39 +109,34 @@ export class LinkReflectionToVerses {
 		startAyah: number,
 		endAyah: number,
 		options: ReflectionLinkOptions
-	): Promise<string | null> {
-		const isRange = endAyah > startAyah;
-		const quotedPassage = isRange ? this.buildQuotedPassage(surahId, startAyah, endAyah, options.quoteFormattingOptions) : null;
-		const entryMarkdown = this.buildEntryMarkdown(
+	): Promise<void> {
+		if (startAyah !== endAyah) throw new Error("Reflection entries must target exactly one ayah");
+		const ayah = this.repository.findAyah(surahId, startAyah);
+		if (!ayah) throw new Error("The selected ayah does not exist");
+		const cleanedText = this.cleanReflectionText(
 			reflectionText,
-			category.name,
-			isRange,
+			surahId,
 			startAyah,
-			endAyah,
-			quotedPassage,
-			options.entryPrefixTemplate,
-			options.includeReflectionEntryDate,
-			options.locale
+			options.quoteFormattingOptions.wrapperStart,
+			options.quoteFormattingOptions.wrapperEnd
 		);
-
-		let firstNoteTitle: string | null = null;
-		for (let ayahId = startAyah; ayahId <= endAyah; ayahId++) {
-			const ayah = this.repository.findAyah(surahId, ayahId);
-			const ref = await this.ayahNotes.appendEntry(
-				this.buildIdentity(surahId, surahName, ayahId, ayah, options.quoteFormattingOptions),
-				category,
-				entryMarkdown,
-				{
-					insertionMode: options.insertionMode,
-					entrySeparator: options.entrySeparator,
-					includeAyahText: options.includeAyahTextInNote,
-					fileNameTemplate: options.fileNameTemplate,
-				}
-			);
-			if (firstNoteTitle === null) firstNoteTitle = ref.title;
-		}
-
-		return firstNoteTitle;
+		if (!cleanedText) throw new Error("The reflection is empty after removing the current ayah citation");
+		const entryMarkdown = renderReflectionEntry(
+			cleanedText,
+			options.entryTemplate,
+			options.includeReflectionEntryDate,
+			formatArabicDate(new Date())
+		);
+		await this.ayahNotes.appendEntry(
+			this.buildIdentity(surahId, surahName, startAyah, ayah, options.quoteFormattingOptions),
+			category,
+			entryMarkdown,
+			{
+				insertionMode: options.insertionMode,
+				noteTemplate: options.noteTemplate,
+				fileNameTemplate: options.fileNameTemplate,
+			},
+		);
 	}
 
 	private buildIdentity(surahId: number, surahName: string, ayahId: number, ayah: Ayah | null, quoteFormatting: FormattingOptions) {
@@ -150,69 +150,52 @@ export class LinkReflectionToVerses {
 		};
 	}
 
-	private renderBacklink(
-		noteTitle: string,
-		category: ReflectionCategory,
-		surahName: string,
-		ayahId: number,
-		ayahText: string,
-		options: ReflectionLinkOptions
-	): string {
-		const alias = options.backlinkAliasTemplate
-			? options.backlinkAliasTemplate
-					.split("{category}")
-					.join(category.name)
-					.split("{surah}")
-					.join(surahName)
-					.split("{verse}")
-					.join(String(ayahId))
-					.split("{ayahText}")
-					.join(ayahText)
-			: "";
-		const heading = category.headingText.trim();
-		const target = heading ? `${noteTitle}#${heading}` : noteTitle;
-		const link = alias ? `[[${target}|${alias}]]` : `[[${target}]]`;
-		return options.backlinkWrapTemplate.split("{link}").join(link);
-	}
+	private removeCurrentAyahCitation(text: string, ayah: Ayah, wrapperStart: string, wrapperEnd: string): string {
+		let result = text;
+		const references = this.reference.findAll(result).filter((match) => {
+			const surah = this.repository.findSurahByName(this.normalizer.normalizeForSearch(match.surahName));
+			return surah?.id === ayah.surahId && match.startAyah === ayah.ayahId && match.endAyah === ayah.ayahId;
+		});
+		for (const match of references.reverse()) result = result.slice(0, match.index) + result.slice(match.index + match.matchText.length);
 
-	private buildQuotedPassage(surahId: number, startAyah: number, endAyah: number, formatting: FormattingOptions): string | null {
-		const ayahs: Ayah[] = [];
-		for (let ayahId = startAyah; ayahId <= endAyah; ayahId++) {
-			const found = this.repository.findAyah(surahId, ayahId);
-			if (found) ayahs.push(found);
-		}
-		return ayahs.length > 0 ? this.formatter.format(ayahs, formatting) : null;
-	}
-
-	private buildEntryMarkdown(
-		reflectionText: string,
-		categoryName: string,
-		isRange: boolean,
-		startAyah: number,
-		endAyah: number,
-		quotedPassage: string | null,
-		entryPrefixTemplate: string,
-		includeReflectionEntryDate: boolean,
-		locale: Locale
-	): string {
-		const lines: string[] = [];
-		const prefix = includeReflectionEntryDate
-			? entryPrefixTemplate.split("{date}").join(formatDateISO(new Date())).trim()
-			: entryPrefixTemplate.includes("{date}")
-				? ""
-				: entryPrefixTemplate.trim();
-		if (prefix) lines.push(prefix, "");
-
-		if (isRange) {
-			lines.push(
-				`> [!note] ${t(locale, "reflection.rangeNoticeTitle")}`,
-				`> ${t(locale, "reflection.rangeNoticeBody", { category: categoryName, start: startAyah, end: endAyah })}`,
-				""
-			);
-			if (quotedPassage) lines.push(quotedPassage, "");
+		// A selected Quran quote is usually a whole wrapped block. Match it by
+		// normalized content so tashkeel, ornate markers, and punctuation do not
+		// prevent cleanup. Only remove the block containing this destination ayah;
+		// other Quran quotations in the reflection remain untouched.
+		if (wrapperStart && wrapperEnd) {
+			const start = this.escapeGlyph(wrapperStart);
+			const end = this.escapeGlyph(wrapperEnd);
+			const ayahText = this.normalizer.normalizeForSearch(ayah.text);
+			const bismillahText = ayah.bismillah ? this.normalizer.normalizeForSearch(ayah.bismillah) : "";
+			result = result.replace(new RegExp(`${start}([\\s\\S]*?)${end}`, "g"), (whole, inner: string) => {
+				const normalizedInner = this.normalizer.normalizeForSearch(inner);
+				return normalizedInner.includes(ayahText) || (bismillahText && normalizedInner.includes(`${bismillahText} ${ayahText}`)) ? "" : whole;
+			});
 		}
 
-		lines.push(reflectionText.trim());
-		return lines.join("\n");
+		// Also handle plain, unwrapped selections. This removes only a normalized
+		// span of the current ayah, preserving surrounding reflection prose.
+		const candidates = [ayah.text, ayah.bismillah ? `${ayah.bismillah} ${ayah.text}` : ""].filter(Boolean);
+		for (const candidate of candidates) result = this.removeNormalizedSpan(result, candidate);
+		return result.replace(/\s{2,}/g, " ").trim();
+	}
+
+	private removeNormalizedSpan(text: string, phrase: string): string {
+		const expected = this.normalizer.normalizeForSearch(phrase).split(" ").filter(Boolean);
+		if (!expected.length) return text;
+		const tokens = Array.from(text.matchAll(/\S+/g));
+		for (let start = 0; start < tokens.length; start++) {
+			for (let end = start; end < Math.min(tokens.length, start + expected.length + 4); end++) {
+				const candidate = this.normalizer.normalizeForSearch(text.slice(tokens[start].index!, tokens[end].index! + tokens[end][0].length)).split(" ").filter(Boolean);
+				if (candidate.length === expected.length && candidate.every((part, index) => part === expected[index])) {
+					return text.slice(0, tokens[start].index!) + text.slice(tokens[end].index! + tokens[end][0].length);
+				}
+			}
+		}
+		return text;
+	}
+
+	private escapeGlyph(value: string): string {
+		return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	}
 }

@@ -34,14 +34,8 @@ export function createLinkReflectionCommand(services: AppServices, categoryId: s
 				new Notice(t(locale, "reflection.noSelection"));
 				return;
 			}
-			const from = editorPort.getCursor("from");
-			const to = editorPort.getCursor("to");
-
 			const link = (surahId: number, surahName: string, startAyah: number, endAyah: number) =>
 				services.useCases.linkReflection.execute(
-					editorPort,
-					from,
-					to,
 					selectedText,
 					cat,
 					surahId,
