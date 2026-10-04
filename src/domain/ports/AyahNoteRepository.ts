@@ -20,6 +20,16 @@ export interface AyahNoteRef {
 	blockId?: string;
 }
 
+export interface CreatedNoteFileSnapshot {
+	path: string;
+	content: string;
+}
+
+export interface EnsuredAyahNote {
+	title: string;
+	createdFiles: readonly string[];
+}
+
 export interface AyahSectionExtraction {
 	title: string;
 	surahId: number;
@@ -57,4 +67,14 @@ export interface AyahNoteRepository {
 		noteTemplate: string,
 		createIfMissing: boolean
 	): Promise<string | null>;
+
+	ensureUnifiedNote(
+		identity: AyahIdentity,
+		fileNameTemplate: string,
+		noteTemplate: string
+	): Promise<EnsuredAyahNote>;
+
+	snapshotFiles(paths: readonly string[]): Promise<CreatedNoteFileSnapshot[]>;
+
+	deleteCreatedFiles(snapshots: readonly CreatedNoteFileSnapshot[]): Promise<string[]>;
 }

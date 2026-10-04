@@ -20,10 +20,15 @@ const VERSE_PLACEHOLDER = "{verse}";
  * orphans/duplicates existing files, only affects new ones.
  */
 export class ReflectionFileNameBuilder {
-	constructor(private readonly template: string, private readonly maxAyahTextLength: number) {}
+	constructor(
+		private readonly template: string,
+		private readonly maxAyahTextLength: number,
+		private readonly stripTashkeel: (text: string) => string = (text) => text,
+		private readonly maxAyahTextWords = 0
+	) {}
 
 	build(surahName: string, ayahId: number, ayahText: string): string {
-		const truncated = this.truncate(ayahText.trim());
+		const truncated = this.truncate(this.limitWords(this.stripTashkeel(ayahText.trim())));
 		return this.template
 			.split(AYAH_TEXT_PLACEHOLDER)
 			.join(truncated)
@@ -38,5 +43,12 @@ export class ReflectionFileNameBuilder {
 	private truncate(text: string): string {
 		if (this.maxAyahTextLength <= 0 || text.length <= this.maxAyahTextLength) return text;
 		return `${text.slice(0, this.maxAyahTextLength).trim()}\u2026`;
+	}
+
+	private limitWords(text: string): string {
+		if (this.maxAyahTextWords <= 0) return text;
+		const words = text.split(/\s+/).filter(Boolean);
+		if (words.length <= this.maxAyahTextWords) return text;
+		return `${words.slice(0, this.maxAyahTextWords).join(" ")}\u2026`;
 	}
 }

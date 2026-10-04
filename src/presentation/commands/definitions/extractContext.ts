@@ -7,6 +7,7 @@ export function createExtractContextCommand(services: AppServices): CommandDefin
 	return {
 		id: "extract-quran-context",
 		name: "Extract Quran verse from context",
+		hotkeys: [{ modifiers: ["Ctrl"], key: "q" }],
 		run: async (editor) => {
 			const editorPort = services.wrapEditor(editor);
 			const success = await services.useCases.extract.execute(editorPort, (query, matches, start, end) => {

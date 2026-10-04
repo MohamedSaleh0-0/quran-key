@@ -78,6 +78,42 @@ describe("VerseOutputFormatter", () => {
 		expect(output).not.toContain("[[al-fatihah-1|بِسْمِ");
 	});
 
+	it("can omit only the trailing reference while retaining the ayah marker", () => {
+		const reference = VerseReference.compile("[{surah}:{verse}]");
+		const formatter = new VerseOutputFormatter(new OrnateNumberConverter("\u06DD"), reference, (t) => t);
+		const output = formatter.format([ayah], {
+			wrapperStart: "﴿",
+			wrapperEnd: "﴾",
+			useOrnateNumbers: false,
+			stripTashkeelOnOutput: false,
+			ayahNoteLinks: new Map([["1:1", "al-fatihah-1"]]),
+			includeReference: false,
+		});
+
+		expect(output).toContain("﴿");
+		expect(output).toContain("[[al-fatihah-1|(1)]]");
+		expect(output).not.toContain("[الفاتحة:1]");
+	});
+
+	it("formats a cross-surah range with both endpoint references", () => {
+		const reference = VerseReference.compile("[{surah}:{verse}]");
+		const formatter = new VerseOutputFormatter(new OrnateNumberConverter(), reference, (t) => t);
+		const output = formatter.format(
+			[
+				ayah,
+				{ ...ayah, id: 2, surahId: 2, surahName: "البقرة", ayahId: 1, text: "الم" },
+			],
+			{
+				wrapperStart: "﴿",
+				wrapperEnd: "﴾",
+				useOrnateNumbers: false,
+				stripTashkeelOnOutput: false,
+			}
+		);
+
+		expect(output).toContain("[الفاتحة:1] - [البقرة:1]");
+	});
+
 	it("preserves Uthmani annotation and sequential tanween marks", () => {
 		const reference = VerseReference.compile("[{surah}:{verse}]");
 		const formatter = new VerseOutputFormatter(new OrnateNumberConverter("\u06DD"), reference, (t) => t);

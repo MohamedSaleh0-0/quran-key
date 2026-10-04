@@ -1,5 +1,5 @@
-import { Decoration, MatchDecorator, ViewPlugin } from "@codemirror/view";
-import type { DecorationSet, EditorView, ViewUpdate } from "@codemirror/view";
+import { Decoration, EditorView, MatchDecorator, ViewPlugin } from "@codemirror/view";
+import type { DecorationSet, ViewUpdate } from "@codemirror/view";
 import { RangeSetBuilder } from "@codemirror/state";
 import type { PluginConfig } from "../../config/types";
 import { DEFAULT_SETTINGS } from "../../config/defaults";
@@ -15,6 +15,47 @@ const ARABIC_INDIC_DIGITS = "\u0660-\u0669";
 
 function escapeRegex(literal: string): string {
 	return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function toAsciiDigits(value: string): string {
+	return value
+		.replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+		.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
+}
+
+function portableAyahMarker(value: string): string | null {
+	const digits = value.match(/[٠-٩۰-۹]+/);
+	return digits ? `(${toAsciiDigits(digits[0])})` : null;
+}
+
+/** Converts only Quran content while it is being copied. The document keeps
+ * its original wikilinks and configured marker style; the clipboard receives
+ * a portable `(1)`-style marker instead. */
+export function formatPortableAyahClipboardText(text: string, wrapperStart: string, wrapperEnd: string): string {
+	const wrapperPattern = new RegExp(`${escapeRegex(wrapperStart)}[\\s\\S]*?${escapeRegex(wrapperEnd)}`, "g");
+	const wikilinkPattern = /\[\[([^\]\n|]+)\|([^\]\n]+)\]\]/g;
+	const markerPattern = /^(?:۝)?[()٠-٩۰-۹]+$/;
+
+	return text.replace(wrapperPattern, (block) => {
+		let portable = block.replace(wikilinkPattern, (full, _target: string, alias: string) => {
+			if (!markerPattern.test(alias.trim())) return full;
+			return portableAyahMarker(alias.trim()) ?? alias;
+		});
+
+		const markerBeforeEnd = new RegExp(`(?:۝)?(?:[٠-٩۰-۹]+|\\([٠-٩۰-۹]+\\))(?=\\s*${escapeRegex(wrapperEnd)})`);
+		portable = portable.replace(markerBeforeEnd, (marker) => portableAyahMarker(marker) ?? marker);
+		return portable;
+	});
+}
+
+function escapeHtml(value: string): string {
+	return value.replace(/[&<>\"']/g, (character) => ({
+		"&": "&amp;",
+		"<": "&lt;",
+		">": "&gt;",
+		'"': "&quot;",
+		"'": "&#39;",
+	}[character] ?? character));
 }
 
 export function createQuranHighlightExtension(wrapperStart: string, wrapperEnd: string) {
@@ -108,7 +149,7 @@ export function createAyahWikilinkSyntaxExtension() {
 		return builder.finish();
 	};
 
-	return ViewPlugin.fromClass(
+	const plugin = ViewPlugin.fromClass(
 		class {
 			decorations: DecorationSet;
 			constructor(view: EditorView) {
@@ -118,8 +159,31 @@ export function createAyahWikilinkSyntaxExtension() {
 				if (update.docChanged) this.decorations = buildDecorations(update.view);
 			}
 		},
-		{ decorations: (value) => value.decorations }
+		{
+			decorations: (value) => value.decorations,
+			provide: (plugin) => EditorView.atomicRanges.of((view) => view.plugin(plugin)?.decorations ?? Decoration.none),
+		}
 	);
+	return plugin;
+}
+
+/** Ensures Ctrl/Cmd+C copies visible Quran text rather than the hidden
+ * wikilink source. Rich-text destinations receive the same portable text,
+ * without a link element that could reintroduce the target syntax. */
+export function createAyahWikilinkClipboardExtension(wrapperStart: string, wrapperEnd: string) {
+	return EditorView.domEventHandlers({
+		copy(event, view) {
+			const ranges = view.state.selection.ranges.filter((range) => !range.empty);
+			if (ranges.length === 0 || !event.clipboardData) return false;
+
+			const selected = ranges.map((range) => view.state.sliceDoc(range.from, range.to)).join("\n");
+			const portable = formatPortableAyahClipboardText(selected, wrapperStart, wrapperEnd);
+			event.clipboardData.setData("text/plain", portable);
+			event.clipboardData.setData("text/html", `<div dir="rtl">${escapeHtml(portable).replace(/\n/g, "<br>")}</div>`);
+			event.preventDefault();
+			return true;
+		},
+	});
 }
 
 /** Gives list items containing Quran text a stable formatting boundary in
@@ -307,7 +371,9 @@ export function applyStyleVariables(settings: PluginConfig): void {
 	document.body.style.setProperty("--quran-key-font-size", `${fontSize}em`);
 	document.body.style.setProperty("--quran-key-line-height", String(lineHeight));
 	document.body.style.setProperty("--quran-key-line-height-loose", String(lineHeight + 0.4));
-	document.body.style.setProperty("--quran-key-color", settings.quranColor || DEFAULT_SETTINGS.quranColor);
+	const legacyColor = settings.quranColor || DEFAULT_SETTINGS.quranColor;
+	document.body.style.setProperty("--quran-key-color-dark", settings.quranColorDark || legacyColor);
+	document.body.style.setProperty("--quran-key-color-light", settings.quranColorLight || legacyColor);
 }
 
 export function cleanupStyleVariables(): void {
@@ -315,5 +381,6 @@ export function cleanupStyleVariables(): void {
 	document.body.style.removeProperty("--quran-key-font-size");
 	document.body.style.removeProperty("--quran-key-line-height");
 	document.body.style.removeProperty("--quran-key-line-height-loose");
-	document.body.style.removeProperty("--quran-key-color");
+	document.body.style.removeProperty("--quran-key-color-dark");
+	document.body.style.removeProperty("--quran-key-color-light");
 }

@@ -52,7 +52,9 @@ export class ArabicNormalizer {
 		out = this.stripTashkeel(out);
 
 		out = out
-			.replace(/[\u0623\u0625\u0622\u0671\u0621\u0649]/g, "\u0627") // أ إ آ ٱ ء ى -> ا
+			.replace(/ذى/g, "ذي") // الذي / الذى
+			.replace(/[\u0623\u0625\u0622\u0671\u0621]/g, "\u0627") // أ إ آ ٱ ء -> ا
+			.replace(/\u0649/g, "\u064A") // ى / ي -> ي
 			.replace(/[\u064A\u0626]/g, "\u064A") // ئ -> ي
 			.replace(/\u0624/g, "\u0648") // ؤ -> و
 			.replace(/\u0629/g, "\u0647") // ة -> ه

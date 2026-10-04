@@ -13,6 +13,9 @@ export interface FormattingOptions {
 	/** Optional note titles keyed as `${surahId}:${ayahId}`. Only the ayah
 	 * marker is linked; the Quran text remains plain text. */
 	ayahNoteLinks?: ReadonlyMap<string, string>;
+	/** Omits the trailing `[surah:ayah]` reference while retaining the
+	 * wrapper and ayah marker. Used for the immediate undo state. */
+	includeReference?: boolean;
 }
 
 /** Builds the final `﴿ ayah text (n) ﴾ [Surah:n-m]` string. Every glyph is
@@ -42,7 +45,11 @@ export class VerseOutputFormatter {
 
 		const first = ayahs[0];
 		const last = ayahs[ayahs.length - 1];
-		const reference = ` ${this.reference.format(first.surahName, first.ayahId, last.ayahId)}`;
+		if (options.includeReference === false) return finalCore;
+		const referenceText = first.surahId === last.surahId
+			? this.reference.format(first.surahName, first.ayahId, last.ayahId)
+			: `${this.reference.format(first.surahName, first.ayahId, first.ayahId)} - ${this.reference.format(last.surahName, last.ayahId, last.ayahId)}`;
+		const reference = ` ${referenceText}`;
 		return finalCore + reference;
 	}
 }

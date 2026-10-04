@@ -34,6 +34,20 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 	onOpen(): void {
 		void super.onOpen();
 		const { settings } = this.services;
+		// SuggestModal refreshes its content area while suggestions change. Keep
+		// the guide outside that replaceable area and append it to the modal root
+		// so it remains visible at the very bottom.
+		const hint = this.modalEl.createDiv({ cls: "quran-key-search-hint quran-key-search-hint-footer" });
+		hint.setAttribute("dir", this.services.settings.interfaceLanguage === "ar" ? "rtl" : "ltr");
+		for (const [key, shortcut] of [
+			["search.hint.enter", "Enter"],
+			["search.hint.range", "Ctrl/Cmd + Enter"],
+			["search.hint.tafsir", "Shift + Enter"],
+		] as const) {
+			const item = hint.createSpan({ cls: "quran-key-search-hint-item" });
+			item.createEl("kbd", { text: shortcut });
+			item.createSpan({ text: t(settings.interfaceLanguage, key).replace(`${shortcut}: `, " ") });
+		}
 
 		if (settings.showAnalytics) {
 			const inputContainer = this.inputEl.parentElement;
@@ -123,7 +137,9 @@ export class QuranSearchModal extends SuggestModal<Ayah> {
 			(cleanQuery.includes(cleanInitial) || cleanInitial.includes(cleanQuery));
 		const pool = usePreFiltered && this.preFilteredMatches ? this.preFilteredMatches : undefined;
 
-		const matches = this.services.useCases.search.execute(query, pool);
+		const matches = usePreFiltered && cleanQuery === cleanInitial && this.preFilteredMatches
+			? [...this.preFilteredMatches]
+			: this.services.useCases.search.execute(query, pool);
 		if (this.dashboard) this.dashboard.update(matches, this.services.repository.getAllAyahs());
 		return matches;
 	}

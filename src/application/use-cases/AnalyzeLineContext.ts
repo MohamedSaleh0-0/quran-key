@@ -1,7 +1,9 @@
 import type { EditorPort } from "../../domain/ports/EditorPort";
+import type { Ayah } from "../../domain/entities/Ayah";
 import type { QuranRepository } from "../../domain/ports/QuranRepository";
 import type { CompiledVerseReference } from "../../domain/value-objects/VerseReference";
 import { ArabicNormalizer } from "../../domain/services/ArabicNormalizer";
+import { AyahLineResolver } from "../../domain/services/AyahLineResolver";
 import { SlidingWindowSearch } from "../../domain/services/SlidingWindowSearch";
 
 export interface LineContext {
@@ -9,6 +11,9 @@ export interface LineContext {
 	surahName: string;
 	startAyah: number;
 	endAyah: number;
+	/** Present when the line contains multiple plausible ayahs. */
+	candidates?: Ayah[];
+	query?: string;
 }
 
 /** Loose "Surah N[-M]" prose pattern — independent of the configured
@@ -25,7 +30,8 @@ export class AnalyzeLineContext {
 		private readonly repository: QuranRepository,
 		private readonly normalizer: ArabicNormalizer,
 		private readonly reference: CompiledVerseReference,
-		private readonly slidingWindow: SlidingWindowSearch
+		private readonly slidingWindow: SlidingWindowSearch,
+		private readonly ayahLineResolver = new AyahLineResolver(normalizer, slidingWindow)
 	) {}
 
 	execute(editor: EditorPort): LineContext | null {
@@ -57,15 +63,33 @@ export class AnalyzeLineContext {
 			}
 		}
 
-		const slid = this.slidingWindow.find(currentLine, this.repository.getAllAyahs(), this.repository.getSearchCorpusText());
-		if (slid && slid.ayahs.length > 0) {
-			const target = slid.ayahs[0];
+		const lineResolution = this.ayahLineResolver.resolve(
+			currentLine,
+			this.repository.getAllAyahs(),
+			this.repository.getSearchCorpusText()
+		);
+		if (lineResolution.match) {
+			const lineMatch = lineResolution.match;
+			const target = lineMatch.ayah;
 			return {
 				surahId: target.surahId,
 				surahName: target.surahName,
 				startAyah: target.ayahId,
 				endAyah: target.ayahId,
 			};
+		}
+		if (lineResolution.ambiguous) {
+			const target = lineResolution.ambiguous.ayahs[0];
+			if (target) {
+				return {
+					surahId: target.surahId,
+					surahName: target.surahName,
+					startAyah: target.ayahId,
+					endAyah: target.ayahId,
+					candidates: lineResolution.ambiguous.ayahs,
+					query: lineResolution.ambiguous.query,
+				};
+			}
 		}
 
 		return null;

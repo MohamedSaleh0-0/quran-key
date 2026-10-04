@@ -3,13 +3,15 @@ import type { App } from "obsidian";
 import type { Ayah } from "../../domain/entities/Ayah";
 import type { AppServices } from "../AppServices";
 import { t } from "../../config/strings";
-import { ReflectionCategoryPickerModal } from "./ReflectionCategoryPickerModal";
+
+const CREATE_SECTION_VALUE = "__create_new_section__";
 
 export class LogAyahEntryModal extends Modal {
 	private searchEl!: HTMLInputElement;
 	private resultsEl!: HTMLElement;
 	private noteEl!: HTMLTextAreaElement;
 	private sectionEl!: HTMLSelectElement;
+	private createSectionEl: HTMLElement | null = null;
 	private destinationEl!: HTMLElement;
 	private selectedAyah: Ayah | null;
 	private matches: Ayah[] = [];
@@ -63,6 +65,14 @@ export class LogAyahEntryModal extends Modal {
 		for (const category of this.services.reflectionCatalog.all()) {
 			this.sectionEl.createEl("option", { value: category.id, text: category.name });
 		}
+		this.sectionEl.createEl("option", {
+			value: CREATE_SECTION_VALUE,
+			text: t(this.locale, "entry.createSectionOption"),
+		});
+		this.sectionEl.addEventListener("change", () => {
+			if (this.sectionEl.value === CREATE_SECTION_VALUE) this.renderCreateSectionControl();
+			else this.removeCreateSectionControl();
+		});
 
 		this.noteEl = contentEl.createEl("textarea", {
 			placeholder: t(this.locale, "entry.notePlaceholder"),
@@ -77,18 +87,84 @@ export class LogAyahEntryModal extends Modal {
 					this.services.settings.wrapperEnd
 				  )
 			: this.initialNoteText;
-		this.noteEl.addEventListener("keydown", (event) => {
-			if (event.key !== "@" || !this.services.settings.enableAtSectionTrigger) return;
-			event.preventDefault();
-			new ReflectionCategoryPickerModal(this.app, this.services, (category) => {
-				this.sectionEl.value = category.id;
-			}).open();
-		});
 
 		const footer = contentEl.createDiv({ cls: "quran-key-picker-footer" });
 		const save = footer.createEl("button", { text: t(this.locale, "entry.save"), cls: "mod-cta" });
 		save.addEventListener("click", () => void this.submit());
 		this.searchEl.focus();
+	}
+
+	private renderCreateSectionControl(): void {
+		this.removeCreateSectionControl();
+		this.createSectionEl = this.contentEl.createDiv({ cls: "quran-key-entry-create-section" });
+		const input = this.createSectionEl.createEl("input", {
+			type: "text",
+			placeholder: t(this.locale, "entry.newSectionPlaceholder"),
+			cls: "quran-key-entry-create-input",
+		});
+		const button = this.createSectionEl.createEl("button", {
+			text: t(this.locale, "entry.createSectionButton"),
+			cls: "mod-cta",
+		});
+		button.addEventListener("click", () => void this.createSection(input.value));
+		input.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				void this.createSection(input.value);
+			}
+		});
+		input.focus();
+	}
+
+	private removeCreateSectionControl(): void {
+		this.createSectionEl?.remove();
+		this.createSectionEl = null;
+	}
+
+	private async createSection(rawName: string): Promise<void> {
+		const name = rawName.trim();
+		if (!name) {
+			new Notice(t(this.locale, "entry.newSectionRequired"));
+			return;
+		}
+
+		const existing = this.services.reflectionCatalog.all().find((category) => category.name.trim().toLowerCase() === name.toLowerCase());
+		if (existing) {
+			this.sectionEl.value = existing.id;
+			this.removeCreateSectionControl();
+			return;
+		}
+
+		const id = `custom-${Date.now().toString(36)}`;
+		this.services.settings.customReflectionCategories = [
+			...this.services.settings.customReflectionCategories,
+			{
+				id,
+				name,
+				organizationMode: "unified",
+				headingText: name,
+				headingLevel: "###",
+				folder: "",
+				isBuiltin: false,
+				dedicatedCommand: false,
+			},
+		];
+
+		try {
+			await this.services.saveSettings();
+			this.sectionEl.empty();
+			for (const category of this.services.reflectionCatalog.all()) {
+				this.sectionEl.createEl("option", { value: category.id, text: category.name });
+			}
+			this.sectionEl.createEl("option", {
+				value: CREATE_SECTION_VALUE,
+				text: t(this.locale, "entry.createSectionOption"),
+			});
+			this.sectionEl.value = id;
+			this.removeCreateSectionControl();
+		} catch {
+			new Notice(t(this.locale, "entry.sectionCreateFailed"));
+		}
 	}
 
 	private renderResults(resetHighlight = true): void {
@@ -141,6 +217,10 @@ export class LogAyahEntryModal extends Modal {
 		const reflectionText = this.noteEl.value.trim();
 		if (!reflectionText) {
 			new Notice(t(this.locale, "entry.writeNote"));
+			return;
+		}
+		if (this.sectionEl.value === CREATE_SECTION_VALUE) {
+			new Notice(t(this.locale, "entry.createSectionFirst"));
 			return;
 		}
 

@@ -21,6 +21,14 @@ describe("ArabicNormalizer", () => {
 		expect(normalizer.normalizeForSearch("\u0625\u062D\u062F")).toBe(normalizer.normalizeForSearch("\u0627\u062D\u062F"));
 	});
 
+	it("treats الذي and الذى as the same search spelling", () => {
+		expect(normalizer.normalizeForSearch("الذي")).toBe(normalizer.normalizeForSearch("الذى"));
+	});
+
+	it("treats final ya and yaa maqsura as the same search spelling", () => {
+		expect(normalizer.normalizeForSearch("الحي")).toBe(normalizer.normalizeForSearch("الحى"));
+	});
+
 	it("applies the configured short-alef substitution rules (data-driven, NFR-2)", () => {
 		expect(normalizer.normalizeForSearch("\u0627\u0644\u0635\u0644\u0648\u0629")).toBe(
 			normalizer.normalizeForSearch("\u0627\u0644\u0635\u0644\u0627\u0629")

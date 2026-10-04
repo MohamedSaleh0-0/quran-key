@@ -5,6 +5,9 @@ import type { Ayah } from "../entities/Ayah";
  *  adapter so it's independently testable. */
 export interface InsertionMemento {
 	line: number;
+	/** The exact character range occupied by the last inserted ayah. */
+	startCh: number;
+	endCh: number;
 	query: string;
 	ayahs: readonly Ayah[];
 	isSnippet: boolean;

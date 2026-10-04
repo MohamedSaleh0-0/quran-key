@@ -7,6 +7,8 @@ import type {
 	AyahNoteRef,
 	AyahNoteRepository,
 	AyahSectionExtraction,
+	CreatedNoteFileSnapshot,
+	EnsuredAyahNote,
 	ReflectionEntryFormatting,
 } from "../../domain/ports/AyahNoteRepository";
 import { HeadingSectionInserter } from "../../domain/services/HeadingSectionInserter";
@@ -22,6 +24,8 @@ function sanitizeFileNameSegment(segment: string): string {
 export interface AyahNoteSettingsSource {
 	ayahNotesFolder: string;
 	reflectionFileNameAyahTextMaxLength: number;
+	reflectionFileNameAyahTextMaxWords: number;
+	stripTashkeel: (text: string) => string;
 	surahNotesFolder: string;
 	surahNoteFileNameTemplate: string;
 	referenceFormat: string;
@@ -102,6 +106,44 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		return file.basename;
 	}
 
+	async ensureUnifiedNote(
+		identity: AyahIdentity,
+		fileNameTemplate: string,
+		noteTemplate: string
+	): Promise<EnsuredAyahNote> {
+		const existingAyahFile = this.findExistingUnifiedFile(identity.surahId, identity.ayahId);
+		const existingSurahFile = this.findExistingSurahFile(identity.surahId);
+		const file = await this.findOrCreateUnifiedNote(identity, fileNameTemplate, noteTemplate);
+		const createdFiles: string[] = [];
+		if (!existingAyahFile) createdFiles.push(file.path);
+		if (!existingSurahFile) {
+			const surahFile = this.findExistingSurahFile(identity.surahId);
+			if (surahFile) createdFiles.push(surahFile.path);
+		}
+		return { title: file.basename, createdFiles };
+	}
+
+	async snapshotFiles(paths: readonly string[]): Promise<CreatedNoteFileSnapshot[]> {
+		const snapshots: CreatedNoteFileSnapshot[] = [];
+		for (const path of paths) {
+			const file = this.app.vault.getAbstractFileByPath(normalizePath(path));
+			if (file instanceof TFile) snapshots.push({ path: file.path, content: await this.app.vault.read(file) });
+		}
+		return snapshots;
+	}
+
+	async deleteCreatedFiles(snapshots: readonly CreatedNoteFileSnapshot[]): Promise<string[]> {
+		const deleted: string[] = [];
+		for (const snapshot of snapshots) {
+			const file = this.app.vault.getAbstractFileByPath(normalizePath(snapshot.path));
+			if (!(file instanceof TFile)) continue;
+			if ((await this.app.vault.read(file)) !== snapshot.content) continue;
+			await this.app.vault.delete(file);
+			deleted.push(file.path);
+		}
+		return deleted;
+	}
+
 	private async appendToUnifiedNote(
 		identity: AyahIdentity,
 		category: ReflectionCategory,
@@ -146,7 +188,7 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 		}
 
 		const settings = this.getSettings();
-		const title = new ReflectionFileNameBuilder(fileNameTemplate, settings.reflectionFileNameAyahTextMaxLength).build(
+		const title = new ReflectionFileNameBuilder(fileNameTemplate, settings.reflectionFileNameAyahTextMaxLength, settings.stripTashkeel, settings.reflectionFileNameAyahTextMaxWords).build(
 			identity.surahName,
 			identity.ayahId,
 			identity.ayahTextRaw
@@ -338,7 +380,7 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 
 		const settings = this.getSettings();
 		await this.ensureFolder(category.folder);
-		const title = new ReflectionFileNameBuilder(fileNameTemplate, settings.reflectionFileNameAyahTextMaxLength).build(
+		const title = new ReflectionFileNameBuilder(fileNameTemplate, settings.reflectionFileNameAyahTextMaxLength, settings.stripTashkeel, settings.reflectionFileNameAyahTextMaxWords).build(
 			identity.surahName,
 			identity.ayahId,
 			identity.ayahTextRaw

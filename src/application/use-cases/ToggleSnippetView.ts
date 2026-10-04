@@ -5,6 +5,10 @@ import type { FormattingOptions, VerseOutputFormatter } from "../../domain/servi
 
 export interface ToggleResult {
 	output: string;
+	/** Range in the current document to replace. This may differ from the
+	 * stored memento range after Ctrl+Z restored the shorter snippet. */
+	startCh: number;
+	endCh: number;
 	nextMemento: InsertionMemento;
 }
 
@@ -36,7 +40,11 @@ export class ToggleSnippetView {
 		formattingOptions: FormattingOptions
 	): ToggleResult | null {
 		if (memento.line !== cursorLine) return null;
-		if (currentLine.indexOf(wrapperStart) === -1 || currentLine.indexOf(wrapperEnd) === -1) return null;
+		const startCh = memento.startCh >= 0 ? memento.startCh : currentLine.indexOf(wrapperStart);
+		const storedEndCh = memento.endCh > startCh && memento.endCh <= currentLine.length ? memento.endCh : -1;
+		const wrapperEndCh = currentLine.indexOf(wrapperEnd, startCh);
+		const endCh = storedEndCh >= 0 ? storedEndCh : wrapperEndCh >= 0 ? wrapperEndCh + wrapperEnd.length : -1;
+		if (startCh < 0 || endCh <= startCh || currentLine.slice(startCh, endCh).indexOf(wrapperStart) === -1 || currentLine.slice(startCh, endCh).indexOf(wrapperEnd) === -1) return null;
 
 		const targetAyah = memento.ayahs[0];
 		const queryText = memento.query.trim();
@@ -46,15 +54,16 @@ export class ToggleSnippetView {
 			const snippetText = this.snippetExtractor.extractSnippet(targetAyah.text, queryText);
 			if (snippetText === targetAyah.text) return null; // nothing narrower to show
 			const dummy: Ayah = { ...targetAyah, text: snippetText };
-			return {
-				output: this.formatter.format([dummy], formattingOptions),
-				nextMemento: { ...memento, isSnippet: true },
-			};
+			const output = this.formatter.format([dummy], formattingOptions);
+			return { output, startCh, endCh, nextMemento: { ...memento, startCh, endCh: startCh + output.length, isSnippet: true } };
 		}
 
+		const output = this.formatter.format(memento.ayahs, formattingOptions);
 		return {
-			output: this.formatter.format(memento.ayahs, formattingOptions),
-			nextMemento: { ...memento, isSnippet: false },
+			output,
+			startCh,
+			endCh,
+			nextMemento: { ...memento, startCh, endCh: startCh + output.length, isSnippet: false },
 		};
 	}
 }
