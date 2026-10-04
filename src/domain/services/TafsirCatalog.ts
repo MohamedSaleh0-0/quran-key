@@ -1,4 +1,5 @@
 import type { TafsirBook } from "../entities/TafsirBook";
+import type { TafsirBookSortOrder } from "../../config/types";
 
 /**
  * v1's `TAFSIR_BOOKS_LIST` was a hardcoded 42-entry array baked into the
@@ -12,11 +13,19 @@ import type { TafsirBook } from "../entities/TafsirBook";
 export class TafsirCatalog {
 	private readonly books: readonly TafsirBook[];
 
-	constructor(builtin: readonly TafsirBook[], custom: readonly TafsirBook[]) {
+	constructor(builtin: readonly TafsirBook[], custom: readonly TafsirBook[], sortOrder: TafsirBookSortOrder = "name") {
 		const byId = new Map<string, TafsirBook>();
 		for (const b of builtin) byId.set(b.id, b);
 		for (const b of custom) byId.set(b.id, b);
-		this.books = Array.from(byId.values());
+		const entries = Array.from(byId.values());
+		this.books = entries.sort((a, b) => {
+			if (sortOrder === "created") {
+				const createdA = a.createdAt ?? 0;
+				const createdB = b.createdAt ?? 0;
+				if (createdA !== createdB) return createdA - createdB;
+			}
+			return a.name.localeCompare(b.name, "ar", { sensitivity: "base" });
+		});
 	}
 
 	all(): readonly TafsirBook[] {

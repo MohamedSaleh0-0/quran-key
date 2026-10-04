@@ -14,4 +14,5 @@ export interface TafsirBook {
 	/** {bookId}, {surahId}, {ayahId} placeholders, substituted at fetch time. */
 	readonly urlTemplate: string;
 	readonly isBuiltin: boolean;
+	readonly createdAt?: number;
 }
