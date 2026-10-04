@@ -15,6 +15,7 @@ import { SnippetExtractor } from "./domain/services/SnippetExtractor";
 import { OrnateNumberConverter } from "./domain/services/OrnateNumberConverter";
 import { VerseOutputFormatter, type FormattingOptions } from "./domain/services/VerseOutputFormatter";
 import { TafsirCatalog } from "./domain/services/TafsirCatalog";
+import { TafsirPackageCatalog } from "./domain/services/TafsirPackageCatalog";
 import { ReflectionCategoryCatalog } from "./domain/services/ReflectionCategoryCatalog";
 import { VerseReference } from "./domain/value-objects/VerseReference";
 
@@ -26,6 +27,7 @@ import { ToggleSnippetView } from "./application/use-cases/ToggleSnippetView";
 import { FetchAndInsertTafsir, type TafsirFormattingOptions } from "./application/use-cases/FetchAndInsertTafsir";
 import { LinkReflectionToVerses, type ReflectionLinkOptions } from "./application/use-cases/LinkReflectionToVerses";
 import { LinkAyahsTogether } from "./application/use-cases/LinkAyahsTogether";
+import { ConvertOrphanAyat, type ConvertOrphanAyatOptions } from "./application/use-cases/ConvertOrphanAyat";
 import { RemoveQuranReference } from "./application/use-cases/RemoveQuranReference";
 import { ConvertReferenceToFootnote } from "./application/use-cases/ConvertReferenceToFootnote";
 import { StripTashkeel } from "./application/use-cases/StripTashkeel";
@@ -42,11 +44,13 @@ import {
 	createOrnateNumberHighlightExtension,
 	createOrnateNumberPostProcessor,
 	createAyahWikilinkSyntaxExtension,
+	createAyahWikilinkClipboardExtension,
 	createQuranListFormattingExtension,
 	createReflectionBlockIdExtension,
 	createQuranHighlightExtension,
 } from "./infrastructure/obsidian/QuranHighlightExtension";
 import { HttpTafsirRepository } from "./infrastructure/http/HttpTafsirRepository";
+import { VaultTafsirRepository } from "./infrastructure/obsidian/VaultTafsirRepository";
 import { InMemoryInsertionMemento } from "./infrastructure/memory/InMemoryInsertionMemento";
 
 import type { AppServices } from "./presentation/AppServices";
@@ -63,7 +67,11 @@ export default class QuranKeyPlugin extends Plugin {
 	settings: PluginConfig = DEFAULT_SETTINGS;
 
 	private repository!: ObsidianQuranRepository;
-	private readonly tafsirRepository = new HttpTafsirRepository();
+	private readonly tafsirRepository = new VaultTafsirRepository(
+		this.app.vault,
+		new HttpTafsirRepository(),
+		() => ({ enabled: this.settings.tafsirCacheEnabled, folder: this.settings.tafsirCacheFolder })
+	);
 	private readonly notice = new ObsidianNoticeAdapter();
 	private readonly memento = new InMemoryInsertionMemento();
 	private readonly editorExtension: Extension[] = [];
@@ -124,6 +132,7 @@ export default class QuranKeyPlugin extends Plugin {
 		this.editorExtension.length = 0;
 		this.editorExtension.push(createQuranHighlightExtension(this.settings.wrapperStart, this.settings.wrapperEnd));
 		this.editorExtension.push(createAyahWikilinkSyntaxExtension());
+		this.editorExtension.push(createAyahWikilinkClipboardExtension(this.settings.wrapperStart, this.settings.wrapperEnd));
 		this.editorExtension.push(createQuranListFormattingExtension(this.settings.wrapperStart, this.settings.wrapperEnd));
 		this.editorExtension.push(createReflectionBlockIdExtension());
 		if (this.settings.styleOrnateNumbers) {
@@ -156,7 +165,8 @@ export default class QuranKeyPlugin extends Plugin {
 		const toggle = new ToggleSnippetView(snippetExtractor, formatter);
 
 		const builtinBooks = builtinTafsirBooksData as unknown as TafsirBook[];
-		const catalog = new TafsirCatalog(builtinBooks, this.settings.customTafsirBooks);
+		const catalog = new TafsirCatalog(builtinBooks, this.settings.customTafsirBooks, this.settings.tafsirBookSortOrder);
+		const tafsirPackages = new TafsirPackageCatalog(this.settings.tafsirPackages);
 
 		const builtinReflectionCategories = builtinReflectionCategoriesData as unknown as ReflectionCategory[];
 		const reflectionCatalog = new ReflectionCategoryCatalog(
@@ -167,6 +177,8 @@ export default class QuranKeyPlugin extends Plugin {
 		const ayahNotes = new ObsidianAyahNoteRepository(this.app, () => ({
 			ayahNotesFolder: this.settings.ayahNotesFolder,
 			reflectionFileNameAyahTextMaxLength: this.settings.reflectionFileNameAyahTextMaxLength,
+			reflectionFileNameAyahTextMaxWords: this.settings.reflectionFileNameAyahTextMaxWords,
+			stripTashkeel: (text) => normalizer.stripTashkeel(text),
 			surahNotesFolder: this.settings.surahNotesFolder,
 			surahNoteFileNameTemplate: this.settings.surahNoteFileNameTemplate,
 			referenceFormat: this.settings.referenceFormat,
@@ -239,6 +251,7 @@ export default class QuranKeyPlugin extends Plugin {
 
 		const linkAyahsTogether = new LinkAyahsTogether(ayahNotes, formatter);
 		const extractAyahSections = new ExtractAyahSections(ayahNotes);
+		const convertOrphanAyat = new ConvertOrphanAyat(ayahNotes);
 
 		const extract = new ExtractAndInsertVerse(
 			this.repository,
@@ -263,7 +276,7 @@ export default class QuranKeyPlugin extends Plugin {
 			this.settings.searchStrategy
 		);
 		const analyzeContext = new AnalyzeLineContext(this.repository, normalizer, reference, slidingWindow);
-		const fetchTafsir = new FetchAndInsertTafsir(this.repository, this.tafsirRepository, catalog, this.notice);
+		const fetchTafsir = new FetchAndInsertTafsir(this.repository, this.tafsirRepository, this.notice);
 		const removeReference = new RemoveQuranReference(reference);
 		const convertToFootnote = new ConvertReferenceToFootnote(reference);
 		const stripTashkeel = new StripTashkeel(normalizer);
@@ -276,17 +289,28 @@ export default class QuranKeyPlugin extends Plugin {
 			useHorizontalDivider: this.settings.useHorizontalDivider,
 			rangeHeadingLevel: this.settings.rangeHeadingLevel,
 			bookHeadingLevel: this.settings.bookHeadingLevel,
-			fetchDelayMs: this.settings.tafsirFetchDelayMs,
-			fetchDelayThreshold: this.settings.tafsirFetchDelayThreshold,
-			resolutionOrder: this.settings.tafsirBookResolutionOrder,
-			favoriteBookIds: this.settings.favoriteBooksIds,
-			defaultBookId: this.settings.defaultTafsirBookId,
+			ayahHeadingLevel: this.settings.ayahHeadingLevel,
+			rangeHeadingTemplate: this.settings.tafsirRangeHeadingTemplate,
+			bookHeadingTemplate: this.settings.tafsirBookHeadingTemplate,
+			ayahHeadingTemplate: this.settings.tafsirAyahHeadingTemplate,
+		});
+
+		const buildOrphanAyatOptions = (): ConvertOrphanAyatOptions => ({
+			wrapperStart: this.settings.wrapperStart,
+			wrapperEnd: this.settings.wrapperEnd,
+			ayahMarkerStyle: this.settings.ayahMarkerStyle,
+			reference,
+			normalizer,
+			ayahs: this.repository.getAllAyahs(),
+			fileNameTemplate: this.settings.reflectionFileNameTemplate,
+			noteTemplate: this.settings.ayahNoteTemplate.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
+			formatAyahNoteBody: (ayah) => formatter.format([ayah], getFormattingOptions()),
 		});
 
 		const buildReflectionOptions = (): ReflectionLinkOptions => ({
 			locale: this.settings.interfaceLanguage,
 			entryTemplate: this.settings.reflectionEntryTemplate.replace(/\\n/g, "\n").replace(/\\t/g, "\t"),
-			includeReflectionEntryDate: this.settings.includeReflectionEntryDate,
+			includeReflectionEntryDate: true,
 			showSuccessNotice: this.settings.showReflectionSuccessNotice,
 			onSuccess: (category) => this.notice.show(t(this.settings.interfaceLanguage, "reflection.success", { category: category.name })),
 			insertionMode: this.settings.reflectionInsertionMode,
@@ -301,6 +325,7 @@ export default class QuranKeyPlugin extends Plugin {
 			repository: this.repository,
 			ayahNotes,
 			catalog,
+			tafsirPackages,
 			reflectionCatalog,
 			normalizer,
 			useCases: {
@@ -314,8 +339,10 @@ export default class QuranKeyPlugin extends Plugin {
 				stripTashkeel,
 				linkReflection,
 				linkAyahsTogether,
+				convertOrphanAyat,
 			},
 			buildTafsirOptions,
+			buildOrphanAyatOptions,
 			buildReflectionOptions,
 			wrapEditor: (editor: Editor) => new ObsidianEditorAdapter(editor),
 			saveSettings: () => this.saveSettings(),

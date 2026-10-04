@@ -106,6 +106,16 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 		heading: { ar: "إعدادات محرك التفسير السياقي", en: "Tafsir Engine" },
 		fields: [
 			{
+				key: "tafsirBookSortOrder",
+				type: "dropdown",
+				label: { ar: "ترتيب كتب التفسير", en: "Tafsir book order" },
+				description: { ar: "رتّب الكتب بالاسم أو بوقت إنشاء المصدر المخصص.", en: "Sort books alphabetically or by the time a custom source was created." },
+				dropdownOptions: [
+					{ value: "name", label: "الاسم / Name" },
+					{ value: "created", label: "وقت الإنشاء / Created" },
+				],
+			},
+			{
 				key: "rangeHeadingLevel",
 				type: "text",
 				label: { ar: "مستوى عنوان نطاق الآيات", en: "Range heading level" },
@@ -124,6 +134,42 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				},
 			},
 			{
+				key: "ayahHeadingLevel",
+				type: "text",
+				label: { ar: "مستوى عنوان الآية", en: "Ayah heading level" },
+				description: {
+					ar: "المستوى المستخدم لعنوان كل آية (مثل #####).",
+					en: "Markdown heading marker for each ayah (e.g. #####).",
+				},
+			},
+			{
+				key: "tafsirRangeHeadingTemplate",
+				type: "text",
+				label: { ar: "قالب عنوان النطاق", en: "Range heading template" },
+				description: {
+					ar: "المتاح: {surah} و{start} و{end}. لا تُضاف كلمة «تفسير» تلقائياً.",
+					en: "Available placeholders: {surah}, {start}, and {end}. No tafsir label is added automatically.",
+				},
+			},
+			{
+				key: "tafsirBookHeadingTemplate",
+				type: "text",
+				label: { ar: "قالب عنوان الكتاب", en: "Book heading template" },
+				description: {
+					ar: "المتاح: {book}.",
+					en: "Available placeholder: {book}.",
+				},
+			},
+			{
+				key: "tafsirAyahHeadingTemplate",
+				type: "text",
+				label: { ar: "قالب عنوان الآية", en: "Ayah heading template" },
+				description: {
+					ar: "المتاح: {ayah}. يُستخدم لكل استجابة كما أعادها المصدر، حتى لو احتوت على آيات إضافية.",
+					en: "Available placeholder: {ayah}. It is used once per source response, even if that response contains extra ayahs.",
+				},
+			},
+			{
 				key: "includeAyahTextInTafsir",
 				type: "toggle",
 				label: { ar: "تضمين نص الآية القرآنية", en: "Include ayah text" },
@@ -138,38 +184,9 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 		],
 	},
 	{
-		id: "advancedFeatures",
-		heading: { ar: "مزايا المستخدم المتقدم", en: "Power-user features" },
-		fields: [
-			{
-				key: "enableAtSectionTrigger",
-				type: "toggle",
-				label: { ar: "مُشغّل الأقسام @", en: "Enable @ section trigger" },
-				description: {
-					ar: "عند كتابة @ داخل نافذة تسجيل الملاحظة، افتح اختيار الأقسام. هذا الخيار معطل افتراضياً.",
-					en: "Typing @ in the log-entry modal opens section selection. Disabled by default.",
-				},
-			},
-		],
-	},
-	{
 		id: "style",
 		heading: { ar: "تنسيق مظهر الآيات", en: "Verse Style" },
 		fields: [
-			{
-				key: "ayahMarkerStyle",
-				type: "dropdown",
-				label: { ar: "شكل علامة نهاية الآية", en: "Ayah ending marker" },
-				description: {
-					ar: "اختبر الأرقام وحدها، أو داخل قوسين، أو علامة ۝ مع الرقم. يؤثر على الآيات الجديدة والملاحظات الجديدة فقط.",
-					en: "Test bare digits, parenthesized digits, or ۝ with the number. Affects newly generated text and notes only.",
-				},
-				dropdownOptions: [
-					{ value: "plain", label: "١٠٤" },
-					{ value: "parenthesized", label: "(١٠٤)" },
-					{ value: "end-symbol", label: "۝١٠٤" },
-				],
-			},
 			{
 				key: "quranFontSize",
 				type: "slider",
@@ -185,18 +202,24 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				slider: { min: 1.5, max: 3.5, step: 0.1 },
 			},
 			{
-				key: "quranColor",
+				key: "quranColorDark",
 				type: "color",
-				label: { ar: "لون الآيات", en: "Verse color" },
-				description: { ar: "اللون المميز للآيات القرآنية.", en: "Accent color for Qur'anic verses." },
+				label: { ar: "لون الآيات في الوضع الداكن", en: "Verse color in dark mode" },
+				description: { ar: "لون متن الآيات عند استخدام سمة Obsidian الداكنة.", en: "Color used for Qur'anic text in Obsidian's dark theme." },
+			},
+			{
+				key: "quranColorLight",
+				type: "color",
+				label: { ar: "لون الآيات في الوضع الفاتح", en: "Verse color in light mode" },
+				description: { ar: "لون متن الآيات عند استخدام سمة Obsidian الفاتحة.", en: "Color used for Qur'anic text in Obsidian's light theme." },
 			},
 			{
 				key: "styleOrnateNumbers",
 				type: "toggle",
-				label: { ar: "تنسيق الأرقام المزخرفة", en: "Style ornate numbers" },
+				label: { ar: "تمييز أرقام الآيات", en: "Highlight ayah numbers" },
 				description: {
-					ar: "إعطاء رقم الآية لوناً مميزاً في المعاينة والقراءة.",
-					en: "Gives the ayah number its own accent color in preview and reading view.",
+					ar: "يضيف تنسيقًا مميزًا للأرقام العربية داخل الشاهد في المعاينة ووضع القراءة.",
+					en: "Applies distinct styling to Arabic-Indic numbers inside Quran passages in Live Preview and Reading View.",
 				},
 			},
 			{
@@ -248,6 +271,15 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				description: {
 					ar: "عند إدراج آية من الاستخراج أو البحث، ينشئ ملاحظتها ويربط رقمها فقط، دون ربط نص الآية.",
 					en: "When inserting an ayah from extraction or search, create its note and link only the ayah marker, not the Quran text.",
+				},
+			},
+			{
+				key: "showOrphanAyahConversionPreview",
+				type: "toggle",
+				label: { ar: "إظهار معاينة تحويل الآيات", en: "Show ayah conversion preview" },
+				description: {
+					ar: "يعرض الآيات التي سيجري ربطها قبل التنفيذ، مع إتاحة التراجع بعده.",
+					en: "Show the ayahs that will be linked before conversion, with rollback available afterward.",
 				},
 			},
 			{
@@ -306,15 +338,6 @@ export const SETTINGS_SCHEMA: SettingsSectionDefinition[] = [
 				description: {
 					ar: "المتغيرات المتاحة: {content} و {date}. مثال: «- {content} — {date}».",
 					en: "Available placeholders: {content} and {date}. Example: '- {content} — {date}'.",
-				},
-			},
-			{
-				key: "includeReflectionEntryDate",
-				type: "toggle",
-				label: { ar: "إضافة تاريخ الإدخال", en: "Add entry date" },
-				description: {
-					ar: "يُدرج التاريخ عند احتواء صيغة التدوينة على {date}.",
-					en: "Insert the date when the entry template contains {date}.",
 				},
 			},
 		],

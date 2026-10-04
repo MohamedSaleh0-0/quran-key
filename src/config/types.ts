@@ -2,23 +2,27 @@ import type { AyahMarkerStyle } from "../domain/services/AyahMarkerFormatter";
 
 export type Locale = "ar" | "en";
 
-export type TafsirResolutionStrategy =
-	| "explicit"
-	| "lineAliases"
-	| "favorites"
-	| "default";
-
 export type SearchStrategy = "literal" | "fuzzy";
 
 export type CategoryOrganizationMode = "unified" | "ownFolder";
 
 export type ReflectionInsertionMode = "afterHeading" | "endOfSection";
+export type TafsirBookSortOrder = "name" | "created";
 
 export interface TafsirBookDescriptor {
 	id: string;
 	name: string;
 	aliases: string[];
 	urlTemplate: string;
+	isBuiltin: boolean;
+	/** Set for user-created books; built-in books may omit it. */
+	createdAt?: number;
+}
+
+export interface TafsirPackageDescriptor {
+	id: string;
+	name: string;
+	bookIds: string[];
 	isBuiltin: boolean;
 }
 
@@ -55,6 +59,8 @@ export interface PluginConfig {
 	quranFontSize: number;
 	quranLineHeight: number;
 	quranColor: string;
+	quranColorDark: string;
+	quranColorLight: string;
 	styleOrnateNumbers: boolean;
 	customCss: string;
 
@@ -64,19 +70,21 @@ export interface PluginConfig {
 	maxSlidingWindowWords: number;
 	interfaceLanguage: Locale;
 	searchStrategy: SearchStrategy;
-	enableAtSectionTrigger: boolean;
 
 	// --- Tafsir ---
-	defaultTafsirBookId: string;
-	favoriteBooksIds: string[];
 	customTafsirBooks: TafsirBookDescriptor[];
-	tafsirBookResolutionOrder: TafsirResolutionStrategy[];
+	tafsirBookSortOrder: TafsirBookSortOrder;
+	tafsirPackages: TafsirPackageDescriptor[];
+	tafsirCacheEnabled: boolean;
+	tafsirCacheFolder: string;
 	includeAyahTextInTafsir: boolean;
 	useHorizontalDivider: boolean;
 	rangeHeadingLevel: string;
 	bookHeadingLevel: string;
-	tafsirFetchDelayMs: number;
-	tafsirFetchDelayThreshold: number;
+	ayahHeadingLevel: string;
+	tafsirRangeHeadingTemplate: string;
+	tafsirBookHeadingTemplate: string;
+	tafsirAyahHeadingTemplate: string;
 
 	// --- Reflections ---
 	customReflectionCategories: ReflectionCategoryDescriptor[];
@@ -84,16 +92,17 @@ export interface PluginConfig {
 	surahNotesFolder: string;
 	surahNoteFileNameTemplate: string;
 	linkAyahMarkersOnInsert: boolean;
+	showOrphanAyahConversionPreview: boolean;
 	showReflectionSuccessNotice: boolean;
 	reflectionCategoryDelimiter: string;
 	reflectionEntryTemplate: string;
 	reflectionEntryPrefixTemplate: string;
-	includeReflectionEntryDate: boolean;
 	/** @deprecated Log spacing is now part of reflectionEntryTemplate. */
 	reflectionEntrySeparator: string;
 	reflectionInsertionMode: ReflectionInsertionMode;
 	reflectionFileNameTemplate: string;
 	reflectionFileNameAyahTextMaxLength: number;
+	reflectionFileNameAyahTextMaxWords: number;
 	/** Markdown body template for a newly-created ayah note. Supports {ayah}. */
 	ayahNoteTemplate: string;
 	/** @deprecated Migrated to ayahNoteTemplate. */

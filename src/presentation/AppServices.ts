@@ -5,6 +5,7 @@ import type { QuranRepository } from "../domain/ports/QuranRepository";
 import type { AyahNoteRepository } from "../domain/ports/AyahNoteRepository";
 import type { ArabicNormalizer } from "../domain/services/ArabicNormalizer";
 import type { TafsirCatalog } from "../domain/services/TafsirCatalog";
+import type { TafsirPackageCatalog } from "../domain/services/TafsirPackageCatalog";
 import type { ReflectionCategoryCatalog } from "../domain/services/ReflectionCategoryCatalog";
 import type { AnalyzeLineContext } from "../application/use-cases/AnalyzeLineContext";
 import type { ConvertReferenceToFootnote } from "../application/use-cases/ConvertReferenceToFootnote";
@@ -13,6 +14,8 @@ import type { ExtractAyahSections } from "../application/use-cases/ExtractAyahSe
 import type { FetchAndInsertTafsir, TafsirFormattingOptions } from "../application/use-cases/FetchAndInsertTafsir";
 import type { LinkReflectionToVerses, ReflectionLinkOptions } from "../application/use-cases/LinkReflectionToVerses";
 import type { LinkAyahsTogether } from "../application/use-cases/LinkAyahsTogether";
+import type { ConvertOrphanAyat } from "../application/use-cases/ConvertOrphanAyat";
+import type { ConvertOrphanAyatOptions } from "../application/use-cases/ConvertOrphanAyat";
 import type { RemoveQuranReference } from "../application/use-cases/RemoveQuranReference";
 import type { SearchQuranVerses } from "../application/use-cases/SearchQuranVerses";
 import type { StripTashkeel } from "../application/use-cases/StripTashkeel";
@@ -30,6 +33,7 @@ export interface AppServices {
 	repository: QuranRepository;
 	ayahNotes: AyahNoteRepository;
 	catalog: TafsirCatalog;
+	tafsirPackages: TafsirPackageCatalog;
 	reflectionCatalog: ReflectionCategoryCatalog;
 	normalizer: ArabicNormalizer;
 	useCases: {
@@ -43,8 +47,10 @@ export interface AppServices {
 		stripTashkeel: StripTashkeel;
 		linkReflection: LinkReflectionToVerses;
 		linkAyahsTogether: LinkAyahsTogether;
+		convertOrphanAyat: ConvertOrphanAyat;
 	};
 	buildTafsirOptions: () => TafsirFormattingOptions;
+	buildOrphanAyatOptions: () => ConvertOrphanAyatOptions;
 	buildReflectionOptions: () => ReflectionLinkOptions;
 	wrapEditor: (editor: Editor) => EditorPort;
 	saveSettings: () => Promise<void>;

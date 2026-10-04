@@ -28,6 +28,16 @@ span.cm-quran-key-text,
 	-webkit-font-smoothing: antialiased;
 }
 
+/* Keep the two configured palette values theme-aware without requiring a
+ * settings reload when the user switches Obsidian between light and dark. */
+body.theme-dark {
+	--quran-key-color: var(--quran-key-color-dark, #dfc56b);
+}
+
+body.theme-light {
+	--quran-key-color: var(--quran-key-color-light, #8a6418);
+}
+
 /* The ayah marker remains a real Obsidian link, but should look like a
  * Quranic end marker rather than a conventional underlined hyperlink. */
 a.quran-key-ayah-note-link,
@@ -47,15 +57,34 @@ a.quran-key-ayah-note-link:hover {
 }
 
 .cm-line.cm-quran-key-list-item {
+	font-family: var(--quran-key-font-family, 'QPC Hafs v18', serif) !important;
+	font-size: var(--quran-key-font-size, 1.3em) !important;
 	line-height: var(--quran-key-line-height, 2.4);
+	direction: rtl;
+}
+
+.cm-line.cm-quran-key-list-item .cm-formatting-list,
+.cm-line.cm-quran-key-list-item .list-bullet {
+	font-family: var(--font-text) !important;
+	font-size: 1em !important;
+	direction: ltr;
 }
 
 .cm-line.cm-quran-key-list-item .cm-quran-key-text {
-	font: inherit;
 	font-family: var(--quran-key-font-family, 'QPC Hafs v18', serif);
 	font-size: var(--quran-key-font-size, 1.3em);
 	line-height: inherit;
 	color: var(--quran-key-color, #dfc56b);
+	direction: rtl;
+	unicode-bidi: isolate;
+}
+
+/* Obsidian wraps list content in one or more cm-list-N spans. Keep those
+ * wrappers from winning the Quran typography cascade in Live Preview. */
+.cm-line.cm-quran-key-list-item [class*="cm-list-"] .cm-quran-key-text {
+	font-family: var(--quran-key-font-family, 'QPC Hafs v18', serif);
+	font-size: var(--quran-key-font-size, 1.3em);
+	line-height: inherit;
 }
 
 /* Uncreated ayah notes use the same visible marker, while Reading View makes
@@ -76,6 +105,7 @@ a.quran-key-ayah-note-link:focus-visible {
 /* --- الرقم المزخرف: حلقة الخلفية + الرقم متمركز فوقها --- */
 .quran-key-ornate-number {
 	display: inline;
+	color: var(--text-accent);
 }
 
 .quran-key-ornate-ring {
@@ -133,6 +163,43 @@ a.quran-key-ayah-note-link:focus-visible {
 .quran-key-analytics-value {
 	color: var(--text-accent);
 	font-weight: 600;
+}
+
+.quran-key-search-hint {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 12px;
+	margin-top: 10px;
+	padding-top: 9px;
+	border-top: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: 0.78em;
+	line-height: 1.5;
+}
+
+.quran-key-search-hint-footer {
+	justify-content: center;
+	margin-top: 12px;
+	margin-left: 12px;
+	margin-right: 12px;
+	margin-bottom: 0;
+	padding-bottom: 9px;
+	text-align: center;
+}
+
+.quran-key-search-hint-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.quran-key-search-hint kbd {
+	padding: 1px 5px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	font-size: 0.9em;
 }
 
 /* --- نوافذ الاختيار والقوائم (التفاسير والتصنيفات والربط) --- */
@@ -196,6 +263,69 @@ a.quran-key-ayah-note-link:focus-visible {
 	color: var(--text-muted);
 }
 
+.quran-key-orphan-summary {
+	padding: 8px 12px;
+	margin-bottom: 10px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+}
+
+.quran-key-orphan-list {
+	max-height: 360px;
+}
+
+.quran-key-orphan-item {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 4px 12px;
+	padding: 9px 12px;
+	border-bottom: 1px solid var(--background-modifier-border-focus);
+}
+
+.quran-key-orphan-item:last-child {
+	border-bottom: none;
+}
+
+.quran-key-orphan-item.is-linked,
+.quran-key-orphan-item.is-skipped {
+	color: var(--text-muted);
+}
+
+.quran-key-orphan-item-label {
+	font-weight: 600;
+}
+
+.quran-key-orphan-marker {
+	direction: rtl;
+	font-family: var(--quran-key-font-family, 'QPC Hafs v18', serif);
+	color: var(--text-accent);
+}
+
+.quran-key-orphan-actions {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.quran-key-orphan-alternatives {
+	min-width: 220px;
+	max-width: 100%;
+}
+
+.quran-key-orphan-item.is-rejected {
+	opacity: 0.65;
+}
+
+.quran-key-orphan-content {
+	grid-column: 1 / -1;
+	direction: rtl;
+	text-align: right;
+	color: var(--text-normal);
+	white-space: pre-wrap;
+}
+
 .quran-key-reflection-destination {
 	display: flex;
 	align-items: center;
@@ -252,6 +382,16 @@ a.quran-key-ayah-note-link:focus-visible {
 	padding: 6px;
 }
 
+.quran-key-entry-create-section {
+	display: flex;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.quran-key-entry-create-input {
+	flex: 1;
+}
+
 .quran-key-entry-textarea {
 	min-height: 140px;
 	margin-top: 12px;
@@ -274,6 +414,80 @@ a.quran-key-ayah-note-link:focus-visible {
 .quran-key-settings-tab-content .setting-item-control textarea {
 	min-width: 320px;
 	max-width: 480px;
+}
+
+.quran-key-settings-card-list {
+	display: grid;
+	gap: 10px;
+	margin: 8px 0 16px;
+}
+
+.quran-key-settings-card {
+	padding: 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background: var(--background-secondary);
+}
+
+.quran-key-settings-card-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.quran-key-settings-card-title {
+	font-weight: 600;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.quran-key-settings-card-editor[hidden] {
+	display: none;
+}
+
+.quran-key-settings-card-header input,
+.quran-key-settings-form input {
+	min-width: 0;
+	flex: 1;
+}
+
+.quran-key-settings-card-actions,
+.quran-key-settings-form-actions {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.quran-key-settings-form {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 8px;
+	padding: 12px;
+	margin: 8px 0 18px;
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: 8px;
+}
+
+.quran-key-settings-book-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+	gap: 4px 12px;
+	max-height: 240px;
+	overflow-y: auto;
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+}
+
+.quran-key-settings-book-grid label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	font-size: 0.9em;
 }
 
 /* --- شريط التبويبات لصفحة الإعدادات --- */

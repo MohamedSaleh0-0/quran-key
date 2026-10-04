@@ -54,5 +54,13 @@
     "pattern": "مشكوة",
     "flags": "g",
     "replacement": "مشكاة"
+  },
+  {
+    "id": "thaal-ya-variant",
+    "kind": "literal",
+    "description": "توحيد الذي والذى",
+    "pattern": "ذى",
+    "flags": "g",
+    "replacement": "ذي"
   }
 ]

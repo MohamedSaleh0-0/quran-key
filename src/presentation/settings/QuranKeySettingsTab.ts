@@ -1,18 +1,11 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type { App, Plugin } from "obsidian";
-import type { CategoryOrganizationMode, Locale, TafsirResolutionStrategy } from "../../config/types";
+import type { CategoryOrganizationMode, Locale } from "../../config/types";
 import type { AppServices } from "../AppServices";
 import { DEFAULT_SETTINGS } from "../../config/defaults";
 import { SETTINGS_SCHEMA, type SettingFieldDefinition } from "./SettingsSchema";
 
 type TabId = "general" | "appearance" | "quran-notes" | "advanced";
-
-const RESOLUTION_LABELS: Record<TafsirResolutionStrategy, Record<Locale, string>> = {
-	explicit: { ar: "اختيار صريح من قائمة", en: "Explicit picker choice" },
-	lineAliases: { ar: "أسماء مذكورة في السطر", en: "Names mentioned on the line" },
-	favorites: { ar: "الكتب المفضلة", en: "Favorite books" },
-	default: { ar: "الكتاب الافتراضي", en: "Default book" },
-};
 
 const TAB_TITLES: Record<TabId, Record<Locale, string>> = {
 	general: { ar: "عام وتنسيق النصوص", en: "General & Text" },
@@ -95,10 +88,29 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 
 	private renderTafsirAndNotesTab(containerEl: HTMLElement, locale: Locale): void {
 		new Setting(containerEl).setName(locale === "ar" ? "كتب التفسير" : "Tafsir Books").setHeading();
-		this.renderDefaultTafsirBook(containerEl, locale);
-		this.renderFavorites(containerEl, locale);
+		const tafsirSchema = SETTINGS_SCHEMA.find((section) => section.id === "tafsir");
+		const sortField = tafsirSchema?.fields.find((field) => field.key === "tafsirBookSortOrder");
+		if (sortField) this.renderField(containerEl, sortField, locale);
 		this.renderCustomBooks(containerEl, locale);
-		this.renderResolutionOrder(containerEl, locale);
+		this.renderTafsirPackages(containerEl, locale);
+		new Setting(containerEl)
+			.setName(locale === "ar" ? "التخزين المؤقت للتفاسير" : "Tafsir caching")
+			.setDesc(locale === "ar" ? "يحفظ نتائج التفسير داخل الـ vault لإعادة استخدامها دون اتصال وتقليل طلبات الشبكة." : "Save tafsir responses in the vault so they can be reused offline and fetched less often.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.services.settings.tafsirCacheEnabled).onChange(async (value) => {
+					this.services.settings.tafsirCacheEnabled = value;
+					await this.save();
+				})
+			)
+		new Setting(containerEl)
+			.setName(locale === "ar" ? "مجلد التخزين المؤقت" : "Cache folder")
+			.setDesc(locale === "ar" ? "مسار نسبي من جذر الـ vault لحفظ ملفات التفسير المؤقتة." : "Vault-relative folder where cached tafsir responses are stored.")
+			.addText((text) =>
+				text.setValue(this.services.settings.tafsirCacheFolder).onChange(async (value) => {
+					this.services.settings.tafsirCacheFolder = value.trim() || "tafsir";
+					await this.save();
+				})
+			);
 
 		new Setting(containerEl).setName(locale === "ar" ? "تصنيفات ملاحظات الآيات" : "Ayah Note Categories").setHeading();
 		this.renderReflectionCategories(containerEl, locale);
@@ -108,11 +120,11 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			const groups: Array<{ title: Record<Locale, string>; keys: string[] }> = [
 				{
 					title: { ar: "ملفات ملاحظات الآيات", en: "Ayah note files" },
-					keys: ["ayahNotesFolder", "surahNotesFolder", "surahNoteFileNameTemplate", "reflectionFileNameTemplate", "ayahNoteTemplate", "linkAyahMarkersOnInsert"],
+					keys: ["ayahNotesFolder", "surahNotesFolder", "surahNoteFileNameTemplate", "reflectionFileNameTemplate", "ayahNoteTemplate", "linkAyahMarkersOnInsert", "showOrphanAyahConversionPreview"],
 				},
 				{
 					title: { ar: "سجل التدبر", en: "Reflection log" },
-					keys: ["reflectionEntryTemplate", "includeReflectionEntryDate", "reflectionInsertionMode", "reflectionCategoryDelimiter", "showReflectionSuccessNotice"],
+					keys: ["reflectionEntryTemplate", "reflectionInsertionMode", "reflectionCategoryDelimiter", "showReflectionSuccessNotice"],
 				},
 			];
 			for (const group of groups) {
@@ -137,17 +149,11 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const tafsirSection = SETTINGS_SCHEMA.find((s) => s.id === "tafsir");
 		if (tafsirSection) {
 			new Setting(containerEl).setName(tafsirSection.heading[locale]).setHeading();
-			for (const field of tafsirSection.fields) this.renderField(containerEl, field, locale);
+			for (const field of tafsirSection.fields.filter((candidate) => candidate.key !== "tafsirBookSortOrder")) this.renderField(containerEl, field, locale);
 		}
 
 		new Setting(containerEl).setName(locale === "ar" ? "معايير محرك البحث والانزلاق" : "Engine Tunables").setHeading();
 		this.renderAdvancedTunables(containerEl, locale);
-
-		const advancedFeaturesSection = SETTINGS_SCHEMA.find((s) => s.id === "advancedFeatures");
-		if (advancedFeaturesSection) {
-			new Setting(containerEl).setName(advancedFeaturesSection.heading[locale]).setHeading();
-			for (const field of advancedFeaturesSection.fields) this.renderField(containerEl, field, locale);
-		}
 
 		new Setting(containerEl).setName(locale === "ar" ? "قواعد التطبيع" : "Normalization Rules").setHeading();
 		this.renderNormalizationRules(containerEl, locale);
@@ -260,142 +266,145 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		}
 	}
 
-	private renderDefaultTafsirBook(containerEl: HTMLElement, locale: Locale): void {
-		new Setting(containerEl)
-			.setName(locale === "ar" ? "الكتاب الافتراضي" : "Default tafsir book")
-			.setDesc(
-				locale === "ar"
-					? "الكتاب الذي يتم جلبه تلقائياً عند عدم تحديد كتاب بعينه."
-					: "Book used when no specific source is chosen."
-			)
-			.addDropdown((dropdown) => {
-				for (const book of this.services.catalog.all()) dropdown.addOption(book.id, book.name);
-				dropdown.setValue(this.services.settings.defaultTafsirBookId);
-				dropdown.onChange(async (value) => {
-					this.services.settings.defaultTafsirBookId = value;
-					await this.save();
-				});
-			});
-	}
-
-	private renderFavorites(containerEl: HTMLElement, locale: Locale): void {
-		const section = containerEl.createEl("details");
-		section.createEl("summary", { text: locale === "ar" ? "الكتب المفضلة" : "Favorite books" });
-		const list = section.createDiv();
-
-		new Setting(list).setDesc(
-			locale === "ar"
-				? "تُجلب هذه الكتب مباشرة عند وصول أولوية الجلب إلى خيار «الكتب المفضلة» دون الحاجة للاختيار اليدوي."
-				: "These books are fetched automatically when the priority order reaches 'Favorite books'."
-		);
-
-		for (const book of this.services.catalog.all()) {
-			new Setting(list).setName(book.name).addToggle((toggle) =>
-				toggle.setValue(this.services.settings.favoriteBooksIds.includes(book.id)).onChange(async (value) => {
-					const set = new Set(this.services.settings.favoriteBooksIds);
-					if (value) set.add(book.id);
-					else set.delete(book.id);
-					this.services.settings.favoriteBooksIds = Array.from(set);
-					await this.save();
-				})
-			);
-		}
-	}
-
 	private renderCustomBooks(containerEl: HTMLElement, locale: Locale): void {
-		const list = containerEl.createDiv();
+		const list = containerEl.createDiv({ cls: "quran-key-settings-card-list" });
+		const input = (parent: HTMLElement, value: string, placeholder: string): HTMLInputElement => {
+			const el = parent.createEl("input", { type: "text", placeholder });
+			el.value = value;
+			return el;
+		};
 		const renderList = () => {
 			list.empty();
 			for (const book of this.services.settings.customTafsirBooks) {
-				new Setting(list)
-					.setName(book.name)
-					.setDesc(book.urlTemplate)
-					.addExtraButton((btn) =>
-						btn.setIcon("trash").onClick(async () => {
-							this.services.settings.customTafsirBooks = this.services.settings.customTafsirBooks.filter(
-								(b) => b.id !== book.id
-							);
-							await this.save();
-							renderList();
-						})
+				const card = list.createDiv({ cls: "quran-key-settings-card" });
+				const header = card.createDiv({ cls: "quran-key-settings-card-header" });
+				header.createSpan({ text: book.name, cls: "quran-key-settings-card-title" });
+				header.createSpan({ text: `${book.id} · ${book.aliases.length} ${locale === "ar" ? "أسماء بديلة" : "aliases"}`, cls: "quran-key-modal-alias" });
+				const actions = header.createDiv({ cls: "quran-key-settings-card-actions" });
+				const edit = actions.createEl("button", { text: locale === "ar" ? "تعديل" : "Edit" });
+				const remove = actions.createEl("button", { text: locale === "ar" ? "حذف" : "Delete" });
+				remove.addClass("mod-warning");
+				const details = card.createDiv({ cls: "quran-key-settings-form quran-key-settings-card-editor" });
+				details.hidden = true;
+				const name = input(details, book.name, locale === "ar" ? "اسم الكتاب" : "Book name");
+				const aliases = input(details, book.aliases.join(", "), locale === "ar" ? "الأسماء البديلة" : "Aliases");
+				const url = input(details, book.urlTemplate, "https://...");
+				const editorActions = details.createDiv({ cls: "quran-key-settings-form-actions" });
+				const save = editorActions.createEl("button", { text: locale === "ar" ? "حفظ" : "Save", cls: "mod-cta" });
+				const cancel = editorActions.createEl("button", { text: locale === "ar" ? "إلغاء" : "Cancel" });
+				edit.addEventListener("click", () => {
+					details.hidden = false;
+					edit.disabled = true;
+				});
+				save.addEventListener("click", async () => {
+					this.services.settings.customTafsirBooks = this.services.settings.customTafsirBooks.map((item) =>
+						item.id === book.id
+							? { ...item, name: name.value.trim() || item.name, aliases: aliases.value.split(",").map((a) => a.trim()).filter(Boolean), urlTemplate: url.value.trim() || item.urlTemplate }
+							: item
 					);
+					await this.save();
+					this.display();
+				});
+				cancel.addEventListener("click", () => {
+					details.hidden = true;
+					edit.disabled = false;
+				});
+				remove.addEventListener("click", async () => {
+					this.services.settings.customTafsirBooks = this.services.settings.customTafsirBooks.filter((item) => item.id !== book.id);
+					await this.save();
+					this.display();
+				});
 			}
 		};
 		renderList();
 
-		let newId = "";
-		let newName = "";
-		let newAliases = "";
-		let newUrl = "";
 		new Setting(containerEl)
 			.setName(locale === "ar" ? "إضافة مصدر تفسير جديد" : "Add a custom tafsir source")
-			.setDesc(
-				locale === "ar"
-					? "استخدم {bookId} و {surahId} و {ayahId} داخل الرابط."
-					: "Use {bookId}, {surahId}, and {ayahId} inside the URL."
-			)
-			.addText((t) => t.setPlaceholder("id").onChange((v) => (newId = v)))
-			.addText((t) => t.setPlaceholder(locale === "ar" ? "الاسم" : "Name").onChange((v) => (newName = v)))
-			.addText((t) =>
-				t.setPlaceholder(locale === "ar" ? "أسماء بديلة (مفصولة بفواصل)" : "Aliases (comma-separated)").onChange((v) => (newAliases = v))
-			)
-			.addText((t) => t.setPlaceholder("https://...").onChange((v) => (newUrl = v)))
-			.addButton((btn) =>
-				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {
-					if (!newId.trim() || !newName.trim() || !newUrl.trim()) return;
-					this.services.settings.customTafsirBooks = [
-						...this.services.settings.customTafsirBooks,
-						{
-							id: newId.trim(),
-							name: newName.trim(),
-							aliases: newAliases
-								.split(",")
-								.map((a) => a.trim())
-								.filter(Boolean),
-							urlTemplate: newUrl.trim(),
-							isBuiltin: false,
-						},
-					];
-					await this.save();
-					this.display();
-				})
-			);
+			.setDesc(locale === "ar" ? "استخدم {bookId} و {surahId} و {ayahId} داخل الرابط." : "Use {bookId}, {surahId}, and {ayahId} inside the URL.");
+		const form = containerEl.createDiv({ cls: "quran-key-settings-form" });
+		const newId = input(form, "", "id");
+		const newName = input(form, "", locale === "ar" ? "الاسم" : "Name");
+		const newAliases = input(form, "", locale === "ar" ? "أسماء بديلة، مفصولة بفواصل" : "Aliases, comma-separated");
+		const newUrl = input(form, "", "https://...");
+		const actions = form.createDiv({ cls: "quran-key-settings-form-actions" });
+		const add = actions.createEl("button", { text: locale === "ar" ? "إضافة" : "Add", cls: "mod-cta" });
+		add.addEventListener("click", async () => {
+			if (!newId.value.trim() || !newName.value.trim() || !newUrl.value.trim()) return;
+			this.services.settings.customTafsirBooks = [...this.services.settings.customTafsirBooks, {
+				id: newId.value.trim(), name: newName.value.trim(),
+				aliases: newAliases.value.split(",").map((a) => a.trim()).filter(Boolean),
+				urlTemplate: newUrl.value.trim(), isBuiltin: false, createdAt: Date.now(),
+			}];
+			await this.save();
+			this.display();
+		});
 	}
 
-	private renderResolutionOrder(containerEl: HTMLElement, locale: Locale): void {
-		const list = containerEl.createDiv();
-		const renderList = () => {
-			list.empty();
-			const order = this.services.settings.tafsirBookResolutionOrder;
-			order.forEach((strategy, idx) => {
-				const row = new Setting(list).setName(`${idx + 1}. ${RESOLUTION_LABELS[strategy]?.[locale] ?? strategy}`);
-				row.addExtraButton((btn) =>
-					btn
-						.setIcon("arrow-up")
-						.setDisabled(idx === 0)
-						.onClick(async () => {
-							const next = [...order];
-							[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-							this.services.settings.tafsirBookResolutionOrder = next;
-							await this.save();
-							renderList();
-						})
-				);
-				row.addExtraButton((btn) =>
-					btn
-						.setIcon("arrow-down")
-						.setDisabled(idx === order.length - 1)
-						.onClick(async () => {
-							const next = [...order];
-							[next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
-							this.services.settings.tafsirBookResolutionOrder = next;
-							await this.save();
-							renderList();
-						})
-				);
-			});
+	private renderTafsirPackages(containerEl: HTMLElement, locale: Locale): void {
+		const books = this.services.catalog.all();
+		const list = containerEl.createDiv({ cls: "quran-key-settings-card-list" });
+		const checkboxGrid = (parent: HTMLElement, selectedIds: readonly string[]): Set<string> => {
+			const selected = new Set(selectedIds);
+			const grid = parent.createDiv({ cls: "quran-key-settings-book-grid" });
+			for (const book of books) {
+				const label = grid.createEl("label");
+				const checkbox = label.createEl("input", { type: "checkbox" });
+				checkbox.checked = selected.has(book.id);
+				checkbox.addEventListener("change", () => checkbox.checked ? selected.add(book.id) : selected.delete(book.id));
+				label.createSpan({ text: book.name });
+			}
+			return selected;
 		};
-		renderList();
+		for (const pkg of this.services.settings.tafsirPackages) {
+			const card = list.createDiv({ cls: "quran-key-settings-card" });
+			const header = card.createDiv({ cls: "quran-key-settings-card-header" });
+			header.createSpan({ text: pkg.name, cls: "quran-key-settings-card-title" });
+			header.createSpan({ text: `${pkg.bookIds.length} ${locale === "ar" ? "كتب" : "books"}`, cls: "quran-key-modal-alias" });
+			const actions = header.createDiv({ cls: "quran-key-settings-card-actions" });
+			const edit = actions.createEl("button", { text: locale === "ar" ? "تعديل" : "Edit" });
+			const remove = actions.createEl("button", { text: locale === "ar" ? "حذف" : "Delete" });
+			remove.addClass("mod-warning");
+			const editor = card.createDiv({ cls: "quran-key-settings-card-editor" });
+			editor.hidden = true;
+			const name = editor.createEl("input", { type: "text", placeholder: locale === "ar" ? "اسم المجموعة" : "Package name" });
+			name.value = pkg.name;
+			const selected = checkboxGrid(editor, pkg.bookIds);
+			const editorActions = editor.createDiv({ cls: "quran-key-settings-form-actions" });
+			const save = editorActions.createEl("button", { text: locale === "ar" ? "حفظ التعديلات" : "Save changes", cls: "mod-cta" });
+			const cancel = editorActions.createEl("button", { text: locale === "ar" ? "إلغاء" : "Cancel" });
+			edit.addEventListener("click", () => {
+				editor.hidden = false;
+				edit.disabled = true;
+			});
+			save.addEventListener("click", async () => {
+				this.services.settings.tafsirPackages = this.services.settings.tafsirPackages.map((item) => item.id === pkg.id ? { ...item, name: name.value.trim() || item.name, bookIds: Array.from(selected) } : item);
+				await this.save();
+				this.display();
+			});
+			cancel.addEventListener("click", () => {
+				editor.hidden = true;
+				edit.disabled = false;
+			});
+			remove.addEventListener("click", async () => {
+				this.services.settings.tafsirPackages = this.services.settings.tafsirPackages.filter((item) => item.id !== pkg.id);
+				await this.save();
+				this.display();
+			});
+		}
+
+		new Setting(containerEl)
+			.setName(locale === "ar" ? "إضافة مجموعة كتب" : "Add book package")
+			.setDesc(locale === "ar" ? "أنشئ مجموعة خاصة بك لاختيار عدة كتب دفعة واحدة." : "Create your own reusable group of books.");
+		const form = containerEl.createDiv({ cls: "quran-key-settings-form" });
+		const name = form.createEl("input", { type: "text", placeholder: locale === "ar" ? "اسم المجموعة" : "Package name" });
+		const selected = checkboxGrid(form, []);
+		const add = form.createEl("button", { text: locale === "ar" ? "إضافة المجموعة" : "Add package", cls: "mod-cta" });
+		add.addEventListener("click", async () => {
+			if (!name.value.trim() || selected.size === 0) return;
+			this.services.settings.tafsirPackages = [...this.services.settings.tafsirPackages, { id: `custom-${Date.now().toString(36)}`, name: name.value.trim(), bookIds: Array.from(selected), isBuiltin: false }];
+			await this.save();
+			this.display();
+		});
 	}
 
 	private renderReflectionCategories(containerEl: HTMLElement, locale: Locale): void {
@@ -591,7 +600,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 
 	private renderAdvancedTunables(containerEl: HTMLElement, locale: Locale): void {
 		const numberField = (
-			key: "maxSlidingWindowWords" | "maxSuggestionResults" | "tafsirFetchDelayMs" | "tafsirFetchDelayThreshold" | "reflectionFileNameAyahTextMaxLength",
+			key: "maxSlidingWindowWords" | "maxSuggestionResults" | "reflectionFileNameAyahTextMaxLength" | "reflectionFileNameAyahTextMaxWords",
 			label: Record<Locale, string>,
 			desc: Record<Locale, string>
 		) => {
@@ -620,21 +629,19 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			{ ar: "سقف عدد الآيات في نوافذ البحث والربط.", en: "Maximum number of verses shown in modals." }
 		);
 		numberField(
-			"tafsirFetchDelayMs",
-			{ ar: "تأخير جلب التفسير (ميلي ثانية)", en: "Tafsir fetch delay (ms)" },
-			{ ar: "مهلة الانتظار بين طلبات التفسير المتتالية.", en: "Delay between consecutive tafsir requests." }
-		);
-		numberField(
-			"tafsirFetchDelayThreshold",
-			{ ar: "عتبة تفعيل التأخير (عدد الآيات)", en: "Delay threshold (ayahs)" },
-			{ ar: "عدد الآيات الذي يبدأ عنده تطبيق التأخير أعلاه.", en: "Number of ayahs above which the delay applies." }
-		);
-		numberField(
 			"reflectionFileNameAyahTextMaxLength",
 			{ ar: "أقصى طول لنص الآية في اسم الملف", en: "Max ayah text length in filename" },
 			{
 				ar: "اقتطاع نص الآية في عنوان الملف عند هذا الحد (0 = بلا اقتطاع).",
 				en: "Truncates verse text in file title at this length (0 = no truncation).",
+			}
+		);
+		numberField(
+			"reflectionFileNameAyahTextMaxWords",
+			{ ar: "أقصى عدد كلمات من الآية في اسم الملف", en: "Max ayah words in filename" },
+			{
+				ar: "يقتطع نص الآية بعد هذا العدد من الكلمات (0 = بلا اقتطاع بالكلمات).",
+				en: "Truncates verse text after this many words (0 = no word limit).",
 			}
 		);
 	}
