@@ -75,15 +75,13 @@ Replace the whole function with:
 ```ts
 const buildReflectionOptions = (): ReflectionLinkOptions => ({
 	locale: this.settings.interfaceLanguage,
-	replaceSelectionWithBacklink: this.settings.deleteSelectionAfterLinkingReflection,
-	entryPrefixTemplate: this.settings.reflectionEntryPrefixTemplate,
-	entrySeparator: this.settings.reflectionEntrySeparator,
+	entryTemplate: this.settings.reflectionEntryTemplate,
 	insertionMode: this.settings.reflectionInsertionMode,
-	includeAyahTextInNote: this.settings.includeAyahTextInReflectionNote,
+	noteTemplate: this.settings.ayahNoteTemplate,
 	fileNameTemplate: this.settings.reflectionFileNameTemplate,
-	backlinkAliasTemplate: this.settings.reflectionBacklinkAliasTemplate,
-	backlinkWrapTemplate: this.settings.reflectionBacklinkWrapTemplate,
 	quoteFormattingOptions: getFormattingOptions(),
+	includeReflectionEntryDate: this.settings.includeReflectionEntryDate,
+	showSuccessNotice: this.settings.showReflectionSuccessNotice,
 });
 ```
 

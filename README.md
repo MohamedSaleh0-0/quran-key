@@ -11,11 +11,13 @@ for planned surah/ayah note workflows and the structure of plugin-generated note
 
 ## Features
 
-- Contextual Verse Extraction: Auto-detects quotes, braces {query}, selections, and shorthand citations (e.g., [البقرة:255] or البقرة 255-257) directly from the cursor line.
-- Snippet Trimming & View Toggle: Extract exact word-ranges (من-إلى) or invoke extraction consecutively to toggle between full ayah and snippet views.
+- Contextual Verse Extraction: Auto-detects quotes, braces {query}, selections, and shorthand citations (e.g., [البقرة:255] or البقرة 255) directly from the cursor line.
+- Snippet Trimming & View Toggle: Extract exact snippets or invoke extraction consecutively to toggle between full ayah and snippet views.
 - Multi-Source Tafsir Engine: Fetch commentary across 40+ classical and contemporary tafsir books with custom source support.
+- Tafsir Packages & Caching: Group preferred tafsir books and cache retrieved commentary inside the vault for offline reuse.
 - Unified Ayah Journaling: Record reflections, benefits, and notes under dedicated headings inside a single unified note per ayah, or configure separate category folders.
 - Surah & Ayah Notes: Open a complete surah as continuous mushaf-style text, then click an ayah marker to lazily create and open its note.
+- Orphan Ayah Conversion: Review unlinked Quran passages and convert them into links to ayah notes with rollback support.
 - Related Verse Linking: Group and cross-link semantically related ayahs together via frontmatter metadata.
 - Typography & Display Lab: Compare verified Uthmani text/font candidates and ayah-ending markers before choosing the production rendering.
 - Footnote & Utility Commands: Convert inline citations into markdown footnotes, strip tashkeel, or clean references with single hotkeys.
@@ -48,7 +50,7 @@ Type a search query, select text, or write a chapter/verse mention, then execute
 ![Verse Extraction Demo](docs/assets/extraction-demo.gif)
 
 ### 2. Snippet Trimming & Toggle View
-Crop specific phrases using (word1-word2) shorthand next to a reference, or repeat the extract command to toggle between the snippet and the full verse.
+Extract a selected phrase or repeat the extract command to toggle between the snippet and the full verse.
 
 ![Snippet Trimming Demo](docs/assets/snippet-demo.gif)
 
@@ -69,14 +71,14 @@ Select your reflection text and choose a category to create or append directly t
 
 | Command | Description |
 | :--- | :--- |
-| `Extract Quran verse from context` | Primary extraction: resolves queries, ranges, or selections on the current line. |
+| `Extract Quran verse from context` | Primary extraction: resolves queries, citations, and selections on the current line. |
 | `Open global Quran search modal` | Opens the full-corpus search modal with live analytics. |
 | `Fetch contextual tafsir for current line` | Retrieves tafsir commentary for the verse/range at the cursor. |
-| `Open global tafsir selection modal` | Interactive picker to choose commentary sources first, then select verse range. |
 | `Log selection to reflection (choose category)` | Interactive modal to pick or create a reflection category for selected text. |
 | `Link related ayahs` | Multi-select modal to cross-link two or more related verses in frontmatter. |
 | `Open or create Quran surah note` | Choose a surah and open its complete mushaf-style note; ayah notes are created only when reached. |
-| `Log note on Quran ayah` | Search for an ayah, optionally choose a range, select a reflection section, and write directly into the notes from one modal. |
+| `Log note on Quran ayah` | Search for an ayah, select a reflection section, and write directly into its note. |
+| `Convert orphan ayat to linked notes` | Review and link Quran passages that do not yet point to ayah notes. |
 | `Convert Quran reference to footnote` | Converts inline `[Surah:Ayah]` to a numbered markdown footnote `[^quran1]`. |
 | `Remove Quran reference from line` | Strips matched Qur'anic citations from the current line. |
 | `Strip tashkeel from selection or line` | Removes diacritics/tashkeel from selection or active line. |
@@ -96,9 +98,8 @@ You can target plugin elements using Obsidian snippets or via the Custom CSS fie
 | `.quran-key-analytics-dashboard` | The live analytics stat bar in the search modal. |
 | `.quran-key-picker-modal` | Modals for tafsir sources, category selection, and ayah linking. |
 
-Power-user options, including the optional `@` section trigger in the ayah
-entry modal, are available under Settings → Advanced and are disabled by
-default.
+Tafsir packages, persistent caching, custom sources, reflection templates, and
+orphan-ayah conversion options are available in the plugin settings.
 
 ### Styling Examples
 

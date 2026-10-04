@@ -58,6 +58,12 @@ Ayah notes are lazy resources:
 
 ## Later phases
 
+### Deferred reflection ergonomics
+
+- [ ] Reintroduce optional replacement of selected text with a generated
+  backlink after the editor replacement behavior is made reliable.
+- [ ] Add a configurable backlink template and exact-entry target support.
+
 ### Phase 1 — Surah-note foundation
 
 - [x] Create/open a surah note.

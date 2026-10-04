@@ -39,13 +39,9 @@ entry either directly under it (newest-first) or at the section's end
 only, no overwrite — linking a 3rd ayah into an existing pair never drops
 the first link. No "reason" field, by design.
 
-**Backlink instead of silent erase.** `deleteSelectionAfterLinkingReflection`
-now means "replace the selection with a backlink" (default `true`),
-never "erase to nothing." Alias and surrounding text are both
-templatable (`reflectionBacklinkAliasTemplate` / `...WrapTemplate`).
-
-**Customizable entry separator.** `reflectionEntrySeparator`, default
-`"\n\n---\n\n"`, free text, can be emptied.
+**Reflection log template.** Reflection entries are controlled by one
+template with `{content}` and `{date}` placeholders. Newlines, bullets, and
+numbering are part of that template.
 
 **Ayah text at the top of a note.** `includeAyahTextInReflectionNote`,
 written once at note creation, never repeated per entry.
@@ -64,6 +60,11 @@ both builtin and custom categories (editing a builtin's field records a
 already uses for builtin tafsir books).
 
 ## Deliberately deferred (per the design discussion itself)
+
+- **Replace selection with backlink.** Deliberately removed from the current
+  release because the editor replacement path was not reliable. The idea,
+  including configurable link placeholders and exact-entry backlinks, remains
+  planned for a future version.
 
 - **Migration (`unified` <-> `ownFolder` for an already-populated
   category).** Explicitly agreed to be a separate, later phase — its
