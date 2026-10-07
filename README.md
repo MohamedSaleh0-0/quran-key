@@ -5,8 +5,6 @@
 See the [roadmap](docs/ROADMAP.md) and [vault-note schema](docs/VAULT_NOTE_SCHEMA.md)
 for planned surah/ayah note workflows and the structure of plugin-generated notes.
 
-![Quran Key Overview Demo](docs/assets/hero-demo.gif)
-
 ---
 
 ## Features
@@ -47,17 +45,11 @@ available at
 ### 1. Contextual Verse Extraction & Auto-Detection
 Type a search query, select text, or write a chapter/verse mention, then execute Extract Quran verse from context.
 
-![Verse Extraction Demo](docs/assets/extraction-demo.gif)
-
 ### 2. Snippet Trimming & Toggle View
 Extract a selected phrase or repeat the extract command to toggle between the snippet and the full verse.
 
-![Snippet Trimming Demo](docs/assets/snippet-demo.gif)
-
 ### 3. Multi-Source Tafsir Retrieval
 Fetch commentary for single ayahs or multi-ayah ranges using your preferred books or auto-detected authors mentioned on the line.
-
-![Tafsir Retrieval Demo](docs/assets/tafsir-demo.gif)
 
 ### 4. Ayah Reflection Journaling
 Select your reflection text and choose a category to create or append directly to the unified verse note.

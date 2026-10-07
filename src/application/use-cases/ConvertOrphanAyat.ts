@@ -75,7 +75,7 @@ export class ConvertOrphanAyat {
 
 		try {
 			for (const candidate of converted) {
-				const ayah = candidate.ayah!;
+				const ayah = candidate.ayah;
 				const identity: AyahIdentity = {
 					surahId: ayah.surahId,
 					surahName: ayah.surahName,

@@ -9,7 +9,6 @@ export function createFetchContextualTafsirCommand(services: AppServices): Comma
 	return {
 		id: "fetch-tafsir",
 		name: "Fetch tafsir",
-		hotkeys: [{ modifiers: ["Ctrl"], key: "t" }],
 		run: (editor) => {
 			const editorPort = services.wrapEditor(editor);
 			const cursor = editorPort.getCursor();

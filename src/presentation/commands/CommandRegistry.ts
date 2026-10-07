@@ -1,4 +1,4 @@
-import type { Editor, Hotkey, MarkdownView, Plugin } from "obsidian";
+import type { Editor, MarkdownView, Plugin } from "obsidian";
 
 /** One entry per command palette action. NFR-9: adding a feature is
  *  "write a new file exporting one of these, add it to the array in
@@ -6,7 +6,6 @@ import type { Editor, Hotkey, MarkdownView, Plugin } from "obsidian";
 export interface CommandDefinition {
 	id: string;
 	name: string;
-	hotkeys?: Hotkey[];
 	/** Set for commands such as settings or comparison tools that should be
 	 * available even when no Markdown editor has focus. */
 	requiresEditor?: boolean;
@@ -19,7 +18,6 @@ export function registerCommands(plugin: Plugin, definitions: readonly CommandDe
 			plugin.addCommand({
 				id: def.id,
 				name: def.name,
-				hotkeys: def.hotkeys,
 				callback: () => {
 					void def.run(undefined as never, undefined as never);
 				},
@@ -28,7 +26,6 @@ export function registerCommands(plugin: Plugin, definitions: readonly CommandDe
 			plugin.addCommand({
 				id: def.id,
 				name: def.name,
-				hotkeys: def.hotkeys,
 				editorCallback: (editor, view) => {
 					void def.run(editor, view as MarkdownView);
 				},

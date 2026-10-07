@@ -75,7 +75,7 @@ export class VaultTafsirRepository implements TafsirRepository {
 		await this.ensureFolder(path.slice(0, path.lastIndexOf("/")));
 		const existing = this.vault.getAbstractFileByPath(path);
 		const serialized = JSON.stringify(record, null, 2);
-		if (existing instanceof TFile) await this.vault.modify(existing, serialized);
+		if (existing instanceof TFile) await this.vault.process(existing, () => serialized);
 		else await this.vault.create(path, serialized);
 	}
 

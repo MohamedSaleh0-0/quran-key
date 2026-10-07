@@ -57,7 +57,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 			});
 			btn.addEventListener("click", () => {
 				this.activeTab = tab;
-				this.display();
+				this.update();
 			});
 		}
 	}
@@ -186,7 +186,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 						if (!confirmed) return;
 						Object.assign(this.services.settings, structuredClone(DEFAULT_SETTINGS));
 						await this.save();
-						this.display();
+						this.update();
 					})
 			);
 	}
@@ -238,7 +238,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 						settings[field.key] = value;
 						await this.save();
 						if (field.key === "interfaceLanguage") {
-							this.display();
+							this.update();
 						}
 					});
 				});
@@ -296,23 +296,27 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 					details.hidden = false;
 					edit.disabled = true;
 				});
-				save.addEventListener("click", async () => {
-					this.services.settings.customTafsirBooks = this.services.settings.customTafsirBooks.map((item) =>
-						item.id === book.id
-							? { ...item, name: name.value.trim() || item.name, aliases: aliases.value.split(",").map((a) => a.trim()).filter(Boolean), urlTemplate: url.value.trim() || item.urlTemplate }
-							: item
-					);
-					await this.save();
-					this.display();
+				save.addEventListener("click", () => {
+					void (async () => {
+						this.services.settings.customTafsirBooks = this.services.settings.customTafsirBooks.map((item) =>
+							item.id === book.id
+								? { ...item, name: name.value.trim() || item.name, aliases: aliases.value.split(",").map((a) => a.trim()).filter(Boolean), urlTemplate: url.value.trim() || item.urlTemplate }
+								: item
+						);
+						await this.save();
+						this.update();
+					})();
 				});
 				cancel.addEventListener("click", () => {
 					details.hidden = true;
 					edit.disabled = false;
 				});
-				remove.addEventListener("click", async () => {
-					this.services.settings.customTafsirBooks = this.services.settings.customTafsirBooks.filter((item) => item.id !== book.id);
-					await this.save();
-					this.display();
+				remove.addEventListener("click", () => {
+					void (async () => {
+						this.services.settings.customTafsirBooks = this.services.settings.customTafsirBooks.filter((item) => item.id !== book.id);
+						await this.save();
+						this.update();
+					})();
 				});
 			}
 		};
@@ -328,15 +332,17 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const newUrl = input(form, "", "https://...");
 		const actions = form.createDiv({ cls: "quran-key-settings-form-actions" });
 		const add = actions.createEl("button", { text: locale === "ar" ? "إضافة" : "Add", cls: "mod-cta" });
-		add.addEventListener("click", async () => {
-			if (!newId.value.trim() || !newName.value.trim() || !newUrl.value.trim()) return;
-			this.services.settings.customTafsirBooks = [...this.services.settings.customTafsirBooks, {
-				id: newId.value.trim(), name: newName.value.trim(),
-				aliases: newAliases.value.split(",").map((a) => a.trim()).filter(Boolean),
-				urlTemplate: newUrl.value.trim(), isBuiltin: false, createdAt: Date.now(),
-			}];
-			await this.save();
-			this.display();
+		add.addEventListener("click", () => {
+			void (async () => {
+				if (!newId.value.trim() || !newName.value.trim() || !newUrl.value.trim()) return;
+				this.services.settings.customTafsirBooks = [...this.services.settings.customTafsirBooks, {
+					id: newId.value.trim(), name: newName.value.trim(),
+					aliases: newAliases.value.split(",").map((a) => a.trim()).filter(Boolean),
+					urlTemplate: newUrl.value.trim(), isBuiltin: false, createdAt: Date.now(),
+				}];
+				await this.save();
+				this.update();
+			})();
 		});
 	}
 
@@ -376,19 +382,23 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 				editor.hidden = false;
 				edit.disabled = true;
 			});
-			save.addEventListener("click", async () => {
-				this.services.settings.tafsirPackages = this.services.settings.tafsirPackages.map((item) => item.id === pkg.id ? { ...item, name: name.value.trim() || item.name, bookIds: Array.from(selected) } : item);
-				await this.save();
-				this.display();
+			save.addEventListener("click", () => {
+				void (async () => {
+					this.services.settings.tafsirPackages = this.services.settings.tafsirPackages.map((item) => item.id === pkg.id ? { ...item, name: name.value.trim() || item.name, bookIds: Array.from(selected) } : item);
+					await this.save();
+					this.update();
+				})();
 			});
 			cancel.addEventListener("click", () => {
 				editor.hidden = true;
 				edit.disabled = false;
 			});
-			remove.addEventListener("click", async () => {
-				this.services.settings.tafsirPackages = this.services.settings.tafsirPackages.filter((item) => item.id !== pkg.id);
-				await this.save();
-				this.display();
+			remove.addEventListener("click", () => {
+				void (async () => {
+					this.services.settings.tafsirPackages = this.services.settings.tafsirPackages.filter((item) => item.id !== pkg.id);
+					await this.save();
+					this.update();
+				})();
 			});
 		}
 
@@ -399,11 +409,13 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		const name = form.createEl("input", { type: "text", placeholder: locale === "ar" ? "اسم المجموعة" : "Package name" });
 		const selected = checkboxGrid(form, []);
 		const add = form.createEl("button", { text: locale === "ar" ? "إضافة المجموعة" : "Add package", cls: "mod-cta" });
-		add.addEventListener("click", async () => {
-			if (!name.value.trim() || selected.size === 0) return;
-			this.services.settings.tafsirPackages = [...this.services.settings.tafsirPackages, { id: `custom-${Date.now().toString(36)}`, name: name.value.trim(), bookIds: Array.from(selected), isBuiltin: false }];
-			await this.save();
-			this.display();
+		add.addEventListener("click", () => {
+			void (async () => {
+				if (!name.value.trim() || selected.size === 0) return;
+				this.services.settings.tafsirPackages = [...this.services.settings.tafsirPackages, { id: `custom-${Date.now().toString(36)}`, name: name.value.trim(), bookIds: Array.from(selected), isBuiltin: false }];
+				await this.save();
+				this.update();
+			})();
 		});
 	}
 
@@ -518,7 +530,7 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName(locale === "ar" ? "إضافة تصنيف جديد" : "Add a category")
 			.setDesc(locale === "ar" ? "مثال: فوائد عملية" : "e.g. Practical Benefits")
-			.addText((t) => t.setPlaceholder("id").onChange((v) => (newId = v)))
+			.addText((t) => t.setPlaceholder("ID").onChange((v) => (newId = v)))
 			.addText((t) => t.setPlaceholder(locale === "ar" ? "الاسم" : "Name").onChange((v) => (newName = v)))
 			.addButton((btn) =>
 				btn.setButtonText(locale === "ar" ? "إضافة" : "Add").onClick(async () => {

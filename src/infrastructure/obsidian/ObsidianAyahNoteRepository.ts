@@ -138,7 +138,7 @@ export class ObsidianAyahNoteRepository implements AyahNoteRepository {
 			const file = this.app.vault.getAbstractFileByPath(normalizePath(snapshot.path));
 			if (!(file instanceof TFile)) continue;
 			if ((await this.app.vault.read(file)) !== snapshot.content) continue;
-			await this.app.vault.delete(file);
+			await this.app.fileManager.trashFile(file);
 			deleted.push(file.path);
 		}
 		return deleted;

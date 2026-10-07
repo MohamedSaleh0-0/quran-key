@@ -49,7 +49,7 @@ export function formatPortableAyahClipboardText(text: string, wrapperStart: stri
 }
 
 function escapeHtml(value: string): string {
-	return value.replace(/[&<>\"']/g, (character) => ({
+	return value.replace(/[&<>"']/g, (character) => ({
 		"&": "&amp;",
 		"<": "&lt;",
 		">": "&gt;",
@@ -329,12 +329,12 @@ function decorateLazyMarkers(
 		pattern.lastIndex = 0;
 		if (!pattern.test(text)) continue;
 		pattern.lastIndex = 0;
-		const fragment = document.createDocumentFragment();
+		const fragment = createFragment();
 		let lastIndex = 0;
 		let match: RegExpExecArray | null;
 		while ((match = pattern.exec(text)) !== null) {
 			if (match.index > lastIndex) fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-			const marker = document.createElement("span");
+			const marker = createSpan();
 			marker.classList.add(LAZY_AYAH_CLASS);
 			marker.dataset.quranKeySurah = String(surahId);
 			marker.dataset.quranKeyAyah = String(arabicIndicToNumber(match[0]));

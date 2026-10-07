@@ -6,7 +6,7 @@ function seedNormalizationRules(): NormalizationRule[] {
 		id: String(r.id),
 		description: String(r.description),
 		pattern: String(r.pattern),
-		flags: String(r.flags ?? "g"),
+		flags: typeof r.flags === "string" ? r.flags : "g",
 		replacement: String(r.replacement),
 		enabled: true,
 	}));

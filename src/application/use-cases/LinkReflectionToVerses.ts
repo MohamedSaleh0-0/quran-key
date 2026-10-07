@@ -186,9 +186,9 @@ export class LinkReflectionToVerses {
 		const tokens = Array.from(text.matchAll(/\S+/g));
 		for (let start = 0; start < tokens.length; start++) {
 			for (let end = start; end < Math.min(tokens.length, start + expected.length + 4); end++) {
-				const candidate = this.normalizer.normalizeForSearch(text.slice(tokens[start].index!, tokens[end].index! + tokens[end][0].length)).split(" ").filter(Boolean);
+				const candidate = this.normalizer.normalizeForSearch(text.slice(tokens[start].index, tokens[end].index + tokens[end][0].length)).split(" ").filter(Boolean);
 				if (candidate.length === expected.length && candidate.every((part, index) => part === expected[index])) {
-					return text.slice(0, tokens[start].index!) + text.slice(tokens[end].index! + tokens[end][0].length);
+					return text.slice(0, tokens[start].index) + text.slice(tokens[end].index + tokens[end][0].length);
 				}
 			}
 		}
