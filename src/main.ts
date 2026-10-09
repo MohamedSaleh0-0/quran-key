@@ -70,7 +70,12 @@ export default class QuranKeyPlugin extends Plugin {
 	private readonly tafsirRepository = new VaultTafsirRepository(
 		this.app.vault,
 		new HttpTafsirRepository(),
-		() => ({ enabled: this.settings.tafsirCacheEnabled, folder: this.settings.tafsirCacheFolder })
+		() => ({
+			enabled: this.settings.tafsirCacheEnabled,
+			folder: this.settings.tafsirCacheFolder,
+			books: this.services?.catalog.all(),
+			trashFile: (file) => this.app.fileManager.trashFile(file),
+		})
 	);
 	private readonly notice = new ObsidianNoticeAdapter();
 	private readonly memento = new InMemoryInsertionMemento();
@@ -105,6 +110,7 @@ export default class QuranKeyPlugin extends Plugin {
 
 		this.addSettingTab(new QuranKeySettingsTab(this.app, this, this.services));
 		registerAllCommands(this, this.services);
+		void this.tafsirRepository.migrateLegacyCaches();
 	}
 
 	onunload(): void {

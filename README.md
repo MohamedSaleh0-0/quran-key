@@ -12,7 +12,7 @@ for planned surah/ayah note workflows and the structure of plugin-generated note
 - Contextual Verse Extraction: Auto-detects quotes, braces {query}, selections, and shorthand citations (e.g., [البقرة:255] or البقرة 255) directly from the cursor line.
 - Snippet Trimming & View Toggle: Extract exact snippets or invoke extraction consecutively to toggle between full ayah and snippet views.
 - Multi-Source Tafsir Engine: Fetch commentary across 40+ classical and contemporary tafsir books with custom source support.
-- Tafsir Packages & Caching: Group preferred tafsir books and cache retrieved commentary inside the vault for offline reuse.
+- Tafsir Packages & Caching: Group preferred tafsir books and cache retrieved commentary inside the vault for offline reuse. Cache files are descriptive JSON files such as `tafsir-cache-تفسير-ابن-كثير-القرآن-العظيم-ibn-katheer-surah-2-ayah-255.json`; each includes a SHA-256 integrity checksum and is refetched if its content no longer matches.
 - Unified Ayah Journaling: Record reflections, benefits, and notes under dedicated headings inside a single unified note per ayah, or configure separate category folders.
 - Surah & Ayah Notes: Open a complete surah as continuous mushaf-style text, then click an ayah marker to lazily create and open its note.
 - Orphan Ayah Conversion: Review unlinked Quran passages and convert them into links to ayah notes with rollback support.
