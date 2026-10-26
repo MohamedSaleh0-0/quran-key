@@ -9,13 +9,13 @@ import { PatternBuilder } from "./PatternBuilder";
 export class FuzzyMatcher {
 	constructor(private readonly normalizer: ArabicNormalizer) {}
 
-	findMatches(query: string, corpus: readonly Ayah[], limit: number): Ayah[] {
+	findMatches(query: string, corpus: readonly Ayah[], limit = Number.POSITIVE_INFINITY): Ayah[] {
 		const words = this.normalizer
 			.normalizeForSearch(query)
 			.split(/\s+/)
 			.filter((w) => w.length > 0);
 		if (words.length === 0) return [];
-		const regexes = words.map((w) => new RegExp(PatternBuilder.makeMedialAlefsOptional(w)));
+		const regexes = words.map((w) => new RegExp(PatternBuilder.makeArabicWordPattern(w)));
 		const out: Ayah[] = [];
 		for (const a of corpus) {
 			const normText = this.normalizer.normalizeForSearch(a.text);

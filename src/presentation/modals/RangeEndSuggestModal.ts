@@ -91,13 +91,13 @@ export class RangeEndSuggestModal extends SuggestModal<Ayah> {
 			.filter((a) => a.surahId === this.startAyah.surahId && a.ayahId >= this.startAyah.ayahId);
 		if (!query || query.trim() === "") return pool.slice(0, this.services.settings.maxSuggestionResults);
 
-		const cleanQuery = this.services.normalizer.normalizeForSearch(query);
 		const numericQuery = ArabicNormalizer.normalizeNumbers(query);
+		const textMatches = new Set(this.services.useCases.search.execute(query, pool).map((a) => a.id));
 		return pool
 			.filter(
 				(a) =>
 					a.ayahId.toString().includes(numericQuery) ||
-					this.services.normalizer.normalizeForSearch(a.text).includes(cleanQuery)
+					textMatches.has(a.id)
 			)
 			.slice(0, this.services.settings.maxSuggestionResults);
 	}

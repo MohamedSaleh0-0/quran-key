@@ -137,7 +137,7 @@ place v1 had a literal, and where it lives now.
 | `۝` ornate-number ring glyph, hardcoded | `settings.ornateRingGlyph` | Settings → "Ornate number style" |
 | Sliding window cap `12` | `settings.maxSlidingWindowWords` | Settings → Advanced |
 | Tafsir delay `150ms`, threshold `>2` | `settings.tafsirFetchDelayMs`, `settings.tafsirFetchDelayThreshold` | Settings → Advanced |
-| Suggestion cap `.slice(0, 30)` (×2 modals) | `settings.maxSuggestionResults` | Settings → Advanced |
+| Search result page size / suggestion cap (`.slice(0, pageSize)`) | `settings.maxSuggestionResults` | Settings → Advanced; Quran search reveals further pages with “Show more” |
 | Book resolution order fixed in code (`if aliases… else if favorites… else default`) | `settings.tafsirBookResolutionOrder: string[]` | Settings → Advanced (reorderable list) |
 | Arabic-only UI strings inline in DOM builders | `src/config/strings.ts`, looked up by key | Settings → "Interface language" |
 | `style.cssText = "...!important..."` in 5 components | `styles.css` classes + CSS custom properties written once in `applyStyleSettings()` | Settings → "Qur'anic text style" (unchanged UX, clean implementation) |

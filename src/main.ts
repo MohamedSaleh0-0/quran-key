@@ -10,6 +10,7 @@ import type { Ayah } from "./domain/entities/Ayah";
 import { ArabicNormalizer } from "./domain/services/ArabicNormalizer";
 import { PhraseMatcher } from "./domain/services/PhraseMatcher";
 import { FuzzyMatcher } from "./domain/services/FuzzyMatcher";
+import { RootSearchIndex, type RootIndexData } from "./domain/services/RootSearchIndex";
 import { SlidingWindowSearch } from "./domain/services/SlidingWindowSearch";
 import { SnippetExtractor } from "./domain/services/SnippetExtractor";
 import { OrnateNumberConverter } from "./domain/services/OrnateNumberConverter";
@@ -62,6 +63,7 @@ import { t } from "./config/strings";
 
 import builtinTafsirBooksData from "../data/tafsirBooks.json";
 import builtinReflectionCategoriesData from "../data/reflectionCategories.json";
+import quranRootIndexData from "../data/quran-root-index.json";
 
 export default class QuranKeyPlugin extends Plugin {
 	settings: PluginConfig = DEFAULT_SETTINGS;
@@ -158,6 +160,7 @@ export default class QuranKeyPlugin extends Plugin {
 		const reference = VerseReference.compile(this.settings.referenceFormat);
 		const phraseMatcher = new PhraseMatcher(normalizer);
 		const fuzzyMatcher = new FuzzyMatcher(normalizer);
+		const rootSearchIndex = new RootSearchIndex(quranRootIndexData as RootIndexData, normalizer);
 		const slidingWindow = new SlidingWindowSearch(
 			normalizer,
 			phraseMatcher,
@@ -279,7 +282,8 @@ export default class QuranKeyPlugin extends Plugin {
 			phraseMatcher,
 			fuzzyMatcher,
 			this.settings.maxSuggestionResults,
-			this.settings.searchStrategy
+			this.settings.searchStrategy,
+			rootSearchIndex
 		);
 		const analyzeContext = new AnalyzeLineContext(this.repository, normalizer, reference, slidingWindow);
 		const fetchTafsir = new FetchAndInsertTafsir(this.repository, this.tafsirRepository, this.notice);

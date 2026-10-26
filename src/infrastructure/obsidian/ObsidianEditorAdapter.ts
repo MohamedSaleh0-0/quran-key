@@ -39,7 +39,10 @@ export class ObsidianEditorAdapter implements EditorPort {
 			editor.cm.dispatch({ changes: { from: fromOffset, to: toOffset, insert: text }, userEvent: historyEvent });
 			return;
 		}
-		this.editor.replaceRange(text, from, to);
+		// Preserve the history event on Obsidian's public Editor path too. Without
+		// the origin, the snippet and full-ayah replacements can be grouped into
+		// one undo step in editor contexts that don't expose editor.cm.
+		this.editor.replaceRange(text, from, to, historyEvent);
 	}
 
 	getSelection(): string {

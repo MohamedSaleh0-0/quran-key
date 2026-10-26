@@ -14,7 +14,7 @@ import { ToggleSnippetView } from "./ToggleSnippetView";
 
 /** Matches "(word1-word2)" range shorthand — deliberately permissive about
  *  what's inside the parens; SnippetExtractor.extractRange does the real
- *  word-matching work and simply falls back to "no crop" if it can't. */
+ *  word-matching work and leaves the shorthand untouched if it can't crop. */
 const RANGE_SHORTHAND_REGEX = /\(([^)]+?-[^)]+?)\)/g;
 
 const EXPLICIT_RESOLUTION_REGEX =
@@ -97,7 +97,8 @@ export class ExtractAndInsertVerse {
 
 			const parts = parenMatch[1].split("-");
 			const cropped = this.snippetExtractor.extractRange(actualAyah.text, parts[0].trim(), parts[1]?.trim() ?? "");
-			if (cropped && cropped !== actualAyah.text) {
+			if (cropped === null) return false;
+			if (cropped !== actualAyah.text) {
 				const dummy: Ayah = { ...actualAyah, text: cropped };
 				editor.replaceRange(
 					this.formatter.format([dummy], await this.prepareFormattingOptions([actualAyah])),
@@ -105,8 +106,8 @@ export class ExtractAndInsertVerse {
 					{ line: cursor.line, ch: endCh },
 					"input.quran-key-range"
 				);
-				return true;
 			}
+			return true;
 		}
 
 		// FR-11
@@ -277,8 +278,8 @@ export class ExtractAndInsertVerse {
 
 		if (preview && start.line === end.line) {
 			// Keep the cited words as a real undo state immediately before the full
-			// ayah. CodeMirror uses the distinct user-event names as a history
-			// boundary, so Ctrl+Z restores the preview instead of the pre-command
+			// ayah. The adapter preserves these plugin-specific event names on both
+			// editor paths, so Ctrl+Z restores the preview instead of the pre-command
 			// prose.
 			editor.replaceRange(preview, start, end, "input.quran-key-snippet");
 			const previewEnd: EditorPosition = { line: start.line, ch: start.ch + preview.length };

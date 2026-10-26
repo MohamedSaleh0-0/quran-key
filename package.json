@@ -1,13 +1,14 @@
 {
 	"name": "quran-key",
-	"version": "2.0.1",
+	"version": "2.1.0",
 	"description": "Toolkit for Islamic studies and Quran research with verse lookup, multi-source tafsir, and reflection notes.",
 	"main": "main.js",
 	"scripts": {
 		"quran:import": "node scripts/import-quran-xml.mjs",
+		"quran:roots": "node scripts/build-quran-root-index.mjs",
 		"dev": "node esbuild.config.mjs",
 		"build:fonts": "node scripts/build-fonts.mjs",
-		"build": "node scripts/import-quran-xml.mjs && node scripts/build-fonts.mjs && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"build": "node scripts/import-quran-xml.mjs && npm run quran:roots && node scripts/build-fonts.mjs && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"lint": "eslint src",
 		"test": "vitest run"
 	},

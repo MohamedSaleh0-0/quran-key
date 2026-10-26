@@ -42,11 +42,25 @@ export class ArabicNormalizer {
 	 *  (hamza forms, ya forms, waw-hamza, ta marbuta), then strips anything
 	 *  outside the Arabic block/digits/whitespace. */
 	normalizeForSearch(text: string): string {
+		return this.normalize(text, true);
+	}
+
+	/** Normalize a live-search prefix without configured spelling rewrites.
+	 *  A rewrite such as صلوة -> صلاة is only applicable after the final
+	 *  letters have been typed; this form keeps the raw prefix comparable to
+	 *  the bundled text while the user is still entering that word. */
+	normalizeForPrefixSearch(text: string): string {
+		return this.normalize(text, false);
+	}
+
+	private normalize(text: string, applyConfiguredRules: boolean): string {
 		if (!text) return "";
 		let out = text.trim();
 
-		for (const rule of this.compiledRules) {
-			out = out.replace(rule.regex, rule.replacement);
+		if (applyConfiguredRules) {
+			for (const rule of this.compiledRules) {
+				out = out.replace(rule.regex, rule.replacement);
+			}
 		}
 
 		out = this.stripTashkeel(out);

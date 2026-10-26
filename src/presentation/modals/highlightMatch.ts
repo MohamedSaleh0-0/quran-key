@@ -64,3 +64,29 @@ export function renderHighlightedText(
 		containerEl.appendText(text.slice(lastIndex));
 	}
 }
+
+/** Highlights the actual Quranic word forms that matched one or more roots. */
+export function renderHighlightedForms(
+	containerEl: HTMLElement,
+	text: string,
+	matchingForms: ReadonlySet<string>,
+	normalizeForSearch: (s: string) => string
+): void {
+	containerEl.empty();
+	if (matchingForms.size === 0) {
+		containerEl.setText(text);
+		return;
+	}
+
+	for (const part of text.split(/(\s+)/)) {
+		if (/^\s+$/.test(part)) {
+			containerEl.appendText(part);
+			continue;
+		}
+		if (matchingForms.has(normalizeForSearch(part))) {
+			containerEl.createSpan({ cls: "quran-key-highlight", text: part });
+		} else {
+			containerEl.appendText(part);
+		}
+	}
+}

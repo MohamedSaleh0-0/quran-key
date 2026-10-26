@@ -637,8 +637,8 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		);
 		numberField(
 			"maxSuggestionResults",
-			{ ar: "أقصى عدد نتائج مقترحة", en: "Max suggestion results" },
-			{ ar: "سقف عدد الآيات في نوافذ البحث والربط.", en: "Maximum number of verses shown in modals." }
+			{ ar: "حجم دفعة نتائج البحث", en: "Search result page size" },
+			{ ar: "عدد الآيات التي تظهر في كل دفعة داخل نافذة البحث. استخدم «عرض المزيد» لرؤية الدفعة التالية.", en: "Number of ayahs shown per page in the search modal. Use “Show more” to reveal the next page." }
 		);
 		numberField(
 			"reflectionFileNameAyahTextMaxLength",

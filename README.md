@@ -10,6 +10,7 @@ for planned surah/ayah note workflows and the structure of plugin-generated note
 ## Features
 
 - Contextual Verse Extraction: Auto-detects quotes, braces {query}, selections, and shorthand citations (e.g., [البقرة:255] or البقرة 255) directly from the cursor line.
+- Quranic Root Search: Search by Arabic roots and highlight the matching Quranic word forms. Press Alt+Enter in the global search modal to toggle root search.
 - Snippet Trimming & View Toggle: Extract exact snippets or invoke extraction consecutively to toggle between full ayah and snippet views.
 - Multi-Source Tafsir Engine: Fetch commentary across 40+ classical and contemporary tafsir books with custom source support.
 - Tafsir Packages & Caching: Group preferred tafsir books and cache retrieved commentary inside the vault for offline reuse. Cache files are descriptive JSON files such as `tafsir-cache-تفسير-ابن-كثير-القرآن-العظيم-ibn-katheer-surah-2-ayah-255.json`; each includes a SHA-256 integrity checksum and is refetched if its content no longer matches.
@@ -38,6 +39,11 @@ Tanzil attribution, display options, and usage terms are
 available at
 <https://tanzil.net/download/>.
 
+Root search uses the Quranic Arabic Corpus morphology data, version 0.4,
+copyright © 2011 Kais Dukes. The original annotation file and its copyright
+notice are included under `data/vendor`; the generated root index preserves
+source and license metadata. See the [Quranic Arabic Corpus download page](https://corpus.quran.com/download/).
+
 ---
 
 ## Demos & Workflows
@@ -64,7 +70,7 @@ Select your reflection text and choose a category to create or append directly t
 | Command | Description |
 | :--- | :--- |
 | `Extract Quran verse from context` | Primary extraction: resolves queries, citations, and selections on the current line. |
-| `Open global Quran search modal` | Opens the full-corpus search modal with live analytics. |
+| `Open global Quran search modal` | Opens the full-corpus search modal with live analytics; press Alt+Enter to search by Quranic roots. |
 | `Fetch contextual tafsir for current line` | Retrieves tafsir commentary for the verse/range at the cursor. |
 | `Log selection to reflection (choose category)` | Interactive modal to pick or create a reflection category for selected text. |
 | `Link related ayahs` | Multi-select modal to cross-link two or more related verses in frontmatter. |
@@ -140,4 +146,10 @@ In compliance with Obsidian Developer Policies:
 
 ## License
 
-This project is open source and licensed under the [MIT License](LICENSE).
+The plugin source code is licensed under the [MIT License](LICENSE). The
+Quranic Arabic Corpus morphology data used for root search is a separate
+third-party work, copyright © 2011 Kais Dukes, with its own GNU GPL and terms
+of use. The unmodified upstream annotation file and its copyright notice are
+included in `data/vendor`; the generated root index retains the source and
+copyright metadata. See the
+[Quranic Arabic Corpus terms](https://corpus.quran.com/download/).
