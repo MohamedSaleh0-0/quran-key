@@ -2,7 +2,6 @@ import type { Vault } from "obsidian";
 import type { Ayah } from "../../domain/entities/Ayah";
 import type { QuranRepository } from "../../domain/ports/QuranRepository";
 import type { ArabicNormalizer } from "../../domain/services/ArabicNormalizer";
-import canonicalCorpus from "../../../data/ayahs-canonical.json";
 
 interface RawAyah {
 	surah_id: number;
@@ -13,6 +12,8 @@ interface RawAyah {
 	page?: number;
 }
 
+export type QuranCorpusData = RawAyah[] | { ayahs: RawAyah[] };
+
 export class ObsidianQuranRepository implements QuranRepository {
 	private ayahs: Ayah[] = [];
 	private searchCorpusText = "";
@@ -21,11 +22,11 @@ export class ObsidianQuranRepository implements QuranRepository {
 		void this.vault;
 	}
 
-	async loadAll(): Promise<void> {
+	async loadAll(corpus?: QuranCorpusData): Promise<void> {
 		if (this.ayahs.length > 0) return;
+		if (!corpus) throw new Error("quran-corpus-not-provided");
 
-		const corpus = canonicalCorpus;
-		const raw: RawAyah[] = Array.isArray(corpus) ? corpus : (corpus as { ayahs: RawAyah[] }).ayahs;
+		const raw = Array.isArray(corpus) ? corpus : corpus.ayahs;
 
 		this.ayahs = raw.map((a, index) => ({
 			id: index + 1,

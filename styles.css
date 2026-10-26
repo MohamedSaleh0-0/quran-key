@@ -424,22 +424,8 @@ a.quran-key-ayah-note-link:focus-visible {
 	resize: vertical;
 }
 
-.quran-key-settings-textarea {
-	width: 100%;
-	font-family: var(--font-monospace);
-	font-size: 0.9em;
-}
-
-.quran-key-settings-tab-content .setting-item-control input[type="text"],
-.quran-key-settings-tab-content .setting-item-control input[type="number"],
-.quran-key-settings-tab-content .setting-item-control select {
-	min-width: 220px;
-	max-width: 360px;
-}
-
-.quran-key-settings-tab-content .setting-item-control textarea {
-	min-width: 320px;
-	max-width: 480px;
+.quran-key-settings-custom-row {
+	display: block;
 }
 
 .quran-key-settings-card-list {

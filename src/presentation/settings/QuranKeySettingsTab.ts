@@ -1,13 +1,12 @@
-import { PluginSettingTab, Setting } from "obsidian";
+import { Modal, PluginSettingTab, Setting } from "obsidian";
+import type { SettingDefinitionGroup, SettingDefinitionItem, SettingGroupItem } from "obsidian";
 import type { App, Plugin } from "obsidian";
 import type { CategoryOrganizationMode, Locale } from "../../config/types";
 import type { AppServices } from "../AppServices";
 import { DEFAULT_SETTINGS } from "../../config/defaults";
 import { SETTINGS_SCHEMA, type SettingFieldDefinition } from "./SettingsSchema";
 
-type TabId = "general" | "appearance" | "quran-notes" | "advanced";
-
-const TAB_TITLES: Record<TabId, Record<Locale, string>> = {
+const TAB_TITLES = {
 	general: { ar: "عام وتنسيق النصوص", en: "General & Text" },
 	appearance: { ar: "المظهر والخط", en: "Appearance" },
 	"quran-notes": { ar: "التفسير والملاحظات", en: "Tafsir & Notes" },
@@ -15,255 +14,206 @@ const TAB_TITLES: Record<TabId, Record<Locale, string>> = {
 };
 
 export class QuranKeySettingsTab extends PluginSettingTab {
-	private activeTab: TabId = "general";
-
 	constructor(app: App, plugin: Plugin, private readonly services: AppServices) {
 		super(app, plugin);
 	}
 
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
+	getSettingDefinitions(): SettingDefinitionItem[] {
 		const locale = this.services.settings.interfaceLanguage;
+		const sections = (ids: string[]) => SETTINGS_SCHEMA.filter((section) => ids.includes(section.id));
+		const fields = (ids: string[]) => sections(ids).flatMap((section) => section.fields);
+		const group = (heading: string, items: SettingGroupItem[]): SettingDefinitionGroup => ({
+			type: "group",
+			heading,
+			items,
+		});
+		const page = (name: string, items: SettingDefinitionItem[]): SettingDefinitionItem => ({
+			type: "page",
+			name,
+			items,
+		});
+		const custom = (
+			name: string,
+			desc: string,
+			render: (containerEl: HTMLElement, locale: Locale) => void
+		): SettingGroupItem => ({
+			name,
+			desc,
+			render: (setting) => {
+				setting.settingEl.addClass("quran-key-settings-custom-row");
+				setting.controlEl.remove();
+				render(setting.settingEl.createDiv({ cls: "quran-key-settings-schema-custom" }), locale);
+			},
+		});
+		const definitions = (sectionIds: string[], excludedKeys: string[] = []): SettingGroupItem[] =>
+			fields(sectionIds)
+				.filter((field) => !excludedKeys.includes(field.key))
+				.map((field) => this.fieldDefinition(field, locale));
 
-		this.renderTabsHeader(containerEl, locale);
-
-		const tabContent = containerEl.createDiv({ cls: "quran-key-settings-tab-content" });
-
-		switch (this.activeTab) {
-			case "general":
-				this.renderGeneralTab(tabContent, locale);
-				break;
-			case "appearance":
-				this.renderAppearanceTab(tabContent, locale);
-				break;
-			case "quran-notes":
-				this.renderTafsirAndNotesTab(tabContent, locale);
-				break;
-			case "advanced":
-				this.renderAdvancedTab(tabContent, locale);
-				break;
-		}
+		return [
+			page(TAB_TITLES.general[locale], [
+				group(locale === "ar" ? "عام وتنسيق النصوص" : "General & Text", definitions(["general", "text"])),
+			]),
+			page(TAB_TITLES.appearance[locale], [
+				group(locale === "ar" ? "تنسيق المظهر" : "Appearance", definitions(["style"], ["customCss"])),
+			]),
+			page(TAB_TITLES["quran-notes"][locale], [
+				group(locale === "ar" ? "كتب التفسير" : "Tafsir books", [
+					...definitions(["tafsir"], ["rangeHeadingLevel", "bookHeadingLevel", "ayahHeadingLevel", "tafsirRangeHeadingTemplate", "tafsirBookHeadingTemplate", "tafsirAyahHeadingTemplate", "includeAyahTextInTafsir", "useHorizontalDivider"]),
+					custom(
+						locale === "ar" ? "مصادر التفسير المخصصة" : "Custom tafsir sources",
+						locale === "ar" ? "أضف مصادر تفسير خاصة بك أو عدّلها." : "Add or edit custom tafsir sources.",
+						(el, lang) => this.renderCustomBooks(el, lang)
+					),
+					custom(
+						locale === "ar" ? "مجموعات كتب التفسير" : "Tafsir book packages",
+						locale === "ar" ? "أنشئ مجموعات لإعادة استخدام اختيارات الكتب." : "Create reusable groups of tafsir books.",
+						(el, lang) => this.renderTafsirPackages(el, lang)
+					),
+					this.fieldDefinition({
+						key: "tafsirCacheEnabled",
+						type: "toggle",
+						label: { ar: "التخزين المؤقت للتفاسير", en: "Cache tafsir responses" },
+						description: { ar: "يحفظ النتائج داخل الـ vault لإعادة استخدامها دون اتصال.", en: "Save responses in the vault for offline reuse." },
+					}, locale),
+					this.fieldDefinition({
+						key: "tafsirCacheFolder",
+						type: "text",
+						label: { ar: "مجلد التخزين المؤقت", en: "Tafsir cache folder" },
+						description: { ar: "مسار نسبي من جذر الـ vault.", en: "Vault-relative folder for cached tafsir responses." },
+					}, locale),
+				]),
+				group(locale === "ar" ? "تنسيق التفسير" : "Tafsir formatting", [
+					...definitions(["tafsir"], ["tafsirBookSortOrder"]),
+				]),
+				group(locale === "ar" ? "ملاحظات الآيات" : "Ayah notes", [
+					custom(
+						locale === "ar" ? "تصنيفات الملاحظات" : "Reflection categories",
+						locale === "ar" ? "أدر التصنيفات وطريقة تنظيم ملاحظات الآيات." : "Manage categories and ayah note organization.",
+						(el, lang) => this.renderReflectionCategories(el, lang)
+					),
+					...definitions(["reflections"]),
+				]),
+			]),
+			page(TAB_TITLES.advanced[locale], [
+				group(locale === "ar" ? "البحث" : "Search", [
+					...definitions(["search"]),
+					this.numberDefinition("maxSuggestionResults", locale === "ar" ? "حجم دفعة نتائج البحث" : "Search result page size", locale === "ar" ? "عدد الآيات الظاهرة في كل دفعة." : "Number of ayahs shown in each result page."),
+					this.numberDefinition("maxSlidingWindowWords", locale === "ar" ? "أقصى عرض لنافذة البحث التلقائي" : "Max auto-detect word window", locale === "ar" ? "أقصى عدد كلمات يحاول الاكتشاف التلقائي مطابقتها." : "Max word count matched by automatic detection."),
+					this.fieldDefinition({
+						key: "ayahMarkerStyle",
+						type: "dropdown",
+						label: { ar: "نمط رقم الآية", en: "Ayah marker style" },
+						description: { ar: "اختر طريقة إظهار رقم الآية.", en: "Choose how ayah numbers are displayed." },
+						dropdownOptions: [
+							{ value: "plain", label: "123" },
+							{ value: "parenthesized", label: "(123)" },
+							{ value: "end-symbol", label: "۝123" },
+						],
+					}, locale),
+				]),
+				group(locale === "ar" ? "إعدادات متقدمة" : "Advanced", [
+					...definitions(["style"], ["quranFontSize", "quranLineHeight", "quranColorDark", "quranColorLight", "styleOrnateNumbers"]),
+					this.numberDefinition("reflectionFileNameAyahTextMaxLength", locale === "ar" ? "أقصى طول لنص الآية في اسم الملف" : "Max ayah text length in filename", locale === "ar" ? "استخدم 0 بلا اقتطاع." : "Use 0 for no truncation."),
+					this.numberDefinition("reflectionFileNameAyahTextMaxWords", locale === "ar" ? "أقصى عدد كلمات في اسم الملف" : "Max ayah words in filename", locale === "ar" ? "استخدم 0 بلا حد للكلمات." : "Use 0 for no word limit."),
+					custom(
+						locale === "ar" ? "قواعد تطبيع النص العربي" : "Arabic normalization rules",
+						locale === "ar" ? "فعّل أو عدّل قواعد تطبيع البحث العربي." : "Enable or edit Arabic search normalization rules.",
+						(el, lang) => this.renderNormalizationRules(el, lang)
+					),
+					this.fieldDefinition(SETTINGS_SCHEMA.find((section) => section.id === "style")!.fields.find((field) => field.key === "customCss")!, locale),
+					custom(
+						locale === "ar" ? "استعادة الإعدادات الافتراضية" : "Restore default settings",
+						locale === "ar" ? "يعيد كافة الإعدادات والتصنيفات والكتب المضافة إلى وضعها الأصلي." : "Resets all settings, custom categories, and added books to defaults.",
+						(el, lang) => this.renderReset(el, lang)
+					),
+				]),
+			]),
+		];
 	}
 
-	private renderTabsHeader(containerEl: HTMLElement, locale: Locale): void {
-		const header = containerEl.createDiv({ cls: "quran-key-settings-tabs-header" });
-		const tabs: TabId[] = ["general", "appearance", "quran-notes", "advanced"];
-
-		for (const tab of tabs) {
-			const btn = header.createEl("button", {
-				text: TAB_TITLES[tab][locale],
-				cls: `quran-key-settings-tab-btn${this.activeTab === tab ? " is-active" : ""}`,
-			});
-			btn.addEventListener("click", () => {
-				this.activeTab = tab;
-				this.update();
-			});
-		}
+	getControlValue(key: string): unknown {
+		return (this.services.settings as unknown as Record<string, unknown>)[key];
 	}
 
-	private renderGeneralTab(containerEl: HTMLElement, locale: Locale): void {
-		const generalSection = SETTINGS_SCHEMA.find((s) => s.id === "general");
-		if (generalSection) {
-			new Setting(containerEl).setName(generalSection.heading[locale]).setHeading();
-			for (const field of generalSection.fields) this.renderField(containerEl, field, locale);
-		}
-
-		const textSection = SETTINGS_SCHEMA.find((s) => s.id === "text");
-		if (textSection) {
-			new Setting(containerEl).setName(textSection.heading[locale]).setHeading();
-			for (const field of textSection.fields) this.renderField(containerEl, field, locale);
-		}
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		if (key === "tafsirCacheFolder" && typeof value === "string") value = value.trim() || "tafsir";
+		(this.services.settings as unknown as Record<string, unknown>)[key] = value;
+		await this.services.saveSettings();
+		if (key === "interfaceLanguage") this.update();
 	}
 
-	private renderAppearanceTab(containerEl: HTMLElement, locale: Locale): void {
-		const styleSection = SETTINGS_SCHEMA.find((s) => s.id === "style");
-		if (styleSection) {
-			new Setting(containerEl).setName(styleSection.heading[locale]).setHeading();
-			for (const field of styleSection.fields.filter((f) => f.key !== "customCss")) {
-				this.renderField(containerEl, field, locale);
-			}
-		}
+	private numberDefinition(key: string, name: string, desc: string): SettingGroupItem {
+		return { name, desc, control: { type: "number", key, min: 0, step: 1 } };
 	}
 
-	private renderTafsirAndNotesTab(containerEl: HTMLElement, locale: Locale): void {
-		new Setting(containerEl).setName(locale === "ar" ? "كتب التفسير" : "Tafsir Books").setHeading();
-		const tafsirSchema = SETTINGS_SCHEMA.find((section) => section.id === "tafsir");
-		const sortField = tafsirSchema?.fields.find((field) => field.key === "tafsirBookSortOrder");
-		if (sortField) this.renderField(containerEl, sortField, locale);
-		this.renderCustomBooks(containerEl, locale);
-		this.renderTafsirPackages(containerEl, locale);
-		new Setting(containerEl)
-			.setName(locale === "ar" ? "التخزين المؤقت للتفاسير" : "Tafsir caching")
-			.setDesc(locale === "ar" ? "يحفظ نتائج التفسير داخل الـ vault لإعادة استخدامها دون اتصال وتقليل طلبات الشبكة." : "Save tafsir responses in the vault so they can be reused offline and fetched less often.")
-			.addToggle((toggle) =>
-				toggle.setValue(this.services.settings.tafsirCacheEnabled).onChange(async (value) => {
-					this.services.settings.tafsirCacheEnabled = value;
-					await this.save();
-				})
-			)
-		new Setting(containerEl)
-			.setName(locale === "ar" ? "مجلد التخزين المؤقت" : "Cache folder")
-			.setDesc(locale === "ar" ? "مسار نسبي من جذر الـ vault لحفظ ملفات التفسير المؤقتة." : "Vault-relative folder where cached tafsir responses are stored.")
-			.addText((text) =>
-				text.setValue(this.services.settings.tafsirCacheFolder).onChange(async (value) => {
-					this.services.settings.tafsirCacheFolder = value.trim() || "tafsir";
-					await this.save();
-				})
-			);
-
-		new Setting(containerEl).setName(locale === "ar" ? "تصنيفات ملاحظات الآيات" : "Ayah Note Categories").setHeading();
-		this.renderReflectionCategories(containerEl, locale);
-
-		const reflectionsSection = SETTINGS_SCHEMA.find((s) => s.id === "reflections");
-		if (reflectionsSection) {
-			const groups: Array<{ title: Record<Locale, string>; keys: string[] }> = [
-				{
-					title: { ar: "ملفات ملاحظات الآيات", en: "Ayah note files" },
-					keys: ["ayahNotesFolder", "surahNotesFolder", "surahNoteFileNameTemplate", "reflectionFileNameTemplate", "ayahNoteTemplate", "linkAyahMarkersOnInsert", "showOrphanAyahConversionPreview"],
-				},
-				{
-					title: { ar: "سجل التدبر", en: "Reflection log" },
-					keys: ["reflectionEntryTemplate", "reflectionInsertionMode", "reflectionCategoryDelimiter", "showReflectionSuccessNotice"],
-				},
-			];
-			for (const group of groups) {
-				new Setting(containerEl).setName(group.title[locale]).setHeading();
-				for (const key of group.keys) {
-					const field = reflectionsSection.fields.find((candidate) => candidate.key === key);
-					if (field) {
-						this.renderField(containerEl, field, locale);
-					}
-				}
-			}
+	private fieldDefinition(field: SettingFieldDefinition, locale: Locale): SettingGroupItem {
+		const base = { name: field.label[locale], desc: field.description[locale] };
+		switch (field.type) {
+			case "toggle":
+				return { ...base, control: { type: "toggle", key: field.key } };
+			case "text":
+				return { ...base, control: { type: "text", key: field.key } };
+			case "textarea":
+				return { ...base, control: { type: "textarea", key: field.key, rows: 4 } };
+			case "dropdown":
+				return {
+					...base,
+					control: {
+						type: "dropdown",
+						key: field.key,
+						options: Object.fromEntries((field.dropdownOptions ?? []).map((option) => [option.value, option.label])),
+					},
+				};
+			case "slider":
+				return { ...base, control: { type: "slider", key: field.key, ...(field.slider ?? { min: 0, max: 1, step: 0.1 }) } };
+			case "color":
+				return { ...base, control: { type: "color", key: field.key } };
 		}
-	}
-
-	private renderAdvancedTab(containerEl: HTMLElement, locale: Locale): void {
-		const searchSection = SETTINGS_SCHEMA.find((s) => s.id === "search");
-		if (searchSection) {
-			new Setting(containerEl).setName(searchSection.heading[locale]).setHeading();
-			for (const field of searchSection.fields) this.renderField(containerEl, field, locale);
-		}
-
-		const tafsirSection = SETTINGS_SCHEMA.find((s) => s.id === "tafsir");
-		if (tafsirSection) {
-			new Setting(containerEl).setName(tafsirSection.heading[locale]).setHeading();
-			for (const field of tafsirSection.fields.filter((candidate) => candidate.key !== "tafsirBookSortOrder")) this.renderField(containerEl, field, locale);
-		}
-
-		new Setting(containerEl).setName(locale === "ar" ? "معايير محرك البحث والانزلاق" : "Engine Tunables").setHeading();
-		this.renderAdvancedTunables(containerEl, locale);
-
-		new Setting(containerEl).setName(locale === "ar" ? "قواعد التطبيع" : "Normalization Rules").setHeading();
-		this.renderNormalizationRules(containerEl, locale);
-
-		const styleSection = SETTINGS_SCHEMA.find((s) => s.id === "style");
-		const customCssField = styleSection?.fields.find((f) => f.key === "customCss");
-		if (customCssField) {
-			new Setting(containerEl).setName(locale === "ar" ? "تخصيص المظهر المتقدم" : "Custom Styling").setHeading();
-			this.renderField(containerEl, customCssField, locale);
-		}
-
-		new Setting(containerEl).setName(locale === "ar" ? "إعادة الضبط" : "Reset").setHeading();
-		new Setting(containerEl)
-			.setName(locale === "ar" ? "استعادة الإعدادات الافتراضية" : "Restore default settings")
-			.setDesc(
-				locale === "ar"
-					? "يعيد كافة الإعدادات والتصنيفات والكتب المضافة إلى وضعها الأصلي."
-					: "Resets all settings, custom categories, and added books to defaults."
-			)
-			.addButton((btn) =>
-				btn
-					.setButtonText(locale === "ar" ? "إعادة الضبط" : "Reset to Defaults")
-					.setDestructive()
-					.onClick(async () => {
-						const confirmed = window.confirm(
-							locale === "ar"
-								? "هل أنت متأكد من رغبتك في استعادة الإعدادات الافتراضية؟ ستفقد كافة التخصيصات الحالية."
-								: "Are you sure you want to restore defaults? All current customizations will be lost."
-						);
-						if (!confirmed) return;
-						Object.assign(this.services.settings, structuredClone(DEFAULT_SETTINGS));
-						await this.save();
-						this.update();
-					})
-			);
 	}
 
 	private async save(): Promise<void> {
 		await this.services.saveSettings();
 	}
 
-	private renderField(containerEl: HTMLElement, field: SettingFieldDefinition, locale: Locale): void {
-		const settings = this.services.settings as unknown as Record<string, unknown>;
-		const setting = new Setting(containerEl).setName(field.label[locale]).setDesc(field.description[locale]);
+	private confirmReset(locale: Locale): Promise<boolean> {
+		return new Promise((resolve) => {
+			const modal = new Modal(this.app);
+			let confirmed = false;
+			modal.setTitle(locale === "ar" ? "استعادة الإعدادات الافتراضية" : "Restore default settings");
+			modal.contentEl.createEl("p", {
+				text: locale === "ar"
+					? "هل أنت متأكد؟ ستفقد كافة التخصيصات الحالية."
+					: "Are you sure? All current customizations will be lost.",
+			});
+			const actions = modal.contentEl.createDiv({ cls: "modal-button-container" });
+			const cancel = actions.createEl("button", { text: locale === "ar" ? "إلغاء" : "Cancel" });
+			cancel.addEventListener("click", () => modal.close());
+			const accept = actions.createEl("button", { text: locale === "ar" ? "استعادة" : "Restore", cls: "mod-warning" });
+			accept.addEventListener("click", () => {
+				confirmed = true;
+				modal.close();
+			});
+			modal.onClose = () => resolve(confirmed);
+			modal.open();
+		});
+	}
 
-		switch (field.type) {
-			case "toggle":
-				setting.addToggle((toggle) =>
-					toggle.setValue(Boolean(settings[field.key])).onChange(async (value) => {
-						settings[field.key] = value;
+	private renderReset(containerEl: HTMLElement, locale: Locale): void {
+		new Setting(containerEl)
+			.setName(locale === "ar" ? "إعادة ضبط الإعدادات" : "Reset settings")
+			.setDesc(locale === "ar" ? "استعادة جميع التخصيصات إلى القيم الافتراضية." : "Restore all settings to their default values.")
+			.addButton((button) =>
+				button
+					.setButtonText(locale === "ar" ? "استعادة" : "Restore")
+					.setDestructive()
+					.onClick(async () => {
+						if (!(await this.confirmReset(locale))) return;
+						Object.assign(this.services.settings, structuredClone(DEFAULT_SETTINGS));
 						await this.save();
+						this.update();
 					})
-				);
-				break;
-			case "text":
-				setting.addText((text) =>
-					text.setValue(String(settings[field.key])).onChange(async (value) => {
-						settings[field.key] = value;
-						await this.save();
-					})
-				);
-				break;
-			case "textarea":
-				setting.addTextArea((textarea) => {
-					textarea.setValue(String(settings[field.key])).onChange(async (value) => {
-						settings[field.key] = value;
-						await this.save();
-					});
-					textarea.inputEl.rows = 4;
-					textarea.inputEl.addClass("quran-key-settings-textarea");
-					if (field.key === "customCss") {
-						textarea.inputEl.placeholder =
-							".cm-quran-key-text { border-right: 2px solid gold; padding-right: 6px; }\n.quran-key-ornate-number { font-size: 0.9em; }";
-					}
-				});
-				break;
-			case "dropdown":
-				setting.addDropdown((dropdown) => {
-					for (const opt of field.dropdownOptions ?? []) dropdown.addOption(opt.value, opt.label);
-					dropdown.setValue(String(settings[field.key]));
-					dropdown.onChange(async (value) => {
-						settings[field.key] = value;
-						await this.save();
-						if (field.key === "interfaceLanguage") {
-							this.update();
-						}
-					});
-				});
-				break;
-			case "slider":
-				setting.addSlider((slider) => {
-					const { min, max, step } = field.slider ?? { min: 0, max: 1, step: 0.1 };
-					slider
-						.setLimits(min, max, step)
-						.setValue(Number(settings[field.key]))
-						.onChange(async (value) => {
-							settings[field.key] = value;
-							await this.save();
-						});
-				});
-				break;
-			case "color":
-				setting.addColorPicker((picker) =>
-					picker.setValue(String(settings[field.key])).onChange(async (value) => {
-						settings[field.key] = value;
-						await this.save();
-					})
-				);
-				break;
-		}
+			);
 	}
 
 	private renderCustomBooks(containerEl: HTMLElement, locale: Locale): void {
@@ -610,51 +560,5 @@ export class QuranKeySettingsTab extends PluginSettingTab {
 		renderList();
 	}
 
-	private renderAdvancedTunables(containerEl: HTMLElement, locale: Locale): void {
-		const numberField = (
-			key: "maxSlidingWindowWords" | "maxSuggestionResults" | "reflectionFileNameAyahTextMaxLength" | "reflectionFileNameAyahTextMaxWords",
-			label: Record<Locale, string>,
-			desc: Record<Locale, string>
-		) => {
-			new Setting(containerEl)
-				.setName(label[locale])
-				.setDesc(desc[locale])
-				.addText((text) =>
-					text.setValue(String(this.services.settings[key])).onChange(async (value) => {
-						const num = parseInt(value, 10);
-						if (!isNaN(num) && num >= 0) {
-							this.services.settings[key] = num;
-							await this.save();
-						}
-					})
-				);
-		};
 
-		numberField(
-			"maxSlidingWindowWords",
-			{ ar: "أقصى عرض لنافذة البحث التلقائي", en: "Max auto-detect word window" },
-			{ ar: "أقصى عدد كلمات يحاول الاكتشاف التلقائي مطابقتها دفعة واحدة.", en: "Max word count the auto-detect fallback matches at once." }
-		);
-		numberField(
-			"maxSuggestionResults",
-			{ ar: "حجم دفعة نتائج البحث", en: "Search result page size" },
-			{ ar: "عدد الآيات التي تظهر في كل دفعة داخل نافذة البحث. استخدم «عرض المزيد» لرؤية الدفعة التالية.", en: "Number of ayahs shown per page in the search modal. Use “Show more” to reveal the next page." }
-		);
-		numberField(
-			"reflectionFileNameAyahTextMaxLength",
-			{ ar: "أقصى طول لنص الآية في اسم الملف", en: "Max ayah text length in filename" },
-			{
-				ar: "اقتطاع نص الآية في عنوان الملف عند هذا الحد (0 = بلا اقتطاع).",
-				en: "Truncates verse text in file title at this length (0 = no truncation).",
-			}
-		);
-		numberField(
-			"reflectionFileNameAyahTextMaxWords",
-			{ ar: "أقصى عدد كلمات من الآية في اسم الملف", en: "Max ayah words in filename" },
-			{
-				ar: "يقتطع نص الآية بعد هذا العدد من الكلمات (0 = بلا اقتطاع بالكلمات).",
-				en: "Truncates verse text after this many words (0 = no word limit).",
-			}
-		);
-	}
 }

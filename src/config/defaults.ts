@@ -116,10 +116,11 @@ export function migrateLegacySettings(raw: Partial<PluginConfig> | undefined): P
 	if (raw.reflectionEntryTemplate === "- {content} — {date}" || raw.reflectionEntryTemplate === "- {content} — - ") {
 		migrated = { ...migrated, reflectionEntryTemplate: DEFAULT_SETTINGS.reflectionEntryTemplate };
 	}
-	if (raw.ayahNoteTemplate === undefined && raw.includeAyahTextInReflectionNote !== undefined) {
+	const legacyIncludeAyahText = (raw as unknown as Record<string, unknown>)["includeAyahTextInReflectionNote"];
+	if (raw.ayahNoteTemplate === undefined && typeof legacyIncludeAyahText === "boolean") {
 		migrated = {
 			...migrated,
-			ayahNoteTemplate: raw.includeAyahTextInReflectionNote ? DEFAULT_SETTINGS.ayahNoteTemplate : "",
+			ayahNoteTemplate: legacyIncludeAyahText ? DEFAULT_SETTINGS.ayahNoteTemplate : "",
 		};
 	}
 	return migrated;

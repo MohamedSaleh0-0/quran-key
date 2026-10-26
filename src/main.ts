@@ -33,7 +33,7 @@ import { RemoveQuranReference } from "./application/use-cases/RemoveQuranReferen
 import { ConvertReferenceToFootnote } from "./application/use-cases/ConvertReferenceToFootnote";
 import { StripTashkeel } from "./application/use-cases/StripTashkeel";
 
-import { ObsidianQuranRepository } from "./infrastructure/obsidian/ObsidianQuranRepository";
+import { ObsidianQuranRepository, type QuranCorpusData } from "./infrastructure/obsidian/ObsidianQuranRepository";
 import { ObsidianEditorAdapter } from "./infrastructure/obsidian/ObsidianEditorAdapter";
 import { ObsidianNoticeAdapter } from "./infrastructure/obsidian/ObsidianNoticeAdapter";
 import { ObsidianAyahNoteRepository } from "./infrastructure/obsidian/ObsidianAyahNoteRepository";
@@ -63,12 +63,15 @@ import { t } from "./config/strings";
 
 import builtinTafsirBooksData from "../data/tafsirBooks.json";
 import builtinReflectionCategoriesData from "../data/reflectionCategories.json";
+import canonicalCorpusData from "../data/ayahs-canonical.json";
 import quranRootIndexData from "../data/quran-root-index.json";
 
 export default class QuranKeyPlugin extends Plugin {
 	settings: PluginConfig = DEFAULT_SETTINGS;
 
 	private repository!: ObsidianQuranRepository;
+	private canonicalCorpus!: QuranCorpusData;
+	private quranRootIndex!: RootIndexData;
 	private readonly tafsirRepository = new VaultTafsirRepository(
 		this.app.vault,
 		new HttpTafsirRepository(),
@@ -89,14 +92,14 @@ export default class QuranKeyPlugin extends Plugin {
 	async onload(): Promise<void> {
 		await this.loadSettings();
 
-		this.repository = new ObsidianQuranRepository(
-			this.app.vault,
-			new ArabicNormalizer(this.settings.normalizationRules),
-		);
-		await this.repository.loadAll();
+		[this.canonicalCorpus, this.quranRootIndex] = await Promise.all([
+			canonicalCorpusData as unknown as Promise<QuranCorpusData>,
+			quranRootIndexData as unknown as Promise<RootIndexData>,
+		]);
 
 		this.refreshStyles();
 		this.rebuildCoreServices();
+		await this.repository.loadAll(this.canonicalCorpus);
 		this.refreshHighlightExtension();
 		this.registerEditorExtension(this.editorExtension);
 
@@ -155,12 +158,12 @@ export default class QuranKeyPlugin extends Plugin {
 			this.app.vault,
 			normalizer,
 		);
-		void this.repository.loadAll();
+		void this.repository.loadAll(this.canonicalCorpus);
 
 		const reference = VerseReference.compile(this.settings.referenceFormat);
 		const phraseMatcher = new PhraseMatcher(normalizer);
 		const fuzzyMatcher = new FuzzyMatcher(normalizer);
-		const rootSearchIndex = new RootSearchIndex(quranRootIndexData as RootIndexData, normalizer);
+		const rootSearchIndex = new RootSearchIndex(this.quranRootIndex, normalizer);
 		const slidingWindow = new SlidingWindowSearch(
 			normalizer,
 			phraseMatcher,

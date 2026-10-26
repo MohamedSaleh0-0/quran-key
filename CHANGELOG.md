@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.1
+
+### Improved
+
+- Compress the bundled Quran and root search data so `main.js` stays below Obsidian Sync's 5 MB per-file limit while remaining available offline.
+- Expose plugin settings to Obsidian's settings search and replace the browser confirmation prompt with an Obsidian modal.
+- Restore type-aware linting for modern JavaScript APIs.
+
 ## 2.1.0
 
 ### Added
